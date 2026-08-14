@@ -8,6 +8,7 @@ import { canViewProject } from "@/lib/permissions";
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ task?: string; tab?: string }>;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -22,8 +23,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 // =============================================================================
 // Project Detail Page — Tab Views (Dashboard, List, Board, Files)
 // =============================================================================
-export default async function ProjectDetailPage({ params }: Props) {
+export default async function ProjectDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { task: initialTaskId, tab: initialTab } = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
@@ -89,6 +91,8 @@ export default async function ProjectDetailPage({ params }: Props) {
           memberCount={project.members.length}
           projectMembers={project.members}
           companyUsers={companyUsers as any}
+          initialTab={initialTab as any}
+          initialTaskId={initialTaskId}
         />
       </div>
     </div>

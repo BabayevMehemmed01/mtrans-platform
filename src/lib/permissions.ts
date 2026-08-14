@@ -22,26 +22,8 @@ export async function hasPermission(
   userId: string,
   permission: PermissionKey
 ): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      role: {
-        select: {
-          permissions: {
-            select: {
-              permission: {
-                select: { key: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user?.role) return false;
-
-  return user.role.permissions.some((rp) => rp.permission.key === permission);
+  const permissions = await getUserPermissions(userId);
+  return permissions.has(permission);
 }
 
 /**
@@ -54,28 +36,7 @@ export async function hasPermissions(
   permissions: PermissionKey[],
   requireAll = false
 ): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      role: {
-        select: {
-          permissions: {
-            select: {
-              permission: {
-                select: { key: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!user?.role) return false;
-
-  const userPermissions = new Set(
-    user.role.permissions.map((rp) => rp.permission.key)
-  );
+  const userPermissions = await getUserPermissions(userId);
 
   if (requireAll) {
     return permissions.every((p) => userPermissions.has(p));
@@ -85,7 +46,9 @@ export async function hasPermissions(
 }
 
 /**
- * İstifadəçinin bütün icazələrini Set kimi qaytarır.
+ * İstifadəçinin bütün icazələrini Set kimi qaytarır — rolundan gələn icazələr
+ * VƏ şöbə rəhbəri tərəfindən fərdi verilmiş əlavə icazələr (UserPermission)
+ * birləşdirilir. Additiv sistemdir: fərdi icazə rolu əvəz etmir, üstünə gəlir.
  * Tez-tez yoxlamalar üçün cache kimi istifadə olunur.
  */
 export async function getUserPermissions(
@@ -105,12 +68,23 @@ export async function getUserPermissions(
           },
         },
       },
+      extraPermissions: {
+        select: {
+          permission: {
+            select: { key: true },
+          },
+        },
+      },
     },
   });
 
-  if (!user?.role) return new Set();
+  if (!user) return new Set();
 
-  return new Set(user.role.permissions.map((rp) => rp.permission.key));
+  const permissions = new Set<PermissionKey>();
+  for (const rp of user.role?.permissions ?? []) permissions.add(rp.permission.key);
+  for (const up of user.extraPermissions) permissions.add(up.permission.key);
+
+  return permissions;
 }
 
 /**
@@ -194,6 +168,50 @@ export async function canViewProject(userId: string, projectId: string): Promise
   });
   if (member) return true;
   return hasPermission(userId, "CAN_VIEW_PROJECT");
+}
+
+/**
+ * İstifadəçinin şirkətin Super Admin-i olub-olmadığını yoxlayır.
+ * Şirkət sahibi (owner) VƏ YA CAN_MANAGE_COMPANY icazəsinə sahib rolu olan
+ * istifadəçilər Super Admin sayılır (seed-də bu icazə yalnız "Super Admin"
+ * roluna verilir).
+ */
+export async function isSuperAdmin(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { companyId: true, company: { select: { ownerId: true } } },
+  });
+  if (user?.company?.ownerId === userId) return true;
+  return hasPermission(userId, "CAN_MANAGE_COMPANY");
+}
+
+/**
+ * İstifadəçinin konkret şöbənin rəhbəri olub-olmadığını yoxlayır.
+ */
+export async function isDepartmentHead(
+  userId: string,
+  departmentId: string
+): Promise<boolean> {
+  const department = await prisma.department.findUnique({
+    where: { id: departmentId },
+    select: { headUserId: true },
+  });
+  return !!department && department.headUserId === userId;
+}
+
+/**
+ * Şöbə səviyyəsində idarəetmə girişi: Super Admin, VƏ YA həmin şöbənin
+ * rəhbəri, VƏ YA qlobal fallback icazəsi olan istifadəçi keçir.
+ */
+export async function requireDepartmentManage(
+  userId: string,
+  departmentId: string,
+  fallbackPermission?: PermissionKey
+): Promise<void> {
+  if (await isSuperAdmin(userId)) return;
+  if (await isDepartmentHead(userId, departmentId)) return;
+  if (fallbackPermission && (await hasPermission(userId, fallbackPermission))) return;
+  throw new PermissionError("Bu şöbə üzərində bu əməliyyat üçün icazəniz yoxdur");
 }
 
 /**

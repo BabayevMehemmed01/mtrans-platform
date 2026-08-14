@@ -5,12 +5,18 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { NewProjectForm } from "./NewProjectForm";
 
-export default async function NewProjectPage() {
+export default async function NewProjectPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ departmentId?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
+
+  const { departmentId } = await searchParams;
 
   const departments = await prisma.department.findMany({
     where: { companyId, isActive: true },
@@ -36,7 +42,7 @@ export default async function NewProjectPage() {
         </div>
       </div>
 
-      <NewProjectForm departments={departments} />
+      <NewProjectForm departments={departments} defaultDepartmentId={departmentId} />
     </div>
   );
 }

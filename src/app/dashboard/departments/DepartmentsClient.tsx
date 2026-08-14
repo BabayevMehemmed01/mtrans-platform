@@ -1,18 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
 import {
   Dialog,
   DialogContent,
@@ -27,11 +20,40 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Building2, Pencil, Trash, UserCircle } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getInitials } from "@/lib/utils"
+import {
+  MoreVertical,
+  Building2,
+  Pencil,
+  Trash,
+  UserCircle,
+  Plus,
+  Users,
+  FolderKanban,
+  Lock,
+} from "lucide-react"
 
 type CompanyUser = { id: string; name: string; avatar: string | null }
 
-export function DepartmentsClient({ initialData, users }: { initialData: any[]; users: CompanyUser[] }) {
+interface DepartmentsClientProps {
+  initialData: any[]
+  users: CompanyUser[]
+  currentUserId: string
+  canCreate: boolean
+  canEdit: boolean
+  canDelete: boolean
+}
+
+export function DepartmentsClient({
+  initialData,
+  users,
+  currentUserId,
+  canCreate,
+  canEdit,
+  canDelete,
+}: DepartmentsClientProps) {
   const [departments, setDepartments] = useState(initialData)
 
   // Dialog States
@@ -43,14 +65,23 @@ export function DepartmentsClient({ initialData, users }: { initialData: any[]; 
   const [name, setName] = useState("")
   const [color, setColor] = useState("#6366f1")
   const [headUserId, setHeadUserId] = useState("")
+  const [isDefault, setIsDefault] = useState(false)
 
   // Edit Form
   const [editId, setEditId] = useState("")
   const [editName, setEditName] = useState("")
   const [editColor, setEditColor] = useState("#6366f1")
   const [editHeadUserId, setEditHeadUserId] = useState("")
+  const [editIsDefault, setEditIsDefault] = useState(false)
 
   const router = useRouter()
+
+  const resetCreateForm = () => {
+    setName("")
+    setColor("#6366f1")
+    setHeadUserId("")
+    setIsDefault(false)
+  }
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -59,27 +90,31 @@ export function DepartmentsClient({ initialData, users }: { initialData: any[]; 
       const res = await fetch("/api/departments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, color, headUserId: headUserId || null }),
+        body: JSON.stringify({ name, color, headUserId: headUserId || null, isDefault }),
       })
       if (res.ok) {
         const newDept = await res.json()
         setDepartments([newDept, ...departments])
         setIsCreateOpen(false)
-        setName("")
-        setColor("#6366f1")
-        setHeadUserId("")
+        resetCreateForm()
         router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || "Xəta baş verdi")
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const openEditModal = (dept: any) => {
+  const openEditModal = (dept: any, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
     setEditId(dept.id)
     setEditName(dept.name)
     setEditColor(dept.color)
     setEditHeadUserId(dept.headUserId || "")
+    setEditIsDefault(!!dept.isDefault)
     setIsEditOpen(true)
   }
 
@@ -90,93 +125,125 @@ export function DepartmentsClient({ initialData, users }: { initialData: any[]; 
       const res = await fetch(`/api/departments/${editId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: editName, color: editColor, headUserId: editHeadUserId || null }),
+        body: JSON.stringify({
+          name: editName,
+          color: editColor,
+          headUserId: editHeadUserId || null,
+          isDefault: editIsDefault,
+        }),
       })
       if (res.ok) {
         const updatedDept = await res.json()
-        setDepartments(departments.map(d =>
-          d.id === editId ? updatedDept : d
-        ))
+        setDepartments(departments.map((d) => (d.id === editId ? updatedDept : d)))
         setIsEditOpen(false)
         router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || "Xəta baş verdi")
       }
     } finally {
       setLoading(false)
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this department?")) return
+  const handleDelete = async (dept: any, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (dept.isDefault) {
+      alert("Sancılmış (default) şöbələr silinə bilməz")
+      return
+    }
+    if (!confirm(`"${dept.name}" şöbəsini silmək istədiyinizə əminsiniz?`)) return
     try {
-      const res = await fetch(`/api/departments/${id}`, { method: "DELETE" })
+      const res = await fetch(`/api/departments/${dept.id}`, { method: "DELETE" })
       if (res.ok) {
-        setDepartments(departments.filter(d => d.id !== id))
+        setDepartments(departments.filter((d) => d.id !== dept.id))
         router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || "Şöbəni silmək mümkün olmadı")
       }
-    } catch (e) {
-      console.error(e)
+    } catch (err) {
+      console.error(err)
     }
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Şöbələr</h2>
-        
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              + Add Department
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Yeni Şöbə</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Şöbənin adı</Label>
-                <Input
-                  id="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Məsələn: Marketing"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="color">Rəng kodu</Label>
-                <Input
-                  id="color"
-                  type="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="h-10 w-20 p-1 cursor-pointer"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="headUser">Şöbə Rəhbəri</Label>
-                <select
-                  id="headUser"
-                  className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
-                  value={headUserId}
-                  onChange={(e) => setHeadUserId(e.target.value)}
-                >
-                  <option value="">Seçilməyib</option>
-                  {users.map(u => (
-                    <option key={u.id} value={u.id}>{u.name}</option>
-                  ))}
-                </select>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  {loading ? "Yaradılır..." : "Yarat"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+        <p className="text-sm text-muted-foreground">
+          {departments.length} şöbə {canCreate ? "" : "— yeni şöbə yaratmaq yalnız Super Admin üçün mümkündür"}
+        </p>
+
+        {canCreate && (
+          <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetCreateForm() }}>
+            <DialogTrigger asChild>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="w-4 h-4 mr-2" />
+                Yeni Şöbə
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Yeni Şöbə</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreate} className="space-y-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Şöbənin adı</Label>
+                  <Input
+                    id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Məsələn: Marketing"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="color">Rəng kodu</Label>
+                  <Input
+                    id="color"
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="h-10 w-20 p-1 cursor-pointer"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="headUser">Şöbə Rəhbəri</Label>
+                  <select
+                    id="headUser"
+                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                    value={headUserId}
+                    onChange={(e) => setHeadUserId(e.target.value)}
+                  >
+                    <option value="">Seçilməyib</option>
+                    {users.map((u) => (
+                      <option key={u.id} value={u.id}>{u.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={isDefault}
+                    onChange={(e) => setIsDefault(e.target.checked)}
+                    className="h-4 w-4 rounded border-[hsl(var(--input))]"
+                  />
+                  <span className="flex items-center gap-1.5">
+                    <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                    Sancılmış (default) şöbə et — silinə bilməyəcək
+                  </span>
+                </label>
+                <DialogFooter>
+                  <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                    {loading ? "Yaradılır..." : "Yarat"}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
@@ -214,11 +281,25 @@ export function DepartmentsClient({ initialData, users }: { initialData: any[]; 
                 onChange={(e) => setEditHeadUserId(e.target.value)}
               >
                 <option value="">Seçilməyib</option>
-                {users.map(u => (
+                {users.map((u) => (
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}
               </select>
             </div>
+            {canCreate && (
+              <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={editIsDefault}
+                  onChange={(e) => setEditIsDefault(e.target.checked)}
+                  className="h-4 w-4 rounded border-[hsl(var(--input))]"
+                />
+                <span className="flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-muted-foreground" />
+                  Sancılmış (default) şöbə — silinə bilməyəcək
+                </span>
+              </label>
+            )}
             <DialogFooter>
               <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
                 {loading ? "Yadda saxlanılır..." : "Yadda saxla"}
@@ -228,71 +309,113 @@ export function DepartmentsClient({ initialData, users }: { initialData: any[]; 
         </DialogContent>
       </Dialog>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Ad</TableHead>
-            <TableHead>Rəhbər</TableHead>
-            <TableHead>İşçi sayı</TableHead>
-            <TableHead>Layihə sayı</TableHead>
-            <TableHead className="w-[80px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {departments.map((dept) => (
-            <TableRow key={dept.id}>
-              <TableCell className="font-medium">
-                <div className="flex items-center gap-3">
+      {departments.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+          {departments.map((dept) => {
+            const isHead = dept.headUserId === currentUserId
+            const canManageThis = canEdit || isHead
+            const canDeleteThis = canDelete && !dept.isDefault
+
+            return (
+              <Link key={dept.id} href={`/dashboard/departments/${dept.id}`} className="block group">
+                <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
+                  {/* Colored banner (Classroom-style header) */}
                   <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: `${dept.color}20`, color: dept.color }}
+                    className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
+                    style={{ backgroundColor: dept.color }}
                   >
-                    <Building2 className="w-4 h-4" />
+                    <Building2 className="absolute -right-4 -bottom-6 h-28 w-28 text-white/10" />
+                    <div className="relative flex items-center justify-between">
+                      {dept.isDefault ? (
+                        <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm gap-1">
+                          <Lock className="h-3 w-3" /> Default
+                        </Badge>
+                      ) : <span />}
+
+                      {(canManageThis || canDeleteThis) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white"
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {canManageThis && (
+                              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(dept, e as any) }}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                <span>Redaktə et</span>
+                              </DropdownMenuItem>
+                            )}
+                            {canDeleteThis && (
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600"
+                                onSelect={(e) => { e.preventDefault(); handleDelete(dept, e as any) }}
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                <span>Sil</span>
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </div>
+                    <h3 className="relative line-clamp-2 text-xl font-bold text-white drop-shadow-sm">
+                      {dept.name}
+                    </h3>
                   </div>
-                  {dept.name}
+
+                  {/* Body */}
+                  <div className="flex flex-1 flex-col gap-4 p-4">
+                    {dept.head ? (
+                      <div className="flex items-center gap-2">
+                        <Avatar size="sm">
+                          <AvatarImage src={dept.head.avatar ?? undefined} alt={dept.head.name} />
+                          <AvatarFallback>{getInitials(dept.head.name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="truncate text-sm text-muted-foreground">
+                          {dept.head.name} <span className="text-xs">(Rəhbər)</span>
+                        </span>
+                      </div>
+                    ) : (
+                      <Badge variant="secondary" className="w-fit gap-1.5 text-muted-foreground">
+                        <UserCircle className="h-3 w-3" />
+                        Rəhbər təyin edilməyib
+                      </Badge>
+                    )}
+
+                    {dept.description && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">{dept.description}</p>
+                    )}
+
+                    <div className="mt-auto flex items-center gap-4 border-t border-[hsl(var(--border))] pt-3 text-sm text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <Users className="h-4 w-4" />
+                        {dept._count?.users ?? 0} işçi
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <FolderKanban className="h-4 w-4" />
+                        {dept._count?.projects ?? 0} layihə
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              </TableCell>
-              <TableCell>
-                {dept.head ? (
-                  <div className="flex items-center gap-1.5 text-sm">
-                    <UserCircle className="w-3.5 h-3.5 text-[hsl(var(--muted-foreground))]" />
-                    {dept.head.name}
-                  </div>
-                ) : (
-                  <span className="text-xs text-muted-foreground">Təyin edilməyib</span>
-                )}
-              </TableCell>
-              <TableCell>{dept._count?.users ?? 0}</TableCell>
-              <TableCell>{dept._count?.projects ?? 0}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreVertical className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => openEditModal(dept)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      <span>Edit</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                      className="text-red-600 focus:text-red-600" 
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        handleDelete(dept.id)
-                      }}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </Link>
+            )
+          })}
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-[hsl(var(--border))] py-16 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+            <Building2 className="h-8 w-8 text-muted-foreground/60" />
+          </div>
+          <h3 className="text-lg font-medium">Şöbə Yoxdur</h3>
+          <p className="mb-4 text-sm text-muted-foreground">Hələ heç bir şöbə yaradılmayıb.</p>
+        </div>
+      )}
     </div>
   )
 }

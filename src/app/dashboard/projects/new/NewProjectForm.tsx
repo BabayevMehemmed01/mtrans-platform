@@ -32,9 +32,10 @@ type DepartmentOption = {
 
 interface NewProjectFormProps {
   departments: DepartmentOption[];
+  defaultDepartmentId?: string;
 }
 
-export function NewProjectForm({ departments }: NewProjectFormProps) {
+export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -47,7 +48,7 @@ export function NewProjectForm({ departments }: NewProjectFormProps) {
     color: "#6366f1",
     startDate: "",
     endDate: "",
-    departmentId: "",
+    departmentId: defaultDepartmentId ?? "",
   });
 
   const hasDepartments = departments.length > 0;

@@ -214,6 +214,7 @@ model Department {
   color       String   @default("#6366f1") // Hex color for UI
   icon        String? // Lucide icon name
   isActive    Boolean  @default(true)
+  isDefault   Boolean  @default(false) // Sancılmış şöbə — silinə bilməz (yalnız Super Admin təyin edə bilər)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -249,8 +250,29 @@ model Permission {
 
   // Relations
   rolePermissions RolePermission[]
+  userGrants      UserPermission[]
 
   @@map("permissions")
+}
+
+// =============================================================================
+// MODEL: UserPermission (Şöbə rəhbərinin fərdi istifadəçiyə əlavə verdiyi icazə)
+// =============================================================================
+// Rolun verdiyi icazələrdən əlavə, additiv şəkildə tətbiq olunur (rolu əvəz etmir).
+
+model UserPermission {
+  id           String   @id @default(cuid())
+  userId       String
+  permissionId String
+  grantedById  String
+  createdAt    DateTime @default(now())
+
+  user       User       @relation("UserPermissionGrants", fields: [userId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedBy  User       @relation("UserPermissionGrantedBy", fields: [grantedById], references: [id], onDelete: Cascade)
+
+  @@unique([userId, permissionId])
+  @@map("user_permissions")
 }
 
 // =============================================================================
@@ -330,21 +352,23 @@ model User {
   role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   // Relations
-  projectMemberships ProjectMember[]
-  ownedProjects      Project[]       @relation("ProjectOwner")
-  assignedTasks      Task[]          @relation("TaskAssignee")
-  createdTasks       Task[]          @relation("TaskCreator")
-  comments           Comment[]
-  attachments        Attachment[]
-  auditLogs          AuditLog[]
-  assignedDeals      CrmDeal[]       @relation("CrmDealAssignee")
-  channelMemberships ChannelMember[]
-  messagesSent       Message[]
-  notifications      Notification[]
-  invitesSent        Invite[]        @relation("InviteSender")
-  headOfDepartments  Department[]    @relation("DepartmentHead")
-  callsInitiated     Call[]          @relation("CallCaller")
-  callSignalsSent    CallSignal[]    @relation("CallSignalSender")
+  projectMemberships     ProjectMember[]
+  ownedProjects          Project[]        @relation("ProjectOwner")
+  assignedTasks          Task[]           @relation("TaskAssignee")
+  createdTasks           Task[]           @relation("TaskCreator")
+  comments               Comment[]
+  attachments            Attachment[]
+  auditLogs              AuditLog[]
+  assignedDeals          CrmDeal[]        @relation("CrmDealAssignee")
+  channelMemberships     ChannelMember[]
+  messagesSent           Message[]
+  notifications          Notification[]
+  invitesSent            Invite[]         @relation("InviteSender")
+  headOfDepartments      Department[]     @relation("DepartmentHead")
+  callsInitiated         Call[]           @relation("CallCaller")
+  callSignalsSent        CallSignal[]     @relation("CallSignalSender")
+  extraPermissions       UserPermission[] @relation("UserPermissionGrants")
+  grantedUserPermissions UserPermission[] @relation("UserPermissionGrantedBy")
 
   @@map("users")
 }

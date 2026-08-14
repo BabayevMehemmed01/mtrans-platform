@@ -75,16 +75,43 @@ export const createDepartmentSchema = z.object({
     .string()
     .min(2, "Şöbə adı ən az 2 simvol olmalıdır")
     .max(100, "Şöbə adı çox uzundur"),
-  description: z.string().max(500).optional(),
+  description: z.string().max(500).optional().or(z.literal("")),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Düzgün hex rəng daxil edin").optional(),
   icon: z.string().optional(),
   headUserId: z.string().optional().or(z.null()),
+  isDefault: z.boolean().optional(),
 });
 
 export const updateDepartmentSchema = createDepartmentSchema.partial();
 
 export type CreateDepartmentInput = z.infer<typeof createDepartmentSchema>;
 export type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
+
+// =============================================================================
+// DEPARTMENT MEMBER PERMISSION Validations
+// =============================================================================
+
+export const permissionKeyEnum = z.enum([
+  "CAN_MANAGE_COMPANY", "CAN_INVITE_USER", "CAN_REMOVE_USER", "CAN_VIEW_AUDIT_LOG", "CAN_MANAGE_BILLING",
+  "CAN_CREATE_ROLE", "CAN_EDIT_ROLE", "CAN_DELETE_ROLE", "CAN_ASSIGN_ROLE", "CAN_VIEW_ROLES",
+  "CAN_CREATE_DEPARTMENT", "CAN_EDIT_DEPARTMENT", "CAN_DELETE_DEPARTMENT", "CAN_VIEW_DEPARTMENTS", "CAN_ASSIGN_DEPARTMENT",
+  "CAN_CREATE_PROJECT", "CAN_EDIT_PROJECT", "CAN_DELETE_PROJECT", "CAN_VIEW_PROJECT", "CAN_ARCHIVE_PROJECT",
+  "CAN_CHANGE_PROJECT_STATUS", "CAN_ASSIGN_PROJECT_MEMBER",
+  "CAN_CREATE_TASK", "CAN_EDIT_TASK", "CAN_DELETE_TASK", "CAN_VIEW_TASK", "CAN_ASSIGN_TASK",
+  "CAN_CHANGE_TASK_STATUS", "CAN_SET_TASK_PRIORITY", "CAN_SET_TASK_DEADLINE",
+  "CAN_CREATE_SUBTASK", "CAN_EDIT_SUBTASK", "CAN_DELETE_SUBTASK", "CAN_COMPLETE_SUBTASK",
+  "CAN_COMMENT", "CAN_EDIT_OWN_COMMENT", "CAN_DELETE_OWN_COMMENT", "CAN_DELETE_ANY_COMMENT",
+  "CAN_UPLOAD_FILE", "CAN_DELETE_OWN_FILE", "CAN_DELETE_ANY_FILE", "CAN_VIEW_FILES",
+  "CAN_VIEW_REPORTS", "CAN_EXPORT_DATA",
+]);
+
+export const grantDepartmentPermissionSchema = z.object({
+  userId: z.string().min(1),
+  permissionKey: permissionKeyEnum,
+  grant: z.boolean(),
+});
+
+export type GrantDepartmentPermissionInput = z.infer<typeof grantDepartmentPermissionSchema>;
 
 // =============================================================================
 // INVITE Validations

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createDepartmentSchema } from "@/lib/validations";
-import { requirePermission, PermissionError } from "@/lib/permissions";
+import { isSuperAdmin, PermissionError } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 
 export async function GET(req: NextRequest) {
@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
 
     const companyId = (session.user as any).companyId;
 
-    await requirePermission(session.user.id, "CAN_CREATE_DEPARTMENT");
+    // Yeni şöbə yaratmaq yalnız Super Admin-ə icazəlidir
+    if (!(await isSuperAdmin(session.user.id))) {
+      throw new PermissionError("Yeni şöbə yaratmaq yalnız Super Admin üçün mümkündür");
+    }
 
     const body = await req.json();
     const parsed = createDepartmentSchema.safeParse(body);
@@ -66,6 +69,7 @@ export async function POST(req: NextRequest) {
         color: data.color || "#6366f1",
         icon: data.icon,
         headUserId: data.headUserId || null,
+        isDefault: data.isDefault ?? false,
         companyId,
       },
       include: {

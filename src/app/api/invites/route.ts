@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createInviteSchema } from "@/lib/validations";
-import { requirePermission, PermissionError } from "@/lib/permissions";
+import { hasPermission, isDepartmentHead, PermissionError } from "@/lib/permissions";
 import { generateInviteToken, getInviteExpiryDate } from "@/lib/invites";
 import { sendInviteEmail } from "@/lib/resend";
 import { logAudit } from "@/lib/audit";
@@ -51,8 +51,6 @@ export async function POST(req: NextRequest) {
     const companyId = (session.user as any).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
-    await requirePermission(session.user.id, "CAN_INVITE_USER");
-
     const body = await req.json();
     const parsed = createInviteSchema.safeParse(body);
     if (!parsed.success) {
@@ -64,6 +62,15 @@ export async function POST(req: NextRequest) {
 
     const { type, roleId, departmentId, projectIds } = parsed.data;
     const email = parsed.data.email.toLowerCase().trim();
+
+    // Dəvət göndərmək üçün ya qlobal CAN_INVITE_USER icazəsi, ya da bu
+    // dəvətin hədəf aldığı şöbənin rəhbəri olmaq lazımdır.
+    const canInvite =
+      (await hasPermission(session.user.id, "CAN_INVITE_USER")) ||
+      (!!departmentId && (await isDepartmentHead(session.user.id, departmentId)));
+    if (!canInvite) {
+      throw new PermissionError("Dəvət göndərmək üçün icazəniz yoxdur");
+    }
 
     // Artıq aktiv istifadəçi varmı? (bu şirkət daxilində)
     const existingUser = await prisma.user.findFirst({

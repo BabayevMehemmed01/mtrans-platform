@@ -35,6 +35,8 @@ interface ProjectViewsProps {
   memberCount: number;
   projectMembers: ProjectMemberExt[];
   companyUsers: TaskMember[];
+  initialTab?: TabId;
+  initialTaskId?: string;
 }
 
 export function ProjectViews({
@@ -46,8 +48,12 @@ export function ProjectViews({
   memberCount,
   projectMembers,
   companyUsers,
+  initialTab,
+  initialTaskId,
 }: ProjectViewsProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("list");
+  const [activeTab, setActiveTab] = useState<TabId>(
+    initialTab && TABS.some((t) => t.id === initialTab) ? initialTab : "list"
+  );
   const [tasks, setTasks] = useState<KanbanTask[]>(initialTasks);
   const router = useRouter();
 
@@ -109,6 +115,7 @@ export function ProjectViews({
             onTaskUpdated={handleTaskUpdated}
             onTaskDeleted={handleTaskDeleted}
             onTaskCreated={handleTaskCreated}
+            initialTaskId={initialTaskId}
           />
         )}
 

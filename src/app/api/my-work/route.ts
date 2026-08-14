@@ -14,6 +14,39 @@ export async function GET() {
 
     if (!companyId) return new NextResponse("Company Required", { status: 400 });
 
+    // 0. Aktivlik — istifadəçinin daxil olduğu şöbə və layihələr
+    const [department, projectMemberships] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          department: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              _count: { select: { users: true, projects: true } },
+            },
+          },
+        },
+      }),
+      prisma.projectMember.findMany({
+        where: { userId, project: { companyId } },
+        select: {
+          role: true,
+          project: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+              status: true,
+              _count: { select: { tasks: true, members: true } },
+            },
+          },
+        },
+        orderBy: { joinedAt: "desc" },
+      }),
+    ]);
+
     // 1. Get assigned tasks
     const tasks = await prisma.task.findMany({
       where: { assigneeId: userId, project: { companyId } },
@@ -31,7 +64,7 @@ export async function GET() {
       },
       include: {
         author: { select: { id: true, name: true, avatar: true } },
-        task: { select: { id: true, title: true } }
+        task: { select: { id: true, title: true, projectId: true } }
       },
       orderBy: { createdAt: "desc" },
       take: 10
@@ -87,7 +120,9 @@ export async function GET() {
         total: tasks.length,
         completed: tasks.filter(t => t.status === "DONE").length
       },
-      weeklyCompleted
+      weeklyCompleted,
+      department: department?.department ?? null,
+      projects: projectMemberships.map((pm) => ({ ...pm.project, memberRole: pm.role })),
     });
   } catch (error) {
     console.error("[MY_WORK_GET]", error);

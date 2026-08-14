@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { projectSchema } from "@/lib/validations";
+import { hasPermission, isDepartmentHead, PermissionError } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 
 // =============================================================================
@@ -75,6 +76,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Layihə yaratmaq üçün ya qlobal CAN_CREATE_PROJECT icazəsi, ya da bu
+    // şöbənin rəhbəri olmaq lazımdır.
+    const canCreate =
+      (await hasPermission(userId, "CAN_CREATE_PROJECT")) ||
+      (await isDepartmentHead(userId, department.id));
+    if (!canCreate) {
+      throw new PermissionError("Layihə yaratmaq üçün icazəniz yoxdur");
+    }
+
     const project = await prisma.$transaction(async (tx) => {
       // Layihəni yarat
       const proj = await tx.project.create({
@@ -115,6 +125,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
+    if (error instanceof PermissionError) {
+      return NextResponse.json({ error: error.message }, { status: error.statusCode });
+    }
     console.error("[POST /api/projects]", error);
     return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }

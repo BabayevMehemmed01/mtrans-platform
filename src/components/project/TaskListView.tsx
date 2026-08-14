@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Check,
   Trash2,
@@ -47,6 +47,7 @@ interface TaskListViewProps {
   onTaskUpdated: (task: KanbanTask) => void;
   onTaskDeleted: (taskId: string) => void;
   onTaskCreated: (task: KanbanTask) => void;
+  initialTaskId?: string;
 }
 
 // Lighter-weight shape used for inline-loaded subtasks in the List view.
@@ -879,8 +880,19 @@ export function TaskListView({
   onTaskUpdated,
   onTaskDeleted,
   onTaskCreated,
+  initialTaskId,
 }: TaskListViewProps) {
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
+  const openedInitialTask = useRef(false);
+
+  useEffect(() => {
+    if (openedInitialTask.current || !initialTaskId) return;
+    const match = tasks.find((t) => t.id === initialTaskId);
+    if (match) {
+      setSelectedTask(match);
+      openedInitialTask.current = true;
+    }
+  }, [initialTaskId, tasks]);
 
   const GROUPS = [
     { status: "BACKLOG",     ...STATUS_MAP.BACKLOG },
