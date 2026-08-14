@@ -1,0 +1,309 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { CrmCompanySelect } from "./CrmCompanySelect";
+import type { CrmStage, CrmDeal, CrmContact, CrmCompanyLite, CrmMember } from "./types";
+
+const CURRENCIES = ["AZN", "USD", "EUR"];
+const STATUS_OPTIONS = [
+  { value: "OPEN", label: "Açıq" },
+  { value: "WON", label: "Qazanıldı" },
+  { value: "LOST", label: "İtirildi" },
+];
+
+interface CrmDealDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  mode: "create" | "edit";
+  deal?: CrmDeal | null;
+  defaultStageId?: string;
+  stages: CrmStage[];
+  members: CrmMember[];
+  contacts: CrmContact[];
+  companies: CrmCompanyLite[];
+  onCreated: (deal: CrmDeal) => void;
+  onUpdated: (deal: CrmDeal) => void;
+  onDeleted: (dealId: string) => void;
+  onCompanyCreated: (company: CrmCompanyLite) => void;
+}
+
+function emptyForm(defaultStageId?: string) {
+  return {
+    title: "",
+    value: "",
+    currency: "AZN",
+    probability: "0",
+    expectedCloseDate: "",
+    stageId: defaultStageId || "",
+    assigneeId: "",
+    crmContactId: "",
+    crmCompanyId: "",
+    status: "OPEN",
+  };
+}
+
+// =============================================================================
+// CrmDealDialog — Əqd yaratma / redaktə forması (Kanban və Cədvəl görünüşləri
+// üçün paylaşılan komponent). PATCH /api/crm/deals/[id] artıq bütün bu sahələri
+// qəbul edir (stageId, title, value, currency, probability, expectedCloseDate,
+// status, assigneeId, crmContactId, crmCompanyId).
+// =============================================================================
+export function CrmDealDialog({
+  open,
+  onOpenChange,
+  mode,
+  deal,
+  defaultStageId,
+  stages,
+  members,
+  contacts,
+  companies,
+  onCreated,
+  onUpdated,
+  onDeleted,
+  onCompanyCreated,
+}: CrmDealDialogProps) {
+  const [form, setForm] = useState(emptyForm(defaultStageId));
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    if (mode === "edit" && deal) {
+      setForm({
+        title: deal.title,
+        value: deal.value != null ? String(deal.value) : "",
+        currency: deal.currency || "AZN",
+        probability: deal.probability != null ? String(deal.probability) : "0",
+        expectedCloseDate: deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toISOString().split("T")[0] : "",
+        stageId: deal.stageId,
+        assigneeId: deal.assigneeId || "",
+        crmContactId: deal.crmContactId || "",
+        crmCompanyId: deal.crmCompanyId || "",
+        status: deal.status || "OPEN",
+      });
+    } else {
+      setForm(emptyForm(defaultStageId));
+    }
+  }, [open, mode, deal, defaultStageId]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.title.trim()) {
+      toast.error("Əqdin adı mütləqdir");
+      return;
+    }
+    if (!form.stageId) {
+      toast.error("Mərhələ seçilməlidir");
+      return;
+    }
+
+    setLoading(true);
+    const payload: Record<string, unknown> = {
+      title: form.title,
+      value: form.value,
+      currency: form.currency,
+      probability: form.probability,
+      expectedCloseDate: form.expectedCloseDate || null,
+      stageId: form.stageId,
+      assigneeId: form.assigneeId || null,
+      crmContactId: form.crmContactId || null,
+      crmCompanyId: form.crmCompanyId || null,
+    };
+    if (mode === "edit") payload.status = form.status;
+
+    try {
+      const url = mode === "create" ? "/api/crm/deals" : `/api/crm/deals/${deal!.id}`;
+      const method = mode === "create" ? "POST" : "PATCH";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Xəta baş verdi");
+      const data = await res.json();
+      if (mode === "create") {
+        onCreated(data);
+        toast.success("Əqd yaradıldı");
+      } else {
+        onUpdated(data);
+        toast.success("Əqd yeniləndi");
+      }
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || "Xəta baş verdi");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deal) return;
+    if (!confirm(`"${deal.title}" əqdini silmək istədiyinizə əminsiniz?`)) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/crm/deals/${deal.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Xəta baş verdi");
+      onDeleted(deal.id);
+      toast.success("Əqd silindi");
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error(err.message || "Əqd silinərkən xəta baş verdi");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{mode === "create" ? "Yeni Əqd Yarat" : "Əqdi Redaktə Et"}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label>Əqdin adı</Label>
+            <Input
+              value={form.title}
+              onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
+              placeholder="Məs: Saytın yığılması..."
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-2 col-span-2">
+              <Label>Məbləğ</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.value}
+                onChange={(e) => setForm((p) => ({ ...p, value: e.target.value }))}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Valyuta</Label>
+              <select
+                value={form.currency}
+                onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {CURRENCIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Mərhələ</Label>
+              <select
+                value={form.stageId}
+                onChange={(e) => setForm((p) => ({ ...p, stageId: e.target.value }))}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {stages.map((s) => (
+                  <option key={s.id} value={s.id}>{s.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Ehtimal (%)</Label>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                value={form.probability}
+                onChange={(e) => setForm((p) => ({ ...p, probability: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>Bağlanma Tarixi</Label>
+              <Input
+                type="date"
+                value={form.expectedCloseDate}
+                onChange={(e) => setForm((p) => ({ ...p, expectedCloseDate: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>İcraçı</Label>
+              <select
+                value={form.assigneeId}
+                onChange={(e) => setForm((p) => ({ ...p, assigneeId: e.target.value }))}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="">Seçilməyib</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>{m.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Əlaqədar Şəxs</Label>
+            <select
+              value={form.crmContactId}
+              onChange={(e) => setForm((p) => ({ ...p, crmContactId: e.target.value }))}
+              className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <option value="">Seçilməyib</option>
+              {contacts.map((c) => (
+                <option key={c.id} value={c.id}>{c.firstName} {c.lastName || ""}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Əlaqədar Şirkət</Label>
+            <CrmCompanySelect
+              value={form.crmCompanyId}
+              onChange={(id) => setForm((p) => ({ ...p, crmCompanyId: id }))}
+              companies={companies}
+              onCompanyCreated={onCompanyCreated}
+            />
+          </div>
+
+          {mode === "edit" && (
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between gap-2 pt-2">
+            {mode === "edit" ? (
+              <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
+                <Trash2 className="mr-2 h-4 w-4" /> {deleting ? "Silinir..." : "Sil"}
+              </Button>
+            ) : <span />}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Yadda saxlanılır..." : mode === "create" ? "Yarat" : "Yadda saxla"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

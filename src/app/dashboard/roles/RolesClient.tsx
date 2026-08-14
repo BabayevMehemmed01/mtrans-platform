@@ -1,0 +1,442 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { MoreVertical, Shield, Trash, Pencil, Check, Users } from "lucide-react"
+
+// İcazələri kateqoriyaya görə qruplaşdır
+function groupByCategory(permissions: any[]) {
+  return permissions.reduce((acc: Record<string, any[]>, p) => {
+    const cat = p.category || "GENERAL"
+    if (!acc[cat]) acc[cat] = []
+    acc[cat].push(p)
+    return acc
+  }, {})
+}
+
+const CATEGORY_LABELS: Record<string, string> = {
+  COMPANY: "🏢 Şirkət İdarəetməsi",
+  ROLE: "🔐 Rol & İcazə",
+  DEPARTMENT: "🏬 Şöbə",
+  PROJECT: "📁 Layihə",
+  TASK: "✅ Tapşırıq",
+  SUBTASK: "📋 Alt Tapşırıq",
+  COMMENT: "💬 Şərhlər",
+  FILE: "📎 Fayllar",
+  REPORTING: "📊 Hesabatlar",
+}
+
+function PermissionCheckboxGroup({
+  permissions,
+  selected,
+  onChange,
+}: {
+  permissions: any[]
+  selected: string[]
+  onChange: (ids: string[]) => void
+}) {
+  const grouped = groupByCategory(permissions)
+
+  const toggle = (id: string) => {
+    if (selected.includes(id)) {
+      onChange(selected.filter((s) => s !== id))
+    } else {
+      onChange([...selected, id])
+    }
+  }
+
+  const toggleCategory = (catPerms: any[]) => {
+    const catIds = catPerms.map((p) => p.id)
+    const allSelected = catIds.every((id) => selected.includes(id))
+    if (allSelected) {
+      onChange(selected.filter((s) => !catIds.includes(s)))
+    } else {
+      const newIds = [...new Set([...selected, ...catIds])]
+      onChange(newIds)
+    }
+  }
+
+  return (
+    <div className="space-y-5 max-h-[420px] overflow-y-auto pr-2">
+      {Object.entries(grouped).map(([cat, perms]) => {
+        const catIds = (perms as any[]).map((p) => p.id)
+        const allChecked = catIds.every((id) => selected.includes(id))
+        const someChecked = catIds.some((id) => selected.includes(id))
+
+        return (
+          <div key={cat}>
+            <div
+              className="flex items-center gap-2 mb-2 cursor-pointer group"
+              onClick={() => toggleCategory(perms as any[])}
+            >
+              <div
+                className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
+                  allChecked
+                    ? "bg-blue-600 border-blue-600"
+                    : someChecked
+                    ? "bg-blue-200 border-blue-400"
+                    : "border-gray-300 group-hover:border-blue-400"
+                }`}
+              >
+                {(allChecked || someChecked) && (
+                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                )}
+              </div>
+              <span className="text-sm font-semibold text-gray-700">
+                {CATEGORY_LABELS[cat] || cat}
+              </span>
+              <span className="text-xs text-gray-400 ml-auto">
+                {catIds.filter((id) => selected.includes(id)).length}/{catIds.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-1 pl-6">
+              {(perms as any[]).map((p) => (
+                <label
+                  key={p.id}
+                  className="flex items-center gap-2.5 py-1 cursor-pointer group rounded hover:bg-gray-50 px-2"
+                >
+                  <div
+                    className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                      selected.includes(p.id)
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300 group-hover:border-blue-400"
+                    }`}
+                    onClick={() => toggle(p.id)}
+                  >
+                    {selected.includes(p.id) && (
+                      <Check className="w-2 h-2 text-white" strokeWidth={3} />
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-600">{p.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+export function RolesClient({
+  initialRoles,
+  permissions,
+}: {
+  initialRoles: any[]
+  permissions: any[]
+}) {
+  const [roles, setRoles] = useState(initialRoles)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const router = useRouter()
+
+  // Create form
+  const [name, setName] = useState("")
+  const [color, setColor] = useState("#8b5cf6")
+  const [selectedPerms, setSelectedPerms] = useState<string[]>([])
+
+  // Edit form
+  const [editId, setEditId] = useState("")
+  const [editName, setEditName] = useState("")
+  const [editColor, setEditColor] = useState("#8b5cf6")
+  const [editPerms, setEditPerms] = useState<string[]>([])
+
+  const resetCreate = () => {
+    setName("")
+    setColor("#8b5cf6")
+    setSelectedPerms([])
+  }
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await fetch("/api/roles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, color, permissionIds: selectedPerms }),
+      })
+      if (res.ok) {
+        const newRole = await res.json()
+        setRoles([...roles, newRole])
+        setIsCreateOpen(false)
+        resetCreate()
+        router.refresh()
+      } else {
+        const data = await res.json()
+        alert(data.error || "Xəta baş verdi")
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const openEdit = (role: any) => {
+    setEditId(role.id)
+    setEditName(role.name)
+    setEditColor(role.color)
+    setEditPerms(role.permissions?.map((rp: any) => rp.permission.id) ?? [])
+    setIsEditOpen(true)
+  }
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/roles/${editId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: editName, color: editColor, permissionIds: editPerms }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        setRoles(roles.map((r) => (r.id === editId ? updated : r)))
+        setIsEditOpen(false)
+        router.refresh()
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string, isSystem: boolean) => {
+    if (isSystem) {
+      alert("Sistem rolları silinə bilməz.")
+      return
+    }
+    if (!confirm("Bu rolu silmək istədiyinizə əminsiniz?")) return
+    try {
+      const res = await fetch(`/api/roles/${id}`, { method: "DELETE" })
+      if (res.ok) {
+        setRoles(roles.filter((r) => r.id !== id))
+        router.refresh()
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">Rollar</h2>
+        <Button
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+          onClick={() => setIsCreateOpen(true)}
+        >
+          + Yeni Rol
+        </Button>
+      </div>
+
+      {/* ──── CREATE MODAL ──── */}
+      <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetCreate() }}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Yeni Rol Yarat</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4 mt-2">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="roleName">Rol adı</Label>
+                <Input
+                  id="roleName"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Məsələn: Project Manager"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="roleColor">Rəng</Label>
+                <Input
+                  id="roleColor"
+                  type="color"
+                  value={color}
+                  onChange={(e) => setColor(e.target.value)}
+                  className="h-10 w-full p-1 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>İcazələr</Label>
+              <div className="border border-[hsl(var(--border))] rounded-xl p-4">
+                <PermissionCheckboxGroup
+                  permissions={permissions}
+                  selected={selectedPerms}
+                  onChange={setSelectedPerms}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {selectedPerms.length} icazə seçildi
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                {loading ? "Yaradılır..." : "Rolu Yarat"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ──── EDIT MODAL ──── */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Rolu Redaktə Et</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4 mt-2">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="editRoleName">Rol adı</Label>
+                <Input
+                  id="editRoleName"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="editRoleColor">Rəng</Label>
+                <Input
+                  id="editRoleColor"
+                  type="color"
+                  value={editColor}
+                  onChange={(e) => setEditColor(e.target.value)}
+                  className="h-10 w-full p-1 cursor-pointer"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>İcazələr</Label>
+              <div className="border border-[hsl(var(--border))] rounded-xl p-4">
+                <PermissionCheckboxGroup
+                  permissions={permissions}
+                  selected={editPerms}
+                  onChange={setEditPerms}
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {editPerms.length} icazə seçildi
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                {loading ? "Yadda saxlanılır..." : "Yadda saxla"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ──── TABLE ──── */}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Rol</TableHead>
+            <TableHead>İcazə sayı</TableHead>
+            <TableHead>İstifadəçi sayı</TableHead>
+            <TableHead>Növ</TableHead>
+            <TableHead className="w-[80px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {roles.map((role) => (
+            <TableRow key={role.id}>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${role.color}20`, color: role.color }}
+                  >
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{role.name}</p>
+                    {role.description && (
+                      <p className="text-xs text-muted-foreground">{role.description}</p>
+                    )}
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <span className="text-sm">{role.permissions?.length ?? 0} icazə</span>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-sm">{role._count?.users ?? 0}</span>
+                </div>
+              </TableCell>
+              <TableCell>
+                {role.isSystem ? (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                    Sistem
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                    Xüsusi
+                  </span>
+                )}
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => openEdit(role)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      <span>İcazələri redaktə et</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600"
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        handleDelete(role.id, role.isSystem)
+                      }}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      <span>Sil</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
+}

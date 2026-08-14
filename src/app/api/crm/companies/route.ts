@@ -1,0 +1,57 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+
+// =============================================================================
+// CRM Companies (B2B) — deal/contact formlarında "Əlaqədar Şirkət" seçimi üçün.
+// Eyni auth/scoping nümunəsi digər /api/crm/** route-larından götürülüb.
+// =============================================================================
+
+export async function GET(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const companyId = (session.user as any).companyId;
+    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+
+    const companies = await prisma.crmCompany.findMany({
+      where: { companyId },
+      orderBy: { name: "asc" },
+    });
+
+    return NextResponse.json(companies);
+  } catch (error) {
+    console.error("[CRM_COMPANIES_GET]", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const companyId = (session.user as any).companyId;
+    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+
+    const body = await req.json();
+    const { name, industry, website, phone, email, address } = body;
+    if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
+
+    const crmCompany = await prisma.crmCompany.create({
+      data: {
+        name,
+        industry: industry || null,
+        website: website || null,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        companyId,
+      },
+    });
+
+    return NextResponse.json(crmCompany, { status: 201 });
+  } catch (error) {
+    console.error("[CRM_COMPANIES_POST]", error);
+    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+  }
+}
