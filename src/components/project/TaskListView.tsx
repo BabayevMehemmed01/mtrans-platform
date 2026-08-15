@@ -449,21 +449,6 @@ function SubtaskRow({
   const [hovered, setHovered] = useState(false);
   const dot = STATUS_MAP[subtask.status as keyof typeof STATUS_MAP];
 
-  const markDone = async () => {
-    const newStatus = subtask.status === "DONE" ? "TODO" : "DONE";
-    try {
-      const res = await fetch(`/api/tasks/${subtask.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        onUpdated(updated);
-      }
-    } catch (e) { console.error(e); }
-  };
-
   const deleteSub = async () => {
     if (!confirm("Bu alt tapşırığı silmək istədiyinizə əminsiniz?")) return;
     try {
@@ -484,8 +469,9 @@ function SubtaskRow({
     >
       {/* Alignment Spacers */}
       <div className="w-5 flex-shrink-0" />
+      {/* Visual icon only, not clickable anymore */}
       <div className="w-6 flex-shrink-0 flex items-center justify-center">
-        <button onClick={markDone} title={subtask.status === "DONE" ? "Tamamlanmamış işarələ" : "Tamamlandı işarələ"}>
+        <div title={subtask.status === "DONE" ? "Tamamlandı" : "Gözləyir"}>
           {subtask.status === "DONE" ? (
             <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
@@ -493,7 +479,7 @@ function SubtaskRow({
           ) : (
             <div className={cn("w-3.5 h-3.5 rounded-full border-2", dot?.dot ?? "border-gray-300")} />
           )}
-        </button>
+        </div>
       </div>
 
       <div className="w-28 flex-shrink-0">
@@ -585,21 +571,6 @@ function TaskRow({
     setSubtasks((prev) => prev?.filter((s) => s.id !== id) ?? prev);
   };
 
-  const markDone = async () => {
-    const newStatus = task.status === "DONE" ? "TODO" : "DONE";
-    try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        onUpdated({ ...task, ...updated });
-      }
-    } catch (e) { console.error(e); }
-  };
-
   const saveTitle = async () => {
     if (!titleVal.trim() || titleVal === task.title) { setEditingTitle(false); return; }
     try {
@@ -655,15 +626,15 @@ function TaskRow({
           )}
         </div>
 
-        {/* 2. Done Checkbox */}
+        {/* 2. Status Icon (Sırf vizual, basıla bilməz) */}
         <div className="w-6 flex-shrink-0 flex items-center justify-center">
-          <button onClick={markDone} className="flex-shrink-0 hover:scale-110 transition-transform">
+          <div className="flex-shrink-0" title={task.status === "DONE" ? "Tamamlandı" : "Gözləyir"}>
             {task.status === "DONE" ? (
               <CheckCircleIcon />
             ) : (
-              <div className={cn("w-4 h-4 rounded-full border-2 transition-colors", STATUS_MAP[task.status as keyof typeof STATUS_MAP]?.dot ?? "border-gray-300 hover:border-gray-500")} />
+              <div className={cn("w-4 h-4 rounded-full border-2", STATUS_MAP[task.status as keyof typeof STATUS_MAP]?.dot ?? "border-gray-300")} />
             )}
-          </button>
+          </div>
         </div>
 
         {/* 3. Status Badge */}

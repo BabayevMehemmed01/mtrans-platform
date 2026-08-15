@@ -16,9 +16,10 @@ import { KanbanBoard } from "@/components/kanban/KanbanBoard";
 import { TaskListView } from "@/components/project/TaskListView";
 import { ProjectDashboard } from "@/components/project/ProjectDashboard";
 import { ProjectMembersClient, ProjectMemberExt } from "@/components/project/ProjectMembersClient";
+import { ProjectCalendar } from "./ProjectCalendar";
+import { ProjectChat } from "./ProjectChat";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 
-// Sənin 9 bəndlik planına uyğun yeni Tab siyahısı
 type TabId = "list" | "board" | "calendar" | "members" | "chat" | "dashboard" | "files";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
@@ -41,7 +42,6 @@ interface ProjectViewsProps {
   companyUsers: TaskMember[];
   initialTab?: TabId;
   initialTaskId?: string;
-  // Bayaqkı TS xətasını həll edən yeni prop-lar:
   chatChannels?: any[]; 
   currentUserRole?: string; 
 }
@@ -60,7 +60,6 @@ export function ProjectViews({
   chatChannels,
   currentUserRole,
 }: ProjectViewsProps) {
-  // Səhifə açılanda avtomatik "list" (Tasklar) tabı açılsın
   const [activeTab, setActiveTab] = useState<TabId>(
     initialTab && TABS.some((t) => t.id === initialTab) ? initialTab : "list"
   );
@@ -146,23 +145,24 @@ export function ProjectViews({
           />
         )}
 
-        {/* Növbəti addımda quracağımız Təqvim və Çat üçün yer tutucular */}
+        {/* YENİ TƏQVİM MODULU */}
         {activeTab === "calendar" && (
-          <div className="flex flex-col items-center justify-center h-full text-[hsl(var(--muted-foreground))] space-y-4">
-            <div className="p-4 bg-muted rounded-full">
-              <Calendar className="w-8 h-8 opacity-50" />
-            </div>
-            <p className="text-sm font-medium">Təqvim modulu növbəti mərhələdə qurulacaq.</p>
-          </div>
+          <ProjectCalendar 
+            tasks={tasks} 
+            members={members} 
+            labels={labels} 
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
+          />
         )}
 
+        {/* YENİ MESAJLAR MODULU */}
         {activeTab === "chat" && (
-          <div className="flex flex-col items-center justify-center h-full text-[hsl(var(--muted-foreground))] space-y-4">
-            <div className="p-4 bg-blue-50 rounded-full">
-              <MessageCircle className="w-8 h-8 text-blue-500 opacity-80" />
-            </div>
-            <p className="text-sm font-medium">Layihənin daxili çatı növbəti mərhələdə aktiv olacaq.</p>
-          </div>
+          <ProjectChat 
+            projectId={projectId} 
+            chatChannels={chatChannels} 
+            currentUserRole={currentUserRole} 
+          />
         )}
 
         {activeTab === "files" && (
