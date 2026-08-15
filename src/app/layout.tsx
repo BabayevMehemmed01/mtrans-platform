@@ -3,6 +3,9 @@ import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
+// ✅ Next.js-ə statik yığmanı dayandırmasını deyən sehrli sətir:
+export const dynamic = 'force-dynamic';
+
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const inter = Inter({
