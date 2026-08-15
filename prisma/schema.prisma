@@ -378,7 +378,7 @@ model User {
 // =============================================================================
 
 model Project {
-  id          String          @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String?
   status      ProjectStatus   @default(PLANNING)
@@ -549,14 +549,14 @@ model Comment {
 // =============================================================================
 
 model Attachment {
-  id           String   @id @default(cuid())
-  fileName     String // Original file name
-  fileUrl      String // UploadThing CDN URL
-  fileKey      String   @unique // UploadThing file key (silmək üçün)
-  fileType     String // MIME type: "image/png", "application/pdf"
-  fileSize     Int // Bytes
+  id             String   @id @default(cuid())
+  fileName       String // Original file name
+  fileUrl        String // UploadThing CDN URL
+  fileKey        String   @unique // UploadThing file key (silmək üçün)
+  fileType       String // MIME type: "image/png", "application/pdf"
+  fileSize       Int // Bytes
   thumbnailUrl String? // Şəkillər üçün thumbnail URL
-  createdAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   // Tapşırığa bağlı
   taskId String
@@ -865,6 +865,8 @@ enum InviteStatus {
 model Invite {
   id         String       @id @default(cuid())
   email      String
+  name       String?      // YENİ: Dəvət edilənin adı və soyadı
+  message    String?      // YENİ: Xüsusi dəvət mesajı
   token      String       @unique
   type       InviteType   @default(MEMBER)
   status     InviteStatus @default(PENDING)

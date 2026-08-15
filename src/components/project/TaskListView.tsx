@@ -10,7 +10,8 @@ import {
   ChevronRight,
   Circle,
   Calendar,
-  Flag,
+  MessageSquare,
+  Paperclip,
   User,
   Loader2,
 } from "lucide-react";
@@ -22,10 +23,10 @@ import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/ty
 
 // ── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_MAP = {
-  URGENT: { label: "Təcili", color: "text-red-500", bg: "bg-red-50 text-red-600" },
-  HIGH:   { label: "Yüksək", color: "text-orange-500", bg: "bg-orange-50 text-orange-600" },
-  MEDIUM: { label: "Orta",   color: "text-amber-500", bg: "bg-amber-50 text-amber-600" },
-  LOW:    { label: "Aşağı",  color: "text-gray-400",  bg: "bg-gray-50 text-gray-500" },
+  URGENT: { label: "Təcili", color: "text-red-500", bg: "bg-red-50 text-red-600 border border-red-200" },
+  HIGH:   { label: "Yüksək", color: "text-orange-500", bg: "bg-orange-50 text-orange-600 border border-orange-200" },
+  MEDIUM: { label: "Orta",   color: "text-amber-500", bg: "bg-amber-50 text-amber-600 border border-amber-200" },
+  LOW:    { label: "Aşağı",  color: "text-gray-500",  bg: "bg-gray-50 text-gray-600 border border-gray-200" },
 } as const;
 
 const STATUS_MAP = {
@@ -50,10 +51,6 @@ interface TaskListViewProps {
   initialTaskId?: string;
 }
 
-// Lighter-weight shape used for inline-loaded subtasks in the List view.
-// Kept local to this file (rather than widening the shared KanbanTask type)
-// since only the List view needs a nested subtasks array — the Kanban board
-// only ever needs the `_count.subtasks` number it already has.
 interface SubtaskItem {
   id: string;
   title: string;
@@ -105,7 +102,7 @@ function AddTaskRow({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-gray-50 transition-colors rounded-lg"
+        className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50 transition-colors rounded-lg mt-1"
       >
         <Plus className="w-4 h-4" />
         Tapşırıq əlavə et
@@ -114,7 +111,7 @@ function AddTaskRow({
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-blue-50/50 rounded-lg border border-blue-200">
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50/50 rounded-lg border border-blue-200 mt-1 shadow-sm">
       <Circle className="w-4 h-4 text-blue-400 flex-shrink-0" />
       <input
         autoFocus
@@ -125,10 +122,11 @@ function AddTaskRow({
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
         placeholder="Tapşırıq adı yazın, Enter-ə basın..."
-        className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+        className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-blue-400/70"
         disabled={loading}
       />
-      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-xs text-muted-foreground hover:text-foreground">
+      {loading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
+      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-xs font-semibold text-gray-500 hover:text-gray-800">
         Ləğv et
       </button>
     </div>
@@ -173,7 +171,7 @@ function AddSubtaskRow({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-full px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-white transition-colors rounded-lg"
+        className="flex items-center gap-2 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50 transition-colors rounded-lg mt-1"
       >
         <Plus className="w-3.5 h-3.5" />
         Alt tapşırıq əlavə et
@@ -182,7 +180,7 @@ function AddSubtaskRow({
   }
 
   return (
-    <div className="flex items-center gap-2 px-2 py-1.5 bg-blue-50/50 rounded-lg border border-blue-200">
+    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50/50 rounded-lg border border-blue-200 mt-1">
       <Circle className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
       <input
         autoFocus
@@ -193,10 +191,11 @@ function AddSubtaskRow({
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
         placeholder="Alt tapşırıq adı yazın, Enter-ə basın..."
-        className="flex-1 bg-transparent text-xs outline-none placeholder:text-muted-foreground"
+        className="flex-1 bg-transparent text-xs outline-none placeholder:text-blue-400/70"
         disabled={loading}
       />
-      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-xs text-muted-foreground hover:text-foreground">
+      {loading && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
+      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-[11px] font-semibold text-gray-500 hover:text-gray-800">
         Ləğv et
       </button>
     </div>
@@ -234,12 +233,12 @@ function StatusBadge({
   };
 
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative flex-shrink-0 w-full">
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "rounded-full font-medium border transition-colors hover:opacity-80",
-          compact ? "text-[10px] px-1.5 py-0.5" : "text-xs px-2 py-0.5"
+          "rounded-md font-semibold border transition-colors hover:opacity-80 flex items-center justify-center w-full",
+          compact ? "text-[10px] px-1.5 py-0.5" : "text-[11px] px-2 py-1"
         )}
         style={{
           borderColor: st?.color,
@@ -250,12 +249,12 @@ function StatusBadge({
         {st?.label}
       </button>
       {open && (
-        <div className="absolute left-0 top-6 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-44">
+        <div className="absolute left-0 top-7 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-36">
           {Object.entries(STATUS_MAP).map(([key, val]) => (
             <button
               key={key}
               onClick={() => changeStatus(key)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left"
+              className="flex items-center gap-2 w-full px-2.5 py-1.5 text-[11px] font-medium rounded-lg hover:bg-gray-50 transition-colors text-left"
             >
               <div
                 className="w-2.5 h-2.5 rounded-full"
@@ -304,40 +303,40 @@ function AssigneeCell({
   const avatarSize = compact ? "w-5 h-5" : "w-6 h-6";
 
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative flex-shrink-0 flex items-center justify-center w-full">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 hover:opacity-80 transition-opacity rounded-md"
+        className="flex items-center gap-2 hover:opacity-80 transition-opacity rounded-md"
         title="İcraçını dəyiş"
       >
         {assignee ? (
           <>
             <Avatar className={avatarSize}>
               <AvatarImage src={assignee.avatar ?? undefined} />
-              <AvatarFallback className={compact ? "text-[9px]" : "text-[10px]"}>
+              <AvatarFallback className={cn("bg-blue-100 text-blue-700 font-medium", compact ? "text-[9px]" : "text-[10px]")}>
                 {getInitials(assignee.name ?? "")}
               </AvatarFallback>
             </Avatar>
             {!compact && (
-              <span className="text-xs text-gray-600 hidden xl:block truncate max-w-[60px]">
+              <span className="text-[12px] font-medium text-gray-700 hidden xl:block truncate max-w-[80px]">
                 {assignee.name?.split(" ")[0]}
               </span>
             )}
           </>
         ) : (
-          <div className={cn(avatarSize, "rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center")}>
-            <User className="w-3 h-3 text-gray-300" />
+          <div className={cn(avatarSize, "rounded-full border border-dashed border-gray-400 flex items-center justify-center hover:border-gray-600 transition-colors bg-gray-50")}>
+            <User className="w-3 h-3 text-gray-400" />
           </div>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-7 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-48 max-h-56 overflow-y-auto">
+        <div className="absolute right-0 top-8 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-48 max-h-56 overflow-y-auto">
           <button
             onClick={() => assign(null)}
-            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left text-gray-500"
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left text-gray-500 font-medium"
           >
-            <div className="w-5 h-5 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center flex-shrink-0">
-              <User className="w-2.5 h-2.5 text-gray-300" />
+            <div className="w-5 h-5 rounded-full border border-dashed border-gray-400 flex items-center justify-center flex-shrink-0 bg-gray-50">
+              <User className="w-3 h-3 text-gray-400" />
             </div>
             Təyin edilməyib
           </button>
@@ -345,11 +344,11 @@ function AssigneeCell({
             <button
               key={m.id}
               onClick={() => assign(m.id)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left"
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left font-medium text-gray-700"
             >
               <Avatar className="w-5 h-5">
                 <AvatarImage src={m.avatar ?? undefined} />
-                <AvatarFallback className="text-[9px]">{getInitials(m.name)}</AvatarFallback>
+                <AvatarFallback className="text-[9px] bg-blue-100 text-blue-700">{getInitials(m.name)}</AvatarFallback>
               </Avatar>
               <span className="truncate">{m.name}</span>
             </button>
@@ -399,21 +398,21 @@ function DueDateCell({
   const isOverdue = !!dueDate && new Date(dueDate) < new Date() && !isDone;
 
   return (
-    <div className="relative flex-shrink-0">
+    <div className="relative flex-shrink-0 flex justify-end w-full">
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-1 rounded-md hover:bg-gray-100 transition-colors px-1 py-0.5",
-          compact ? "text-[11px]" : "text-xs",
-          isOverdue ? "text-red-500 font-medium" : dueDate ? "text-muted-foreground" : "text-gray-300"
+          "flex items-center gap-1.5 rounded-md hover:bg-gray-100 transition-colors px-2 py-1",
+          compact ? "text-[11px]" : "text-[12px] font-medium",
+          isOverdue ? "text-red-600 bg-red-50" : dueDate ? "text-gray-600" : "text-gray-400"
         )}
         title="Son tarixi dəyiş"
       >
-        <Calendar className={compact ? "w-2.5 h-2.5" : "w-3 h-3"} />
+        <Calendar className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
         {dueDate ? format(new Date(dueDate), "dd MMM") : "—"}
       </button>
       {open && (
-        <div className="absolute right-0 top-6 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-3 w-52">
+        <div className="absolute right-0 top-8 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-3 w-52">
           <input
             type="date"
             autoFocus
@@ -421,11 +420,11 @@ function DueDateCell({
             onChange={(e) => setVal(e.target.value)}
             className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs outline-none focus:border-blue-400"
           />
-          <div className="flex items-center justify-between mt-2">
-            <button onClick={() => save("")} className="text-[11px] text-gray-400 hover:text-red-500">
+          <div className="flex items-center justify-between mt-3">
+            <button onClick={() => save("")} className="text-[11px] font-semibold text-gray-500 hover:text-red-500">
               Təmizlə
             </button>
-            <button onClick={() => save(val)} className="text-[11px] font-medium text-blue-600 hover:underline">
+            <button onClick={() => save(val)} className="text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md">
               Təsdiqlə
             </button>
           </div>
@@ -476,51 +475,56 @@ function SubtaskRow({
   return (
     <div
       className={cn(
-        "group flex items-center gap-2 pl-14 pr-4 py-1.5 border-t border-gray-100/70 transition-colors",
-        hovered ? "bg-white" : "bg-transparent",
+        "group flex items-center gap-3 px-4 py-1.5 border-t border-gray-100/70 transition-colors",
+        hovered ? "bg-white shadow-sm" : "bg-transparent",
         subtask.status === "DONE" && "opacity-60"
       )}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      <button
-        onClick={markDone}
-        title={subtask.status === "DONE" ? "Tamamlanmamış işarələ" : "Tamamlandı işarələ"}
-        className="flex-shrink-0"
-      >
-        {subtask.status === "DONE" ? (
-          <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
-            <Check className="w-2 h-2 text-white" strokeWidth={3} />
-          </div>
-        ) : (
-          <div className={cn("w-3.5 h-3.5 rounded-full border-2", dot?.dot ?? "border-gray-300")} />
-        )}
-      </button>
+      {/* Alignment Spacers */}
+      <div className="w-5 flex-shrink-0" />
+      <div className="w-6 flex-shrink-0 flex items-center justify-center">
+        <button onClick={markDone} title={subtask.status === "DONE" ? "Tamamlanmamış işarələ" : "Tamamlandı işarələ"}>
+          {subtask.status === "DONE" ? (
+            <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
+              <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+            </div>
+          ) : (
+            <div className={cn("w-3.5 h-3.5 rounded-full border-2", dot?.dot ?? "border-gray-300")} />
+          )}
+        </button>
+      </div>
 
-      <StatusBadge taskId={subtask.id} status={subtask.status} onChanged={onUpdated} compact />
+      <div className="w-28 flex-shrink-0">
+        <StatusBadge taskId={subtask.id} status={subtask.status} onChanged={onUpdated} compact />
+      </div>
 
-      <span
-        className={cn(
-          "flex-1 min-w-0 text-xs text-gray-600 truncate",
-          subtask.status === "DONE" && "line-through text-gray-400"
-        )}
-      >
+      <span className={cn("flex-1 min-w-0 text-[13px] font-medium text-gray-700 truncate", subtask.status === "DONE" && "line-through text-gray-400")}>
         {subtask.title}
       </span>
 
-      <AssigneeCell taskId={subtask.id} assignee={subtask.assignee} members={members} onChanged={onUpdated} compact />
-      <DueDateCell taskId={subtask.id} dueDate={subtask.dueDate} isDone={subtask.status === "DONE"} onChanged={onUpdated} compact />
+      <div className="w-24 flex-shrink-0" /> {/* Indicators Placeholder */}
 
-      <button
-        onClick={deleteSub}
-        className={cn(
-          "p-1 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0",
-          hovered ? "opacity-100" : "opacity-0 pointer-events-none"
-        )}
-        title="Sil"
-      >
-        <Trash2 className="w-3 h-3" />
-      </button>
+      <div className="w-32 flex-shrink-0 flex justify-center">
+        <AssigneeCell taskId={subtask.id} assignee={subtask.assignee} members={members} onChanged={onUpdated} compact />
+      </div>
+
+      <div className="w-28 flex-shrink-0 flex justify-end">
+        <DueDateCell taskId={subtask.id} dueDate={subtask.dueDate} isDone={subtask.status === "DONE"} onChanged={onUpdated} compact />
+      </div>
+
+      <div className="w-24 hidden md:block flex-shrink-0" /> {/* Priority Placeholder */}
+
+      <div className="w-16 flex justify-end pr-2 flex-shrink-0">
+        <button
+          onClick={deleteSub}
+          className={cn("p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}
+          title="Sil"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      </div>
     </div>
   );
 }
@@ -543,9 +547,7 @@ function TaskRow({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleVal, setTitleVal] = useState(task.title);
 
-  // ── Subtasks: lazily loaded on first expand, cached locally so
-  // re-collapsing/re-expanding doesn't refetch. Only mutated in-place on
-  // create/toggle/delete rather than refetched.
+  // ── Subtasks logic
   const [expanded, setExpanded] = useState(false);
   const [subtasks, setSubtasks] = useState<SubtaskItem[] | null>(null);
   const [loadingSubtasks, setLoadingSubtasks] = useState(false);
@@ -622,50 +624,55 @@ function TaskRow({
     } catch (e) { console.error(e); }
   };
 
+  // ── Indicators Logic
   const subtaskCount = subtasks?.length ?? task._count?.subtasks ?? 0;
+  const doneSubtasks = (subtasks ?? []).filter((s) => s.status === "DONE").length;
+  const commentCount = task._count?.comments ?? 0;
+  const fileCount = task._count?.attachments ?? 0;
 
   return (
     <>
       <div
         className={cn(
-          "group flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 transition-colors",
-          hovered ? "bg-gray-50/70" : "bg-white",
+          "group flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 transition-all",
+          hovered ? "bg-slate-50 shadow-sm z-10 relative" : "bg-white",
           task.status === "DONE" && "opacity-60"
         )}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
       >
-        {/* ── Expand / subtasks toggle ─── */}
-        <button
-          onClick={toggleExpand}
-          className="flex-shrink-0 w-4 flex items-center justify-center text-gray-400 hover:text-gray-600 transition-colors"
-          title={expanded ? "Alt tapşırıqları gizlət" : "Alt tapşırıqları göstər"}
-        >
-          <ChevronRight className={cn("w-3.5 h-3.5 transition-transform", expanded && "rotate-90")} />
-        </button>
-
-        {/* ── Done toggle ─────── */}
-        <button
-          onClick={markDone}
-          title={task.status === "DONE" ? "Tamamlanmamış işarələ" : "Tamamlandı işarələ"}
-          className="flex-shrink-0"
-        >
-          {task.status === "DONE" ? (
-            <CheckCircleIcon />
+        {/* 1. Expand Toggle */}
+        <div className="w-5 flex-shrink-0 flex items-center justify-center">
+          {subtaskCount > 0 ? (
+            <button
+              onClick={toggleExpand}
+              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors"
+            >
+              <ChevronRight className={cn("w-4 h-4 transition-transform", expanded && "rotate-90")} />
+            </button>
           ) : (
-            <div className={cn("w-4 h-4 rounded-full border-2 transition-colors", STATUS_MAP[task.status as keyof typeof STATUS_MAP]?.dot ?? "border-gray-300")} />
+            <div className="w-5 h-5" />
           )}
-        </button>
+        </div>
 
-        {/* ── Status badge (clickable) ─── */}
-        <StatusBadge
-          taskId={task.id}
-          status={task.status}
-          onChanged={(raw) => onUpdated({ ...task, ...raw })}
-        />
+        {/* 2. Done Checkbox */}
+        <div className="w-6 flex-shrink-0 flex items-center justify-center">
+          <button onClick={markDone} className="flex-shrink-0 hover:scale-110 transition-transform">
+            {task.status === "DONE" ? (
+              <CheckCircleIcon />
+            ) : (
+              <div className={cn("w-4 h-4 rounded-full border-2 transition-colors", STATUS_MAP[task.status as keyof typeof STATUS_MAP]?.dot ?? "border-gray-300 hover:border-gray-500")} />
+            )}
+          </button>
+        </div>
 
-        {/* ── Title ─────────────────────── */}
-        <div className="flex-1 min-w-0">
+        {/* 3. Status Badge */}
+        <div className="w-28 flex-shrink-0">
+          <StatusBadge taskId={task.id} status={task.status} onChanged={(raw) => onUpdated({ ...task, ...raw })} />
+        </div>
+
+        {/* 4. Title & Labels */}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           {editingTitle ? (
             <input
               autoFocus
@@ -673,89 +680,74 @@ function TaskRow({
               onChange={(e) => setTitleVal(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") { setTitleVal(task.title); setEditingTitle(false); } }}
-              className="w-full text-sm bg-transparent border-b border-blue-400 outline-none"
+              className="w-full text-sm bg-transparent border-b-2 border-blue-500 outline-none font-medium text-slate-900"
             />
           ) : (
             <span
               className={cn(
-                "text-sm font-medium text-gray-800 truncate block cursor-pointer hover:text-blue-600 transition-colors",
-                task.status === "DONE" && "line-through text-gray-400"
+                "text-[14px] font-semibold text-slate-800 truncate cursor-pointer hover:text-blue-600 transition-colors",
+                task.status === "DONE" && "line-through text-slate-400"
               )}
               onClick={() => onTaskClick(task)}
               onDoubleClick={(e) => { e.stopPropagation(); setEditingTitle(true); }}
-              title="Klikləyin detalları görmək üçün. İki dəfə klik — redaktə."
             >
               {task.title}
-              {subtaskCount > 0 && (
-                <span className="ml-2 text-[11px] text-gray-400 font-normal">
-                  {(subtasks ?? []).filter((s) => s.status === "DONE").length}/{subtaskCount}
-                </span>
-              )}
             </span>
+          )}
+          {task.labels && task.labels.length > 0 && (
+            <div className="hidden lg:flex items-center gap-1.5 flex-shrink-0 ml-2">
+              {task.labels.slice(0, 2).map(({ label }) => (
+                <span key={label.id} className="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider" style={{ backgroundColor: `${label.color}15`, color: label.color }}>
+                  {label.name}
+                </span>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* ── Labels ──────────────────── */}
-        {task.labels && task.labels.length > 0 && (
-          <div className="hidden lg:flex items-center gap-1 flex-shrink-0">
-            {task.labels.slice(0, 2).map(({ label }) => (
-              <span
-                key={label.id}
-                className="text-xs px-2 py-0.5 rounded-full font-medium"
-                style={{ backgroundColor: `${label.color}25`, color: label.color }}
-              >
-                {label.name}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* ── Assignee (clickable) ─────── */}
-        <div className="flex-shrink-0 w-28 flex justify-center">
-          <AssigneeCell
-            taskId={task.id}
-            assignee={task.assignee}
-            members={members}
-            onChanged={(raw) => onUpdated({ ...task, ...raw })}
-          />
+        {/* 5. Indicators (Subtasks, Comments, Files) */}
+        <div className="w-24 flex-shrink-0 flex items-center gap-3 text-[11px] font-bold text-gray-400">
+          {subtaskCount > 0 && (
+            <div className="flex items-center gap-1" title={`${doneSubtasks}/${subtaskCount} alt tapşırıq`}>
+              <Check className="w-3.5 h-3.5" />
+              <span className={doneSubtasks === subtaskCount ? "text-green-500" : ""}>{doneSubtasks}/{subtaskCount}</span>
+            </div>
+          )}
+          {commentCount > 0 && (
+            <div className="flex items-center gap-1" title={`${commentCount} şərh`}>
+              <MessageSquare className="w-3.5 h-3.5" /> <span>{commentCount}</span>
+            </div>
+          )}
+          {fileCount > 0 && (
+            <div className="flex items-center gap-1" title={`${fileCount} fayl`}>
+              <Paperclip className="w-3.5 h-3.5" /> <span>{fileCount}</span>
+            </div>
+          )}
         </div>
 
-        {/* ── Due date (clickable) ─────── */}
-        <div className="flex-shrink-0 w-28 flex justify-end">
-          <DueDateCell
-            taskId={task.id}
-            dueDate={task.dueDate}
-            isDone={task.status === "DONE"}
-            onChanged={(raw) => onUpdated({ ...task, ...raw })}
-          />
+        {/* 6. Assignee */}
+        <div className="w-32 flex-shrink-0 flex justify-center">
+          <AssigneeCell taskId={task.id} assignee={task.assignee} members={members} onChanged={(raw) => onUpdated({ ...task, ...raw })} />
         </div>
 
-        {/* ── Priority ─────────────────── */}
-        <div className="flex-shrink-0 w-20 hidden md:flex justify-end">
-          <span className={cn("text-xs px-2 py-0.5 rounded-full font-medium", prio.bg)}>
+        {/* 7. Due Date */}
+        <div className="w-28 flex-shrink-0 flex justify-end">
+          <DueDateCell taskId={task.id} dueDate={task.dueDate} isDone={task.status === "DONE"} onChanged={(raw) => onUpdated({ ...task, ...raw })} />
+        </div>
+
+        {/* 8. Priority */}
+        <div className="w-24 flex-shrink-0 hidden md:flex justify-end">
+          <span className={cn("text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider", prio.bg)}>
             {prio.label}
           </span>
         </div>
 
-        {/* ── Hover actions ─────────────── */}
-        <div
-          className={cn(
-            "flex items-center gap-1 flex-shrink-0 transition-opacity",
-            hovered ? "opacity-100" : "opacity-0 pointer-events-none"
-          )}
-        >
-          <button
-            onClick={() => setEditingTitle(true)}
-            className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-500 transition-colors"
-            title="Redaktə et"
-          >
+        {/* 9. Actions */}
+        <div className={cn("w-16 flex-shrink-0 flex items-center justify-end gap-1 transition-opacity pr-2", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}>
+          <button onClick={() => setEditingTitle(true)} className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors" title="Redaktə et">
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button
-            onClick={deleteTask}
-            className="p-1.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors"
-            title="Sil"
-          >
+          <button onClick={deleteTask} className="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors" title="Sil">
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -763,28 +755,18 @@ function TaskRow({
 
       {/* ── Expanded subtasks ─────────────── */}
       {expanded && (
-        <div className="bg-gray-50/40 border-b border-gray-100">
+        <div className="bg-slate-50/50 border-b border-gray-100 py-1 shadow-inner">
           {loadingSubtasks ? (
-            <div className="flex items-center gap-2 pl-14 pr-4 py-2.5 text-xs text-muted-foreground">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Yüklənir...
+            <div className="flex items-center gap-2 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> Alt tapşırıqlar yüklənir...
             </div>
           ) : (
             <>
               {(subtasks ?? []).map((sub) => (
-                <SubtaskRow
-                  key={sub.id}
-                  subtask={sub}
-                  members={members}
-                  onUpdated={handleSubtaskUpdated}
-                  onDeleted={handleSubtaskDeleted}
-                />
+                <SubtaskRow key={sub.id} subtask={sub} members={members} onUpdated={handleSubtaskUpdated} onDeleted={handleSubtaskDeleted} />
               ))}
               <div className="pl-14 pr-4 py-1.5">
-                <AddSubtaskRow
-                  parentId={task.id}
-                  projectId={task.projectId}
-                  onCreated={handleSubtaskCreated}
-                />
+                <AddSubtaskRow parentId={task.id} projectId={task.projectId} onCreated={handleSubtaskCreated} />
               </div>
             </>
           )}
@@ -829,25 +811,23 @@ function GroupSection({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="mb-2">
+    <div className="mb-6 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
       {/* Group header */}
       <div
-        className="flex items-center gap-2 px-4 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors rounded-t-lg"
+        className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors bg-slate-50/80 border-b border-gray-100"
         onClick={() => setCollapsed(!collapsed)}
       >
-        <ChevronDown
-          className={cn("w-4 h-4 text-gray-400 transition-transform", collapsed && "-rotate-90")}
-        />
-        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-sm font-semibold text-gray-700">{title}</span>
-        <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-0.5 rounded-full ml-1">
+        <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform", collapsed && "-rotate-90")} />
+        <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: color }} />
+        <span className="text-[14px] font-bold text-slate-800 tracking-tight">{title}</span>
+        <span className="text-[11px] font-bold text-slate-500 bg-white border border-gray-200 px-2 py-0.5 rounded-full ml-2 shadow-sm">
           {tasks.length}
         </span>
       </div>
 
       {/* Task rows */}
       {!collapsed && (
-        <div className="border border-gray-100 rounded-b-xl overflow-hidden mb-1">
+        <div className="flex flex-col">
           {tasks.map((task) => (
             <TaskRow
               key={task.id}
@@ -858,12 +838,8 @@ function GroupSection({
               onTaskClick={onTaskClick}
             />
           ))}
-          <div className="bg-white px-2 py-1.5">
-            <AddTaskRow
-              status={defaultStatus}
-              projectId={projectId}
-              onCreated={onTaskCreated}
-            />
+          <div className="px-3 py-2 bg-white rounded-b-xl">
+            <AddTaskRow status={defaultStatus} projectId={projectId} onCreated={onTaskCreated} />
           </div>
         </div>
       )}
@@ -895,11 +871,11 @@ export function TaskListView({
   }, [initialTaskId, tasks]);
 
   const GROUPS = [
-    { status: "BACKLOG",     ...STATUS_MAP.BACKLOG },
     { status: "TODO",        ...STATUS_MAP.TODO },
     { status: "IN_PROGRESS", ...STATUS_MAP.IN_PROGRESS },
     { status: "IN_REVIEW",   ...STATUS_MAP.IN_REVIEW },
     { status: "DONE",        ...STATUS_MAP.DONE },
+    { status: "BACKLOG",     ...STATUS_MAP.BACKLOG },
     { status: "CANCELLED",   ...STATUS_MAP.CANCELLED },
   ];
 
@@ -915,31 +891,26 @@ export function TaskListView({
 
   return (
     <>
-      <div className="h-full overflow-auto bg-gray-50/30">
-        {/* Table header */}
-        <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-2.5 flex items-center gap-3">
-          <div className="w-4 flex-shrink-0" />
-          <div className="w-4 flex-shrink-0" />
-          <div className="w-24 flex-shrink-0" />
-          <div className="flex-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Tapşırıq Adı
-          </div>
-          <div className="w-28 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center flex-shrink-0">
-            İcraçı
-          </div>
-          <div className="w-28 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right flex-shrink-0">
-            Son Tarix
-          </div>
-          <div className="w-20 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-right flex-shrink-0 hidden md:block">
-            Prioritet
-          </div>
+      <div className="h-full overflow-auto bg-slate-50/50">
+        {/* Table header (Fixed Widths for Perfect Alignment) */}
+        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+          <div className="w-5 flex-shrink-0" />
+          <div className="w-6 flex-shrink-0" />
+          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Status</div>
+          <div className="flex-1 min-w-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Tapşırıq Adı</div>
+          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Məlumat</div>
+          <div className="w-32 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">İcraçı</div>
+          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Son Tarix</div>
+          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right hidden md:block">Prioritet</div>
           <div className="w-16 flex-shrink-0" />
         </div>
 
         {/* Groups */}
-        <div className="p-4 space-y-1">
+        <div className="p-6 max-w-[1600px] mx-auto space-y-2">
           {GROUPS.map((group) => {
             const groupTasks = tasks.filter((t) => t.status === group.status && !t.isArchived);
+            if (groupTasks.length === 0 && group.status !== "TODO" && group.status !== "IN_PROGRESS") return null;
+
             return (
               <GroupSection
                 key={group.status}
@@ -951,7 +922,7 @@ export function TaskListView({
                 onTaskUpdated={onTaskUpdated}
                 onTaskDeleted={onTaskDeleted}
                 onTaskCreated={onTaskCreated}
-                onTaskClick={(task) => setSelectedTask(task)}
+                onTaskClick={(task: KanbanTask) => setSelectedTask(task)}
                 defaultStatus={group.status}
               />
             );

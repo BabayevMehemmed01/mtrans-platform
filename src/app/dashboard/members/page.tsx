@@ -13,6 +13,7 @@ export default async function MembersPage() {
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
 
+  // İşçiləri gətiririk (Şöbə və Rol daxil olmaqla)
   const users = await prisma.user.findMany({
     where: { companyId },
     include: {
@@ -52,9 +53,9 @@ export default async function MembersPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Komanda</h2>
+          <h2 className="text-2xl font-bold tracking-tight">İnsanlar</h2>
           <p className="text-[hsl(var(--muted-foreground))]">
-            Şirkətinizə üzvlər əlavə edin, rollar və şöbələr təyin edin.
+            Şirkətinizə üzvlər əlavə edin, axtarış edin və komandanı idarə edin.
           </p>
         </div>
       </div>

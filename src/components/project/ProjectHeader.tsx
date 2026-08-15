@@ -2,7 +2,7 @@
 
 import { getStatusColor, getPriorityColor } from "@/lib/utils";
 import Link from "next/link";
-import { ArrowLeft, Users, CheckSquare, Settings, Archive } from "lucide-react";
+import { ArrowLeft, Users, CheckSquare, Settings, FolderKanban } from "lucide-react";
 
 interface ProjectHeaderProps {
   project: {
@@ -29,60 +29,79 @@ const priorityLabels: Record<string, string> = {
 
 export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeaderProps) {
   return (
-    <div className="flex-shrink-0 px-6 py-4 border-b border-[hsl(var(--border))] bg-[hsl(var(--card))]">
-      {/* Back + Title row */}
-      <div className="flex items-center gap-3 mb-3">
-        <Link
-          href="/dashboard/projects"
-          className="p-1.5 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))]"
-        >
-          <ArrowLeft className="w-4 h-4" />
-        </Link>
+    <div className="flex-shrink-0 px-6 py-5 border-b border-[hsl(var(--border))] bg-white">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        
+        {/* Sol Tərəf: Geri düyməsi + Ad + Badgelər */}
+        <div className="flex items-center gap-3">
+          <Link
+            href="/dashboard/projects"
+            className="p-1.5 rounded-md border border-[hsl(var(--border))] hover:bg-muted transition-colors text-muted-foreground shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
 
-        {/* Color dot + name */}
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-          style={{ backgroundColor: project.color }}
-        >
-          {project.name[0]}
+          <div
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold shadow-sm"
+            style={{ backgroundColor: project.color }}
+          >
+            {project.name.charAt(0).toUpperCase()}
+          </div>
+          
+          <div className="flex flex-col">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-bold tracking-tight text-slate-900">{project.name}</h1>
+              <div className="hidden sm:flex items-center gap-2">
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${getStatusColor(project.status)}`}>
+                  {statusLabels[project.status]}
+                </span>
+                <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${getPriorityColor(project.priority)}`}>
+                  {priorityLabels[project.priority]} Prioritet
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
-        <h1 className="text-lg font-bold truncate flex-1">{project.name}</h1>
 
-        {/* Badges */}
-        <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${getStatusColor(project.status)}`}>
-          {statusLabels[project.status]}
-        </span>
-        <span className={`text-xs font-semibold ${getPriorityColor(project.priority)}`}>
-          ↑ {priorityLabels[project.priority]}
-        </span>
-      </div>
-
-      {/* Meta row */}
-      <div className="flex items-center gap-5 text-xs text-[hsl(var(--muted-foreground))]">
-        {project.description && (
-          <span className="truncate max-w-xs">{project.description}</span>
-        )}
-        <span className="flex items-center gap-1">
-          <Users className="w-3.5 h-3.5" /> {memberCount} üzv
-        </span>
-        <span className="flex items-center gap-1">
-          <CheckSquare className="w-3.5 h-3.5" /> {taskCount} tapşırıq
-        </span>
-        {project.department && (
-          <span>📂 {project.department.name}</span>
-        )}
-        <span>👤 {project.owner.name}</span>
-
-        {/* Actions */}
-        <div className="ml-auto flex items-center gap-2">
+        {/* Sağ Tərəf: Ayarlar düyməsi */}
+        <div className="flex items-center">
           <Link
             href={`/dashboard/projects/${project.id}/settings`}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-white hover:bg-muted text-sm font-medium transition-colors shadow-sm"
           >
-            <Settings className="w-3.5 h-3.5" />
-            <span>Parametrlər</span>
+            <Settings className="w-4 h-4 text-muted-foreground" />
+            <span>Ayarlar</span>
           </Link>
         </div>
+      </div>
+
+      {/* Alt Məlumat Sətri (Meta data) */}
+      <div className="flex flex-wrap items-center gap-4 mt-3 pl-12 text-xs text-[hsl(var(--muted-foreground))]">
+        {project.department && (
+          <span className="flex items-center gap-1.5 font-medium text-slate-600">
+            <FolderKanban className="w-3.5 h-3.5 text-blue-500" />
+            {project.department.name}
+          </span>
+        )}
+        <div className="w-1 h-1 rounded-full bg-slate-300" />
+        <span className="flex items-center gap-1.5">
+          <Users className="w-3.5 h-3.5" /> 
+          {memberCount} İnsan
+        </span>
+        <div className="w-1 h-1 rounded-full bg-slate-300" />
+        <span className="flex items-center gap-1.5">
+          <CheckSquare className="w-3.5 h-3.5" /> 
+          {taskCount} Task
+        </span>
+        
+        {project.description && (
+          <>
+            <div className="w-1 h-1 rounded-full bg-slate-300 hidden sm:block" />
+            <span className="truncate max-w-md hidden sm:block italic text-slate-500">
+              {project.description}
+            </span>
+          </>
+        )}
       </div>
     </div>
   );

@@ -20,32 +20,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: project?.name ?? "Layihə" };
 }
 
-// =============================================================================
-// Project Detail Page — Tab Views (Dashboard, List, Board, Files)
-// =============================================================================
 export default async function ProjectDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
-  const { task: initialTaskId, tab: initialTab } = await searchParams;
+  const { task: initialTaskId, tab } = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const companyId = (session.user as any).companyId;
+  const initialTab = tab || "tasks"; // Default olaraq Tasklar açılır
 
-  const [project, tasks, labels, companyUsers] = await Promise.all([
-    prisma.project.findFirst({
-      where: { id, companyId },
-      include: {
-        owner: { select: { id: true, name: true, avatar: true } },
-        department: { select: { id: true, name: true } },
-        members: {
-          include: {
-            user: { select: { id: true, name: true, email: true, avatar: true, jobTitle: true } },
-          },
+  // 1. Layihəni və onun daxili məlumatlarını çəkirik
+  const project = await prisma.project.findFirst({
+    where: { id, companyId },
+    include: {
+      owner: { select: { id: true, name: true, avatar: true } },
+      department: { select: { id: true, name: true } },
+      chatChannels: true, // Çat tabı üçün
+      members: {
+        include: {
+          user: { select: { id: true, name: true, email: true, avatar: true, jobTitle: true } },
         },
       },
-    }),
+    },
+  });
+
+  if (!project) notFound();
+  if (!(await canViewProject(session.user.id, id))) notFound();
+
+  // 2. İstifadəçinin layihədəki rolunu tapırıq
+  const currentMember = project.members.find(m => m.userId === session.user.id);
+  const isManagerOrOwner = currentMember?.role === "OWNER" || currentMember?.role === "MANAGER";
+
+  // 3. Əgər MANAGER/OWNER-dirsə bütün taskları görür. Əks halda YALNIZ ÖZ tasklarını.
+  const taskWhereClause = {
+    projectId: id,
+    parentId: null,
+    isArchived: false,
+    ...(isManagerOrOwner ? {} : {
+      OR: [
+        { assigneeId: session.user.id },
+        { createdById: session.user.id }
+      ]
+    })
+  };
+
+  const [tasks, labels, companyUsers] = await Promise.all([
     prisma.task.findMany({
-      where: { projectId: id, parentId: null, isArchived: false },
+      where: taskWhereClause,
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
       include: {
         assignee: { select: { id: true, name: true, avatar: true } },
@@ -63,9 +84,6 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       orderBy: { name: "asc" },
     }),
   ]);
-
-  if (!project) notFound();
-  if (!(await canViewProject(session.user.id, id))) notFound();
 
   const memberOptions = project.members.map((m) => ({
     id: m.user.id,
@@ -93,6 +111,8 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
           companyUsers={companyUsers as any}
           initialTab={initialTab as any}
           initialTaskId={initialTaskId}
+          chatChannels={project.chatChannels} // Çat məlumatları
+          currentUserRole={currentMember?.role || "VIEWER"} // İcazə yoxlanışı üçün
         />
       </div>
     </div>

@@ -8,6 +8,8 @@ import {
   LayoutGrid,
   Paperclip,
   Users,
+  Calendar,
+  MessageCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
@@ -16,14 +18,16 @@ import { ProjectDashboard } from "@/components/project/ProjectDashboard";
 import { ProjectMembersClient, ProjectMemberExt } from "@/components/project/ProjectMembersClient";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 
-type TabId = "dashboard" | "list" | "board" | "files" | "members";
+// Sənin 9 bəndlik planına uyğun yeni Tab siyahısı
+type TabId = "list" | "board" | "calendar" | "members" | "chat" | "dashboard" | "files";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "list",      label: "List",      icon: List },
-  { id: "board",     label: "Board",     icon: LayoutGrid },
-  { id: "members",   label: "Üzvlər/İcazələr", icon: Users },
-  { id: "files",     label: "Files",     icon: Paperclip },
+  { id: "list",      label: "Tasklar (Siyahı)", icon: List },
+  { id: "board",     label: "Lövhə",            icon: LayoutGrid },
+  { id: "calendar",  label: "Təqvim",           icon: Calendar },
+  { id: "members",   label: "İnsanlar",         icon: Users },
+  { id: "chat",      label: "Mesajlar",         icon: MessageCircle },
+  { id: "dashboard", label: "Analitika",        icon: LayoutDashboard },
 ];
 
 interface ProjectViewsProps {
@@ -37,6 +41,9 @@ interface ProjectViewsProps {
   companyUsers: TaskMember[];
   initialTab?: TabId;
   initialTaskId?: string;
+  // Bayaqkı TS xətasını həll edən yeni prop-lar:
+  chatChannels?: any[]; 
+  currentUserRole?: string; 
 }
 
 export function ProjectViews({
@@ -50,7 +57,10 @@ export function ProjectViews({
   companyUsers,
   initialTab,
   initialTaskId,
+  chatChannels,
+  currentUserRole,
 }: ProjectViewsProps) {
+  // Səhifə açılanda avtomatik "list" (Tasklar) tabı açılsın
   const [activeTab, setActiveTab] = useState<TabId>(
     initialTab && TABS.some((t) => t.id === initialTab) ? initialTab : "list"
   );
@@ -72,8 +82,8 @@ export function ProjectViews({
   return (
     <div className="flex flex-col h-full">
       {/* ─── Tab Bar ─────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 border-b border-[hsl(var(--border))] bg-white px-6">
-        <div className="flex items-center gap-1">
+      <div className="flex-shrink-0 border-b border-[hsl(var(--border))] bg-white px-6 overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-2 min-w-max">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -82,13 +92,13 @@ export function ProjectViews({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all",
+                  "inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all",
                   isActive
-                    ? "border-blue-600 text-blue-600"
+                    ? "border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg"
                     : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-foreground hover:border-[hsl(var(--border))]"
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className={cn("w-4 h-4", isActive ? "text-blue-600" : "")} />
                 {tab.label}
               </button>
             );
@@ -97,15 +107,7 @@ export function ProjectViews({
       </div>
 
       {/* ─── Tab Content ──────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden">
-        {activeTab === "dashboard" && (
-          <ProjectDashboard
-            tasks={tasks}
-            members={members}
-            memberCount={memberCount}
-          />
-        )}
-
+      <div className="flex-1 overflow-hidden bg-[hsl(var(--background))]">
         {activeTab === "list" && (
           <TaskListView
             projectId={projectId}
@@ -128,12 +130,39 @@ export function ProjectViews({
           />
         )}
 
+        {activeTab === "dashboard" && (
+          <ProjectDashboard
+            tasks={tasks}
+            members={members}
+            memberCount={memberCount}
+          />
+        )}
+
         {activeTab === "members" && (
           <ProjectMembersClient 
             projectId={projectId} 
             projectMembers={projectMembers} 
             companyUsers={companyUsers} 
           />
+        )}
+
+        {/* Növbəti addımda quracağımız Təqvim və Çat üçün yer tutucular */}
+        {activeTab === "calendar" && (
+          <div className="flex flex-col items-center justify-center h-full text-[hsl(var(--muted-foreground))] space-y-4">
+            <div className="p-4 bg-muted rounded-full">
+              <Calendar className="w-8 h-8 opacity-50" />
+            </div>
+            <p className="text-sm font-medium">Təqvim modulu növbəti mərhələdə qurulacaq.</p>
+          </div>
+        )}
+
+        {activeTab === "chat" && (
+          <div className="flex flex-col items-center justify-center h-full text-[hsl(var(--muted-foreground))] space-y-4">
+            <div className="p-4 bg-blue-50 rounded-full">
+              <MessageCircle className="w-8 h-8 text-blue-500 opacity-80" />
+            </div>
+            <p className="text-sm font-medium">Layihənin daxili çatı növbəti mərhələdə aktiv olacaq.</p>
+          </div>
         )}
 
         {activeTab === "files" && (

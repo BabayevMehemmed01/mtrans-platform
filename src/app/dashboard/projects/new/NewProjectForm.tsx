@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Building2 } from "lucide-react";
+import { Loader2, Building2, Save } from "lucide-react";
 import Link from "next/link";
 
 const STATUS_OPTIONS = [
@@ -75,7 +75,7 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Xəta baş verdi"); return; }
-      router.push(`/dashboard/projects/${data.id}`);
+      router.push(`/dashboard/projects/${data.id}?tab=tasks`); // Yaradan kimi Tasklar tabına atsın
     } catch {
       setError("Şəbəkə xətası");
     } finally {
@@ -84,8 +84,8 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 space-y-5">
+    <form onSubmit={handleSubmit} className="relative pb-24 space-y-5">
+      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 space-y-5 shadow-sm">
         {error && (
           <div className="px-4 py-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] text-sm">
             ⚠️ {error}
@@ -230,7 +230,6 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
                 }}
               />
             ))}
-            {/* Custom color picker */}
             <div className="relative">
               <input
                 type="color"
@@ -240,32 +239,28 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
                 title="Özəl rəng seçin"
               />
             </div>
-            {/* Preview */}
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
-              style={{ backgroundColor: form.color }}
-            >
-              {form.name?.[0]?.toUpperCase() ?? "P"}
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3">
-        <Link
-          href="/dashboard/projects"
-          className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--accent))] transition-colors"
-        >
-          Ləğv Et
-        </Link>
-        <button
-          type="submit"
-          disabled={loading || !hasDepartments}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 text-white text-sm font-semibold transition-colors"
-        >
-          {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Yaradılır...</> : "Layihəni Yarat"}
-        </button>
+      {/* STICKY ACTIONS FOOTER - Həmişə ekranda görünür */}
+      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+        <div className="max-w-2xl mx-auto flex items-center justify-end gap-3">
+          <Link
+            href="/dashboard/projects"
+            className="px-5 py-2.5 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--accent))] transition-colors"
+          >
+            Ləğv Et
+          </Link>
+          <button
+            type="submit"
+            disabled={loading || !hasDepartments}
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors shadow-md"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            {loading ? "Yaradılır..." : "Yadda Saxla və Yarat"}
+          </button>
+        </div>
       </div>
     </form>
   );

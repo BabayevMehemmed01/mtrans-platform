@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Table,
@@ -20,7 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Trash } from "lucide-react";
+import { MoreVertical, Trash, UserPlus, ShieldAlert } from "lucide-react";
 import type { TaskMember } from "@/components/kanban/types";
 
 // Extended ProjectMember type that includes the user object and role
@@ -105,20 +104,29 @@ export function ProjectMembersClient({
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl p-6 shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Layihəyə Üzv Əlavə Et</h3>
-        <form onSubmit={handleAddMember} className="flex items-end gap-4">
-          <div className="flex-1 space-y-2">
-            <Label htmlFor="user">İstifadəçi</Label>
+    <div className="p-6 max-w-[1600px] mx-auto space-y-6 overflow-auto h-full">
+      {/* Add Member Toolbar */}
+      <div className="bg-white border border-gray-200/80 rounded-xl p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center">
+            <UserPlus className="w-5 h-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-[15px] font-bold text-slate-800">Yeni Üzv Əlavə Et</h3>
+            <p className="text-[12px] font-medium text-slate-500">Layihəyə şirkət daxilindən işçi cəlb edin</p>
+          </div>
+        </div>
+
+        <form onSubmit={handleAddMember} className="flex items-center gap-3 w-full lg:w-auto">
+          <div className="flex-1 lg:w-64">
             <select
               id="user"
-              className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[13px] font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               value={selectedUserId}
               onChange={(e) => setSelectedUserId(e.target.value)}
               required
             >
-              <option value="">İstifadəçi seçin</option>
+              <option value="" disabled>İstifadəçi seçin...</option>
               {availableUsers.map((u: any) => (
                 <option key={u.id} value={u.id}>
                   {u.name} {u.email ? `(${u.email})` : ''}
@@ -126,11 +134,11 @@ export function ProjectMembersClient({
               ))}
             </select>
           </div>
-          <div className="w-48 space-y-2">
-            <Label htmlFor="role">Layihə Rolu</Label>
+          
+          <div className="w-40">
             <select
               id="role"
-              className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+              className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-[13px] font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
             >
@@ -140,59 +148,70 @@ export function ProjectMembersClient({
               <option value="VIEWER">İzləyici (Viewer)</option>
             </select>
           </div>
-          <Button type="submit" disabled={loading || !selectedUserId} className="bg-blue-600 hover:bg-blue-700 text-white">
-            {loading ? "Əlavə edilir..." : "Əlavə et"}
+          
+          <Button 
+            type="submit" 
+            disabled={loading || !selectedUserId} 
+            className="h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 shadow-sm rounded-lg"
+          >
+            {loading ? "Əlavə edilir..." : "Əlavə Et"}
           </Button>
         </form>
       </div>
 
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden">
+      {/* Members Table */}
+      <div className="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
+        {/* Table Header matching TaskListView style */}
+        <div className="bg-slate-50/80 border-b border-gray-200 px-6 py-3 flex items-center gap-3">
+          <div className="flex-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Üzv / Məlumat</div>
+          <div className="w-32 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">İcazə Rolu</div>
+          <div className="w-16 flex-shrink-0 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">İdarə</div>
+        </div>
+
         <Table>
-          <TableHeader className="bg-muted/50">
-            <TableRow>
-              <TableHead>Üzv</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
-            </TableRow>
-          </TableHeader>
           <TableBody>
             {members.map((member) => (
-              <TableRow key={member.userId}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar>
+              <TableRow key={member.userId} className="hover:bg-slate-50/50 transition-colors border-b border-gray-100 last:border-0">
+                <TableCell className="px-6 py-3">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-10 h-10 border border-gray-200 shadow-sm">
                       <AvatarImage src={member.user.avatar || undefined} />
-                      <AvatarFallback>{getInitials(member.user.name)}</AvatarFallback>
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-bold text-sm">
+                        {getInitials(member.user.name)}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col">
-                      <span className="font-medium text-sm">{member.user.name}</span>
-                      <span className="text-xs text-[hsl(var(--muted-foreground))]">{member.user.email}</span>
+                      <span className="font-bold text-[14px] text-slate-800">{member.user.name}</span>
+                      <span className="text-[12px] font-medium text-slate-500">{member.user.email}</span>
                     </div>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    member.role === 'OWNER' ? 'bg-purple-100 text-purple-800' :
-                    member.role === 'MANAGER' ? 'bg-blue-100 text-blue-800' :
-                    member.role === 'VIEWER' ? 'bg-gray-100 text-gray-800' :
-                    'bg-green-100 text-green-800'
+                
+                <TableCell className="w-32 px-6 py-3 text-center">
+                  <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider border ${
+                    member.role === 'OWNER' ? 'bg-purple-50 text-purple-700 border-purple-200' :
+                    member.role === 'MANAGER' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                    member.role === 'VIEWER' ? 'bg-gray-50 text-gray-600 border-gray-200' :
+                    'bg-green-50 text-green-700 border-green-200'
                   }`}>
+                    {member.role === 'OWNER' && <ShieldAlert className="w-3 h-3 mr-1" />}
                     {member.role}
                   </span>
                 </TableCell>
-                <TableCell>
+
+                <TableCell className="w-16 px-6 py-3 text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreVertical className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                      <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-200 rounded-md transition-colors text-slate-500">
+                        <MoreVertical className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border border-gray-200">
                       <DropdownMenuItem 
-                        className="text-red-600 focus:text-red-600" 
+                        className="text-red-600 focus:bg-red-50 focus:text-red-700 cursor-pointer rounded-lg font-medium text-[13px]" 
                         onSelect={(e) => {
-                          e.preventDefault()
-                          handleRemoveMember(member.userId)
+                          e.preventDefault();
+                          handleRemoveMember(member.userId);
                         }}
                       >
                         <Trash className="mr-2 h-4 w-4" />
@@ -205,8 +224,12 @@ export function ProjectMembersClient({
             ))}
             {members.length === 0 && (
               <TableRow>
-                <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                  Bu layihədə hələ heç bir üzv yoxdur.
+                <TableCell colSpan={3} className="text-center py-12">
+                  <div className="flex flex-col items-center justify-center text-slate-500">
+                    <UserPlus className="w-12 h-12 mb-3 opacity-20" />
+                    <p className="text-[14px] font-medium">Bu layihədə hələ heç bir üzv yoxdur.</p>
+                    <p className="text-[12px]">Yuxarıdakı paneldən yeni üzv əlavə edə bilərsiniz.</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
