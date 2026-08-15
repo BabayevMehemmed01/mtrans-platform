@@ -19,6 +19,7 @@ import {
   CircleUser,
   Contact,
   MessageSquare,
+  Network, // Collab üçün ikon
 } from "lucide-react";
 
 // =============================================================================
@@ -40,6 +41,11 @@ const navItems = [
     title: "Layihələr",
     href: "/dashboard/projects",
     icon: FolderKanban,
+  },
+  {
+    title: "Collab (Ortaq)",
+    href: "/dashboard/collab",
+    icon: Network,
   },
   {
     title: "Komanda",
