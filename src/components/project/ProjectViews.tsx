@@ -148,11 +148,13 @@ export function ProjectViews({
         {/* YENİ TƏQVİM MODULU */}
         {activeTab === "calendar" && (
           <ProjectCalendar 
+            projectId={projectId}          /* BUNA ƏLAVƏ EDİLDİ */
             tasks={tasks} 
             members={members} 
             labels={labels} 
             onTaskUpdated={handleTaskUpdated}
             onTaskDeleted={handleTaskDeleted}
+            onTaskCreated={handleTaskCreated}  /* VƏ BUNA ƏLAVƏ EDİLDİ */
           />
         )}
 

@@ -78,11 +78,18 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       where: { companyId },
       orderBy: { name: "asc" },
     }),
-    prisma.user.findMany({
+prisma.user.findMany({
       where: { companyId, status: "ACTIVE" },
-      select: { id: true, name: true, email: true, avatar: true, jobTitle: true },
+      select: { 
+        id: true, 
+        name: true, 
+        email: true, 
+        avatar: true, 
+        jobTitle: true,
+        department: { select: { id: true, name: true } } // <--- BURA ƏLAVƏ EDİLDİ
+      },
       orderBy: { name: "asc" },
-    }),
+  })
   ]);
 
   const memberOptions = project.members.map((m) => ({
