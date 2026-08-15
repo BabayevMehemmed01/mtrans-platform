@@ -28,15 +28,16 @@ export function NewCollabForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // DİQQƏT: departmentId buradan silindi ki, null getməsin
   const [form, setForm] = useState({
     name: "",
     description: "",
     status: "PLANNING",
     priority: "MEDIUM",
-    color: "#8b5cf6", // Collab layihələr üçün default olaraq bənövşəyi ton
+    color: "#8b5cf6",
     startDate: "",
     endDate: "",
-    departmentId: null, // DİQQƏT: Collab olduğu üçün şöbə yoxdur
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -53,12 +54,11 @@ export function NewCollabForm() {
       const res = await fetch("/api/projects", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(form), // departmentId artıq göndərilmir, backend avtomatik null qəbul edəcək
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Xəta baş verdi"); return; }
       
-      // Uğurla yarandıqdan sonra birbaşa həmin layihəyə atırıq
       router.push(`/dashboard/projects/${data.id}?tab=tasks`);
     } catch {
       setError("Şəbəkə xətası");
