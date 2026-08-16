@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { 
   Building2, 
   Users, 
@@ -171,6 +173,9 @@ export function SettingsClient({
   projects: ProjectOption[];
   userRole: any;
 }) {
+  const router = useRouter();
+  const { setTheme: setSystemTheme } = useTheme(); // YENİ: next-themes-dən gəlir
+  
   const isSuperAdmin = typeof userRole === "string" ? userRole.includes("ADMIN") : (userRole?.name?.toUpperCase().includes("ADMIN") || userRole?.name?.toUpperCase().includes("OWNER"));
 
   // 1. Görünüş (Appearance) States
@@ -211,11 +216,20 @@ export function SettingsClient({
   const handleSaveAppearance = async () => {
     setIsAppearanceLoading(true);
     try {
-      // Arxa planda api/settings/user yaradılmalıdır. 
-      // Hələlik brauzer tərəfini vizual simulyasiya edirik
+      const res = await fetch("/api/settings/user", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme, language, wallpaper }),
+      });
+      if (!res.ok) throw new Error("Xəta baş verdi");
+      
+      // YENİ: Uğurla yazıldıqdan sonra effekti dərhal UI-da tətbiq etmək
+      setSystemTheme(theme); // Gecə/Gündüz rejimi anında dəyişir
+      router.refresh();      // Divar kağızı (layout.tsx-dən gələn) anında dəyişir
+
       toast.success("Görünüş və dil tənzimləmələri yadda saxlanıldı.");
     } catch (err: any) {
-      toast.error("Xəta baş verdi.");
+      toast.error(err.message || "Xəta baş verdi.");
     } finally {
       setIsAppearanceLoading(false);
     }

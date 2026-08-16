@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
 
 // ✅ Next.js-ə statik yığmanı dayandırmasını deyən sehrli sətir:
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,15 @@ export default function RootLayout({
   return (
     <html lang="az" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+        {/* YENİ: Bütün saytı ThemeProvider içinə alırıq */}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
