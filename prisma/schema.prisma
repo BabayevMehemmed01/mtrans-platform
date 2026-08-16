@@ -182,6 +182,10 @@ model Company {
   // Yeni dəvət edilən (MEMBER tipli) istifadəçilərin default olaraq üzv ediləcəyi layihələr
   defaultProjectIds String[] @default([])
 
+  // YENİ ƏLAVƏLƏR: Avtomatik Rollar (Member və Guest üçün)
+  defaultMemberRoleId String?
+  defaultGuestRoleId  String?
+
   // Owner — şirkəti yaradan istifadəçi (1 şirkətin 1 sahibi var)
   ownerId String @unique
   owner   User   @relation("CompanyOwner", fields: [ownerId], references: [id])
@@ -336,6 +340,12 @@ model User {
   address      String?    // YENİ: Yaşayış/İş ünvanı
   bio          String?    // YENİ: Haqqında qısa məlumat
   workingHours String     @default("09:00 - 18:00 (B.E - Cümə)") // YENİ: İş saatları
+
+  // YENİ ƏLAVƏLƏR: Görünüş və Ayarlar
+  theme        String     @default("light") // "light", "dark", "system"
+  language     String     @default("az")    // "az", "en", "ru"
+  wallpaper    String     @default("default")
+
   timezone     String     @default("Asia/Baku")
   lastLoginAt  DateTime?
   createdAt    DateTime   @default(now())

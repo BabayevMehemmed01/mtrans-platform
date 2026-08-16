@@ -23,7 +23,7 @@ import { RecentActivityFeed } from "@/components/dashboard/RecentActivityFeed";
 const TREND_DAYS = 14;
 const STATUS_ORDER = ["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELLED"];
 
-export const metadata: Metadata = { title: "Ana Səhifə" };
+export const metadata: Metadata = { title: "Ana Səhifə | WorkSpace ERP" };
 
 // =============================================================================
 // Dashboard Overview Page — Server Component
@@ -54,21 +54,17 @@ export default async function DashboardPage() {
     recentActivity,
     projectsThisMonth,
   ] = await Promise.all([
-    // Layihə statistikaları
     prisma.project.groupBy({
       by: ["status"],
       where: { companyId, isArchived: false },
       _count: true,
     }),
-    // Tapşırıq statistikaları
     prisma.task.groupBy({
       by: ["status"],
       where: { project: { companyId } },
       _count: true,
     }),
-    // Üzv sayı
     prisma.user.count({ where: { companyId } }),
-    // Son 5 tapşırıq
     prisma.task.findMany({
       where: { project: { companyId } },
       orderBy: { createdAt: "desc" },
@@ -83,7 +79,6 @@ export default async function DashboardPage() {
         assignee: { select: { name: true, avatar: true } },
       },
     }),
-    // Son 4 layihə
     prisma.project.findMany({
       where: { companyId, isArchived: false },
       orderBy: { createdAt: "desc" },
@@ -98,14 +93,12 @@ export default async function DashboardPage() {
         _count: { select: { tasks: true, members: true } },
       },
     }),
-    // Etiketlər (Recent)
     prisma.label.findMany({
       where: { companyId },
       orderBy: { createdAt: "desc" },
       take: 5,
       include: { _count: { select: { taskLabels: true } } }
     }),
-    // Son 14 gündə tamamlanan tapşırıqlar (trend qrafiki üçün)
     prisma.task.findMany({
       where: {
         project: { companyId },
@@ -113,14 +106,12 @@ export default async function DashboardPage() {
       },
       select: { completedAt: true },
     }),
-    // Son fəaliyyət qeydləri (Audit Log)
     prisma.auditLog.findMany({
       where: { companyId },
       orderBy: { createdAt: "desc" },
       take: 10,
       include: { user: { select: { name: true, avatar: true } } },
     }),
-    // Bu ay yaradılan layihələr (real trend üçün)
     prisma.project.count({
       where: { companyId, isArchived: false, createdAt: { gte: monthStart } },
     }),
@@ -128,21 +119,16 @@ export default async function DashboardPage() {
 
   // --- Stats hesablamaları ---
   const totalProjects = projectStats.reduce((sum, s) => sum + s._count, 0);
-  const activeProjects =
-    projectStats.find((s) => s.status === "ACTIVE")?._count ?? 0;
+  const activeProjects = projectStats.find((s) => s.status === "ACTIVE")?._count ?? 0;
 
   const totalTasks = taskStats.reduce((sum, s) => sum + s._count, 0);
   const doneTasks = taskStats.find((s) => s.status === "DONE")?._count ?? 0;
-  const inProgressTasks =
-    taskStats.find((s) => s.status === "IN_PROGRESS")?._count ?? 0;
-  const overallProgress =
-    totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+  const inProgressTasks = taskStats.find((s) => s.status === "IN_PROGRESS")?._count ?? 0;
+  const overallProgress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-  // Aktiv Layihələr kartı üçün real trend (fake "+2 bu ay" əvəzinə)
-  const activeProjectsTrend =
-    projectsThisMonth > 0 ? `+${projectsThisMonth} bu ay` : undefined;
+  const activeProjectsTrend = projectsThisMonth > 0 ? `+${projectsThisMonth} bu ay` : undefined;
 
-  // --- Son 14 gün üzrə tamamlanan tapşırıq trendi (gündəlik bucket-lar) ---
+  // --- Son 14 gün üzrə tamamlanan tapşırıq trendi ---
   const tasksTrendData = (() => {
     const buckets = new Map<string, number>();
     for (let i = 0; i < TREND_DAYS; i++) {
@@ -158,154 +144,139 @@ export default async function DashboardPage() {
     return Array.from(buckets, ([date, count]) => ({ date, count }));
   })();
 
-  // --- Statusa görə tapşırıq sayları (bütün statuslar, 0 daxil olmaqla) ---
+  // --- Statusa görə tapşırıq sayları ---
   const statusChartData = STATUS_ORDER.map((status) => ({
     status,
     count: taskStats.find((s) => s.status === status)?._count ?? 0,
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-300">
       {/* Greeting */}
       <div>
-        <h1 className="text-2xl font-bold">
+        <h1 className="text-[26px] font-black tracking-tight text-slate-800">
           Xoş gəlmisiniz, {session.user.name?.split(" ")[0]}! 👋
         </h1>
-        <p className="text-[hsl(var(--muted-foreground))] mt-1 text-sm">
-          Bugünkü iş vəziyyətinizə baxın
+        <p className="text-slate-500 font-medium mt-1 text-[15px]">
+          Bugünkü iş vəziyyətinizə və statistikalarınıza nəzər yetirin.
         </p>
       </div>
 
-      {/* KPI Cards */}
+      {/* DİNAMİK KPI CARDS (KLİKLƏNƏ BİLƏN) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Aktiv Layihələr"
           value={activeProjects}
           subtext={`${totalProjects} layihədən`}
           icon={FolderKanban}
-          iconColor="bg-blue-500/10 text-blue-600"
+          iconColor="bg-blue-100 text-blue-600"
           trend={activeProjectsTrend}
+          href="/dashboard/projects"
         />
         <StatCard
           title="Tamamlanan Tapşırıqlar"
           value={doneTasks}
           subtext={`${totalTasks} tapşırıqdan`}
           icon={CheckCircle2}
-          iconColor="bg-green-500/10 text-green-600"
+          iconColor="bg-green-100 text-green-600"
           trend={`${overallProgress}% tamamlanıb`}
+          href="/dashboard/my-work"
         />
         <StatCard
           title="Davam edən"
           value={inProgressTasks}
-          subtext="tapşırıq aktiv"
+          subtext="tapşırıq aktivdir"
           icon={Clock}
-          iconColor="bg-yellow-500/10 text-yellow-600"
+          iconColor="bg-amber-100 text-amber-600"
+          href="/dashboard/my-work"
         />
         <StatCard
           title="Komanda Üzvləri"
           value={memberCount}
-          subtext="aktiv üzv"
+          subtext="sistemdəki aktiv üzv"
           icon={Users}
-          iconColor="bg-purple-500/10 text-purple-600"
+          iconColor="bg-purple-100 text-purple-600"
+          href="/dashboard/members"
         />
       </div>
 
       {/* Progress Bar */}
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
+      <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-[hsl(var(--primary))]" />
-            <span className="text-sm font-semibold">Ümumi İcra Faizi</span>
+            <TrendingUp className="w-5 h-5 text-blue-600" />
+            <span className="text-[15px] font-bold text-slate-800">Ümumi İcra Faizi</span>
           </div>
-          <span className="text-2xl font-bold text-[hsl(var(--primary))]">
+          <span className="text-3xl font-black text-blue-600">
             {overallProgress}%
           </span>
         </div>
-        <div className="w-full h-2.5 bg-[hsl(var(--muted))] rounded-full overflow-hidden">
+        <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
           <div
-            className="h-full bg-gradient-to-r from-[hsl(var(--primary))] to-blue-400 rounded-full transition-all duration-500"
+            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-1000 ease-out"
             style={{ width: `${overallProgress}%` }}
           />
         </div>
-        <div className="flex justify-between text-xs text-[hsl(var(--muted-foreground))] mt-2">
-          <span>{doneTasks} tamamlandı</span>
-          <span>{totalTasks - doneTasks} qalır</span>
+        <div className="flex justify-between text-[13px] font-medium text-slate-500 mt-3">
+          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-500" /> {doneTasks} tamamlandı</span>
+          <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-amber-500" /> {totalTasks - doneTasks} qalır</span>
         </div>
       </div>
 
-      {/* Charts Row: Tasks Trend + Tasks by Status */}
+      {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
-          <h2 className="text-sm font-semibold mb-4">
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+          <h2 className="text-[16px] font-black text-slate-800 mb-6">
             Son 14 Gün — Tamamlanan Tapşırıqlar
           </h2>
           <TasksTrendChart data={tasksTrendData} />
         </div>
-        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
-          <h2 className="text-sm font-semibold mb-4">Statusa görə Tapşırıqlar</h2>
-          <TasksByStatusChart data={statusChartData} />
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm flex flex-col">
+          <h2 className="text-[16px] font-black text-slate-800 mb-2">Statusa görə Tapşırıqlar</h2>
+          <p className="text-[13px] font-medium text-slate-500 mb-6">Şirkət üzrə bütün tapşırıqların cari bölgüsü</p>
+          <div className="flex-1 flex items-center justify-center">
+            <TasksByStatusChart data={statusChartData} />
+          </div>
         </div>
       </div>
 
       {/* Recent Activity */}
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
-        <div className="flex items-center gap-2 mb-4">
-          <Activity className="w-4 h-4 text-[hsl(var(--primary))]" />
-          <h2 className="text-sm font-semibold">Son Fəaliyyət</h2>
+      <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <Activity className="w-5 h-5 text-indigo-600" />
+          <h2 className="text-[16px] font-black text-slate-800">Sistemdəki Son Fəaliyyətlər</h2>
         </div>
         <RecentActivityFeed logs={recentActivity} />
       </div>
 
-      {/* Bottom Grid: Recent Tasks + Recent Projects + Top Labels */}
+      {/* Bottom Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Recent Tasks */}
-        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold">Son Tapşırıqlar</h2>
-            <Link
-              href="/dashboard/projects"
-              className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
-            >
-              Hamısı <ArrowRight className="w-3 h-3" />
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[16px] font-black text-slate-800">Son Tapşırıqlar</h2>
+            <Link href="/dashboard/my-work" className="text-[12px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
+              Hamısı <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-
           {recentTasks.length === 0 ? (
             <EmptyState icon={AlertCircle} message="Hələ tapşırıq yoxdur" />
           ) : (
-            <ul className="divide-y divide-[hsl(var(--border))]">
+            <ul className="space-y-4">
               {recentTasks.map((task) => (
-                <li key={task.id} className="py-3 first:pt-0 last:pb-0">
+                <li key={task.id} className="group">
                   <div className="flex items-start gap-3">
-                    {/* Project color dot */}
-                    <div
-                      className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
-                      style={{ backgroundColor: task.project.color }}
-                    />
+                    <div className="w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 shadow-sm" style={{ backgroundColor: task.project.color }} />
                     <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/dashboard/projects/${task.project.id}`}
-                        className="text-xs text-[hsl(var(--muted-foreground))] hover:underline truncate block"
-                      >
+                      <Link href={`/dashboard/projects/${task.project.id}`} className="text-[11px] font-bold text-slate-400 hover:text-blue-600 uppercase tracking-wider truncate block transition-colors">
                         {task.project.name}
                       </Link>
-                      <p className="text-sm font-medium truncate">{task.title}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span
-                          className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(task.status)}`}
-                        >
-                          {statusLabel(task.status)}
-                        </span>
-                        <span
-                          className={`text-xs font-medium ${getPriorityColor(task.priority)}`}
-                        >
-                          {priorityLabel(task.priority)}
-                        </span>
+                      <p className="text-[14px] font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors mt-0.5">{task.title}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${getStatusColor(task.status)}`}>{statusLabel(task.status)}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${getPriorityColor(task.priority)}`}>{priorityLabel(task.priority)}</span>
                       </div>
                     </div>
-                    <span className="text-[10px] text-[hsl(var(--muted-foreground))] whitespace-nowrap">
-                      {timeAgo(task.createdAt)}
-                    </span>
                   </div>
                 </li>
               ))}
@@ -314,49 +285,30 @@ export default async function DashboardPage() {
         </div>
 
         {/* Recent Projects */}
-        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold">Son Layihələr</h2>
-            <Link
-              href="/dashboard/projects"
-              className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
-            >
-              Hamısı <ArrowRight className="w-3 h-3" />
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[16px] font-black text-slate-800">Son Layihələr</h2>
+            <Link href="/dashboard/projects" className="text-[12px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
+              Hamısı <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
-
           {recentProjects.length === 0 ? (
             <EmptyState icon={AlertCircle} message="Hələ layihə yoxdur" />
           ) : (
             <ul className="space-y-3">
               {recentProjects.map((proj) => (
                 <li key={proj.id}>
-                  <Link
-                    href={`/dashboard/projects/${proj.id}`}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
-                  >
-                    <div
-                      className="w-9 h-9 rounded-lg flex-shrink-0 flex items-center justify-center text-white text-sm font-bold"
-                      style={{ backgroundColor: proj.color }}
-                    >
-                      {proj.name[0]}
+                  <Link href={`/dashboard/projects/${proj.id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-gray-200 transition-all group">
+                    <div className="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-white text-sm font-bold shadow-sm group-hover:scale-105 transition-transform" style={{ backgroundColor: proj.color }}>
+                      {proj.name.substring(0, 2).toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{proj.name}</p>
-                      <div className="flex items-center gap-3 mt-0.5">
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {proj._count.tasks} tapşırıq
-                        </span>
-                        <span className="text-xs text-[hsl(var(--muted-foreground))]">
-                          {proj._count.members} üzv
-                        </span>
+                      <p className="text-[14px] font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">{proj.name}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-[11px] font-bold text-slate-400">{proj._count.tasks} tapşırıq</span>
+                        <span className="text-[11px] font-bold text-slate-400">{proj._count.members} üzv</span>
                       </div>
                     </div>
-                    <span
-                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${getStatusColor(proj.status)}`}
-                    >
-                      {projectStatusLabel(proj.status)}
-                    </span>
                   </Link>
                 </li>
               ))}
@@ -365,40 +317,25 @@ export default async function DashboardPage() {
         </div>
 
         {/* Top Labels */}
-        <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold">Tez-tez İstifadə Olunan Etiketlər</h2>
-            <Link
-              href="/dashboard/labels"
-              className="text-xs text-[hsl(var(--primary))] hover:underline flex items-center gap-1"
-            >
-              Hamısı <ArrowRight className="w-3 h-3" />
-            </Link>
+        <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-[16px] font-black text-slate-800">Populyar Etiketlər</h2>
           </div>
-
           {topLabels.length === 0 ? (
             <EmptyState icon={Tag} message="Hələ etiket yoxdur" />
           ) : (
             <ul className="space-y-3">
               {topLabels.map((label) => (
-                <li key={label.id}>
-                  <Link
-                    href="/dashboard/labels"
-                    className="flex items-center justify-between p-3 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white"
-                        style={{ backgroundColor: label.color }}
-                      >
-                        <Tag className="w-4 h-4" />
-                      </div>
-                      <span className="text-sm font-medium">{label.name}</span>
+                <li key={label.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-colors">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center text-white shadow-sm" style={{ backgroundColor: label.color }}>
+                      <Tag className="w-4 h-4" />
                     </div>
-                    <span className="text-xs font-semibold px-2.5 py-1 bg-[hsl(var(--muted))] rounded-md text-[hsl(var(--muted-foreground))]">
-                      {label._count.taskLabels}
-                    </span>
-                  </Link>
+                    <span className="text-[13px] font-bold text-slate-700">{label.name}</span>
+                  </div>
+                  <span className="text-[11px] font-bold px-2.5 py-1 bg-white border border-gray-200 rounded-md text-slate-500 shadow-sm">
+                    {label._count.taskLabels} tapşırıq
+                  </span>
                 </li>
               ))}
             </ul>
@@ -413,55 +350,40 @@ export default async function DashboardPage() {
 // Sub-components
 // =============================================================================
 
-function StatCard({
-  title,
-  value,
-  subtext,
-  icon: Icon,
-  iconColor,
-  trend,
-}: {
-  title: string;
-  value: number;
-  subtext: string;
-  icon: React.ElementType;
-  iconColor: string;
-  trend?: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-5 card-hover">
+function StatCard({ title, value, subtext, icon: Icon, iconColor, trend, href }: { title: string; value: number; subtext: string; icon: React.ElementType; iconColor: string; trend?: string; href?: string; }) {
+  const CardContent = (
+    <div className="rounded-2xl border border-gray-200/80 bg-white p-6 h-full flex flex-col justify-between group-hover:border-blue-300 group-hover:shadow-md transition-all duration-300">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] font-medium">
-            {title}
-          </p>
-          <p className="text-3xl font-bold mt-1">{value}</p>
-          <p className="text-xs text-[hsl(var(--muted-foreground))] mt-1">
-            {subtext}
-          </p>
+          <p className="text-[13px] font-bold text-slate-500 uppercase tracking-wider">{title}</p>
+          <p className="text-4xl font-black text-slate-800 mt-2 tracking-tight group-hover:text-blue-600 transition-colors">{value}</p>
+          <p className="text-[12px] font-semibold text-slate-400 mt-1">{subtext}</p>
         </div>
-        <div className={`p-2.5 rounded-xl ${iconColor}`}>
-          <Icon className="w-5 h-5" />
+        <div className={`p-3 rounded-2xl shadow-sm ${iconColor} group-hover:scale-110 transition-transform duration-300`}>
+          <Icon className="w-6 h-6" />
         </div>
       </div>
       {trend && (
-        <p className="text-xs font-medium text-green-600 mt-3">{trend}</p>
+        <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-1.5">
+          <TrendingUp className="w-4 h-4 text-green-500" />
+          <p className="text-[12px] font-bold text-green-600">{trend}</p>
+        </div>
       )}
     </div>
   );
+
+  return href ? (
+    <Link href={href} className="block group h-full cursor-pointer">{CardContent}</Link>
+  ) : (
+    <div className="block group h-full">{CardContent}</div>
+  );
 }
 
-function EmptyState({
-  icon: Icon,
-  message,
-}: {
-  icon: React.ElementType;
-  message: string;
-}) {
+function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message: string; }) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 gap-2 text-[hsl(var(--muted-foreground))]">
-      <Icon className="w-8 h-8 opacity-40" />
-      <p className="text-sm">{message}</p>
+    <div className="flex flex-col items-center justify-center py-10 gap-3 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-gray-200">
+      <Icon className="w-10 h-10 opacity-50" />
+      <p className="text-[13px] font-bold">{message}</p>
     </div>
   );
 }
@@ -470,7 +392,7 @@ function EmptyState({
 function statusLabel(s: string) {
   const map: Record<string, string> = {
     BACKLOG: "Növbəti", TODO: "Gözləyir", IN_PROGRESS: "Davam edir",
-    IN_REVIEW: "Nəzərdən keçirilir", DONE: "Tamamlandı", CANCELLED: "Ləğv edildi",
+    IN_REVIEW: "Nəzərdən keç.", DONE: "Tamamlandı", CANCELLED: "Ləğv edildi",
   };
   return map[s] ?? s;
 }

@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { SettingsClient } from "./SettingsClient";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Parametrlər" };
+export const metadata: Metadata = { title: "Ayarlar | WorkSpace ERP" };
 
 export default async function SettingsPage() {
   const session = await auth();
@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
 
-  // Get company info
+  // 1. Şirkət məlumatlarını çəkirik (Yeni əlavə edilən sütunlarla birlikdə)
   const company = await prisma.company.findUnique({
     where: { id: companyId },
     select: {
@@ -22,16 +22,30 @@ export default async function SettingsPage() {
       slug: true,
       description: true,
       website: true,
+      taxId: true,
+      logo: true,
       plan: true,
       createdAt: true,
       defaultProjectIds: true,
+      defaultMemberRoleId: true,
+      defaultGuestRoleId: true,
     }
   });
 
   if (!company) redirect("/onboarding");
 
-  // Get roles for default role selection (permissions daxil, seçilmiş default rolun
-  // hansı icazələrə malik olduğunu bilmək üçün)
+  // 2. Cari istifadəçinin fərdi ayarlarını (Görünüş, Dil, Wallpaper) çəkirik
+  const currentUser = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      theme: true,
+      language: true,
+      wallpaper: true,
+    }
+  });
+
+  // 3. Rollar (Yeni istifadəçilər üçün default rol seçimi paneli üçün)
   const roles = await prisma.role.findMany({
     where: { companyId },
     include: {
@@ -42,7 +56,7 @@ export default async function SettingsPage() {
     orderBy: { name: "asc" },
   });
 
-  // İcazə qəlibi (permission template) qrid-i üçün bütün icazələr
+  // 4. İcazə qəlibi (permission template) üçün bütün icazələr
   const permissions = await prisma.permission.findMany({
     orderBy: [
       { category: "asc" },
@@ -50,7 +64,7 @@ export default async function SettingsPage() {
     ],
   });
 
-  // Default layihə girişi checkbox-ları üçün şirkətin aktiv layihələri
+  // 5. Default layihə seçimi üçün şirkətin aktiv layihələri
   const projects = await prisma.project.findMany({
     where: { companyId, isArchived: false },
     select: { id: true, name: true, color: true },
@@ -58,21 +72,21 @@ export default async function SettingsPage() {
   });
 
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-4xl mx-auto">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Parametrlər</h2>
-          <p className="text-[hsl(var(--muted-foreground))]">
-            Şirkət məlumatlarını və sistem tənzimləmələrini idarə edin.
-          </p>
-        </div>
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-[1200px] mx-auto animate-in fade-in duration-300">
+      <div className="flex flex-col items-start gap-1 mb-2">
+        <h2 className="text-[28px] font-black tracking-tight text-slate-800">Sistem Ayarları</h2>
+        <p className="text-sm font-medium text-slate-500">
+          Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin.
+        </p>
       </div>
       
       <SettingsClient
         initialCompany={company}
+        currentUserSettings={currentUser}
         roles={roles}
         permissions={permissions}
         projects={projects}
+        userRole={(session.user as any).role}
       />
     </div>
   );
