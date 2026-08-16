@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom"; // <-- BURA YENİ ƏLAVƏ EDİLDİ
 import { signOut } from "next-auth/react";
 import {
   User,
@@ -36,9 +37,16 @@ import {
 import { cn } from "@/lib/utils";
 
 // =============================================================================
-// Köməkçi Modal Komponenti (Mükəmməl Scroll və Klik İdarəetməsi ilə)
+// Köməkçi Modal Komponenti (React Portal ilə Z-index probleminə son!)
 // =============================================================================
 function CustomModal({ isOpen, onClose, title, children, maxWidth = "max-w-3xl" }: any) {
+  const [mounted, setMounted] = useState(false);
+
+  // SSR (Server Side Rendering) xətalarının qarşısını almaq üçün
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Modal açılanda arxa planın sürüşməsini (scroll) dayandırırıq
   useEffect(() => {
     if (isOpen) {
@@ -51,11 +59,11 @@ function CustomModal({ isOpen, onClose, title, children, maxWidth = "max-w-3xl" 
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !mounted) return null;
 
-  return (
+  const modalContent = (
     <div 
-      className="fixed inset-0 z-[9999] flex justify-center items-start pt-10 pb-10 overflow-y-auto bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[99999] flex justify-center items-start pt-10 pb-10 overflow-y-auto bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose} // Arxa fona klikləyəndə bağla
     >
       <div 
@@ -81,6 +89,9 @@ function CustomModal({ isOpen, onClose, title, children, maxWidth = "max-w-3xl" 
       </div>
     </div>
   );
+
+  // createPortal elementi birbaşa <body> teqinin içinə render edir
+  return createPortal(modalContent, document.body);
 }
 
 // =============================================================================
