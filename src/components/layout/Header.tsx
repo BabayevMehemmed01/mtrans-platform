@@ -1,13 +1,14 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
-import { Bell, Search, LogOut, User, Settings, ChevronDown, CheckCheck } from "lucide-react";
-import { getInitials, timeAgo } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { Bell, Search, CheckCheck } from "lucide-react";
+import { timeAgo } from "@/lib/utils";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import { useCommandPaletteStore } from "@/store/useCommandPaletteStore";
+import { UserProfileDropdown } from "./UserProfileDropdown";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -21,7 +22,7 @@ interface NotificationItem {
 }
 
 // =============================================================================
-// Breadcrumb helper — URL path-i oxunaqlı ad-a çevirir
+// Breadcrumb helper — URL path-i oxunaqlı ada çevirir
 // =============================================================================
 const routeLabels: Record<string, string> = {
   dashboard: "Ana Səhifə",
@@ -33,6 +34,10 @@ const routeLabels: Record<string, string> = {
   roles: "Rollar & İcazələr",
   labels: "Etiketlər",
   settings: "Parametrlər",
+  collab: "Collab (Ortaq)",
+  crm: "CRM",
+  chat: "Mesajlar",
+  "my-work": "Mənim İşlərim",
 };
 
 function useBreadcrumbs() {
@@ -52,10 +57,12 @@ export function Header() {
   const { data: session } = useSession();
   const breadcrumbs = useBreadcrumbs();
   const router = useRouter();
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
+
+  // Bildiriş pəncərəsi və Axtarış modulu üçün state-lər
   const [notifMenuOpen, setNotifMenuOpen] = useState(false);
   const { setOpen: setPaletteOpen } = useCommandPaletteStore();
 
+  // Real-time bildirişlərin SWR ilə çəkilməsi (hər 15 saniyədən bir)
   const { data: notifData, mutate: mutateNotifications } = useSWR<{
     notifications: NotificationItem[];
     unreadCount: number;
@@ -65,9 +72,13 @@ export function Header() {
   const unreadCount = notifData?.unreadCount ?? 0;
 
   const user = session?.user;
-  const roleName = (user as any)?.role?.name ?? "İstifadəçi";
-  const roleColor = (user as any)?.role?.color ?? "#6366f1";
 
+  // İstifadəçi rolu məlumatının formatlanması
+  const roleName = typeof (user as any)?.role === "string"
+    ? (user as any).role
+    : ((user as any)?.role?.name ?? "İstifadəçi");
+
+  // Bildirişə kliklədikdə oxunmuş edilməsi və müvafiq səhifəyə keçid
   const handleNotificationClick = async (notif: NotificationItem) => {
     setNotifMenuOpen(false);
     if (!notif.isRead) {
@@ -80,6 +91,7 @@ export function Header() {
     }
   };
 
+  // Bütün bildirişləri oxunmuş kimi qeyd etmək
   const handleMarkAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });
     mutateNotifications();
@@ -87,7 +99,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex items-center h-14 px-4 gap-4 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] backdrop-blur-sm">
-      {/* Breadcrumb */}
+      {/* ─── Breadcrumb Naviqasiyası ─── */}
       <nav className="flex items-center gap-1 text-sm flex-1 min-w-0">
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.href} className="flex items-center gap-1">
@@ -108,7 +120,7 @@ export function Header() {
         ))}
       </nav>
 
-      {/* Search Button */}
+      {/* ─── Qlobal Axtarış Düyməsi (Command Palette Trigger) ─── */}
       <button
         onClick={() => setPaletteOpen(true)}
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] transition-colors min-w-[200px] hidden md:flex"
@@ -120,11 +132,12 @@ export function Header() {
         </kbd>
       </button>
 
-      {/* Notifications */}
+      {/* ─── Bildirişlər Bölməsi ─── */}
       <div className="relative">
         <button
           onClick={() => setNotifMenuOpen((prev) => !prev)}
           className="relative p-2 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
+          title="Bildirişlər"
         >
           <Bell className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           {unreadCount > 0 && (
@@ -134,6 +147,7 @@ export function Header() {
 
         {notifMenuOpen && (
           <>
+            {/* Arxa fon örtüyü (Klikləyəndə bağlanması üçün) */}
             <div
               className="fixed inset-0 z-30"
               onClick={() => setNotifMenuOpen(false)}
@@ -151,7 +165,7 @@ export function Header() {
                   </button>
                 )}
               </div>
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
                   <p className="p-4 text-sm text-center text-[hsl(var(--muted-foreground))]">
                     Bildiriş yoxdur
@@ -188,86 +202,15 @@ export function Header() {
         )}
       </div>
 
-      {/* User Menu */}
-      <div className="relative">
-        <button
-          onClick={() => setUserMenuOpen((prev) => !prev)}
-          className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
-        >
-          {/* Avatar */}
-          <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-            style={{ backgroundColor: roleColor }}>
-            {user?.image ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.image} alt={user.name ?? ""} className="w-full h-full rounded-full object-cover" />
-            ) : (
-              getInitials(user?.name ?? "U")
-            )}
-          </div>
-          {/* Name + Role */}
-          <div className="hidden md:block text-left min-w-0">
-            <p className="text-xs font-semibold leading-none truncate max-w-[120px]">
-              {user?.name}
-            </p>
-            <p className="text-[10px] text-[hsl(var(--muted-foreground))] truncate max-w-[120px] mt-0.5">
-              {roleName}
-            </p>
-          </div>
-          <ChevronDown className="w-3 h-3 text-[hsl(var(--muted-foreground))] hidden md:block" />
-        </button>
-
-        {/* Dropdown */}
-        {userMenuOpen && (
-          <>
-            <div
-              className="fixed inset-0 z-30"
-              onClick={() => setUserMenuOpen(false)}
-            />
-            <div className="absolute right-0 top-full mt-1 z-40 w-52 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xl animate-scale-in overflow-hidden">
-              <div className="p-3 border-b border-[hsl(var(--border))]">
-                <p className="text-sm font-semibold truncate">{user?.name}</p>
-                <p className="text-xs text-[hsl(var(--muted-foreground))] truncate">{user?.email}</p>
-              </div>
-              <div className="p-1">
-                <DropdownItem icon={User} label="Profilim" href="/dashboard/profile" onClick={() => setUserMenuOpen(false)} />
-                <DropdownItem icon={Settings} label="Parametrlər" href="/dashboard/settings" onClick={() => setUserMenuOpen(false)} />
-              </div>
-              <div className="p-1 border-t border-[hsl(var(--border))]">
-                <button
-                  onClick={() => signOut({ callbackUrl: "/login" })}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[hsl(var(--destructive))] hover:bg-[hsl(var(--destructive)/0.08)] rounded-lg transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Çıxış
-                </button>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      {/* ─── Sağ Yuxarı: İstifadəçi Profili və Ayarlar Menyu Kompleksi ─── */}
+      <UserProfileDropdown
+        user={{
+          name: user?.name || "İstifadəçi",
+          email: user?.email || "Email qeyd edilməyib",
+          role: roleName,
+          avatar: user?.image || undefined,
+        }}
+      />
     </header>
-  );
-}
-
-function DropdownItem({
-  icon: Icon,
-  label,
-  href,
-  onClick,
-}: {
-  icon: React.ElementType;
-  label: string;
-  href: string;
-  onClick: () => void;
-}) {
-  return (
-    <a
-      href={href}
-      onClick={onClick}
-      className="flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
-    >
-      <Icon className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
-      {label}
-    </a>
   );
 }
