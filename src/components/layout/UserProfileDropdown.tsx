@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // <-- BURA YENİ ƏLAVƏ EDİLDİ
+import { createPortal } from "react-dom";
 import { signOut } from "next-auth/react";
 import {
   User,
@@ -24,7 +24,8 @@ import {
   Phone,
   Globe,
   FileText,
-  TrendingUp
+  TrendingUp,
+  Image as ImageIcon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -37,20 +38,18 @@ import {
 import { cn } from "@/lib/utils";
 
 // =============================================================================
-// Köməkçi Modal Komponenti (React Portal ilə Z-index probleminə son!)
+// MÜKƏMMƏL MODAL KOMPONENTİ (Z-Index və Scroll problemlərinə son)
 // =============================================================================
 function CustomModal({ isOpen, onClose, title, children, maxWidth = "max-w-3xl" }: any) {
   const [mounted, setMounted] = useState(false);
 
-  // SSR (Server Side Rendering) xətalarının qarşısını almaq üçün
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Modal açılanda arxa planın sürüşməsini (scroll) dayandırırıq
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = "hidden"; // Modal açılanda arxa plan sürüşməsin
     } else {
       document.body.style.overflow = "unset";
     }
@@ -63,39 +62,41 @@ function CustomModal({ isOpen, onClose, title, children, maxWidth = "max-w-3xl" 
 
   const modalContent = (
     <div 
-      className="fixed inset-0 z-[99999] flex justify-center items-start pt-10 pb-10 overflow-y-auto bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200"
       onClick={onClose} // Arxa fona klikləyəndə bağla
     >
       <div 
-        className={cn("bg-white rounded-2xl shadow-2xl w-full flex flex-col relative mb-10 mx-4 border border-gray-100", maxWidth)}
+        className={cn(
+          "bg-white rounded-2xl shadow-2xl w-full flex flex-col relative max-h-[90vh] overflow-hidden border border-gray-100 animate-in zoom-in-95 duration-200", 
+          maxWidth
+        )}
         onClick={(e) => e.stopPropagation()} // Daxilə klikləyəndə bağlanmasın
       >
-        {/* Sticky Header (Həmişə yuxarıda görünür) */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white/95 backdrop-blur-md z-10 rounded-t-2xl">
-          <h2 className="text-lg font-black text-slate-800 tracking-tight">{title}</h2>
+        {/* Sabit (Sticky) Başlıq */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white z-10 shrink-0">
+          <h2 className="text-[18px] font-black text-slate-800 tracking-tight">{title}</h2>
           <button 
             onClick={onClose} 
             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors bg-slate-50"
-            title="Bağla (Esc)"
+            title="Bağla"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
         
-        {/* Modal Məzmunu */}
-        <div className="p-6">
+        {/* Sürüşdürülə bilən (Scrollable) Məzmun */}
+        <div className="overflow-y-auto custom-scrollbar p-6 bg-white">
           {children}
         </div>
       </div>
     </div>
   );
 
-  // createPortal elementi birbaşa <body> teqinin içinə render edir
   return createPortal(modalContent, document.body);
 }
 
 // =============================================================================
-// Əsas Dropdown Komponenti
+// ƏSAS DROPDOWN KOMPONENTİ
 // =============================================================================
 interface UserProfileDropdownProps {
   user: {
@@ -125,7 +126,7 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
 
   return (
     <>
-      {/* ─── Dropdown Tətiyi (Header-də görünən hissə) ─── */}
+      {/* ─── DROPDOWN TƏTİYİ (HEADER) ─── */}
       <DropdownMenu>
         <DropdownMenuTrigger className="flex items-center gap-3 outline-none hover:bg-slate-50 p-1.5 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-gray-200">
           <Avatar className="w-10 h-10 border border-gray-200 shadow-sm">
@@ -142,7 +143,7 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
           </div>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border-gray-200/80">
+        <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border-gray-200/80 z-[60]">
           <div className="px-3 py-2 mb-2 border-b border-gray-100">
             <p className="text-sm font-bold text-slate-800 truncate">{user.name}</p>
             <p className="text-xs font-medium text-slate-500 truncate">{user.email}</p>
@@ -166,9 +167,9 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* ─── 1. MODAL: View My Details (Genişləndirilmiş Profil Kartı) ─── */}
+      {/* ─── 1. MODAL: İSTİFADƏÇİ PROFİLİ (VIEW) ─── */}
       <CustomModal isOpen={isViewOpen} onClose={() => setViewOpen(false)} title="İstifadəçi Profili" maxWidth="max-w-4xl">
-        <div className="flex items-center gap-2 border-b border-gray-200 mb-6 overflow-x-auto custom-scrollbar pb-2">
+        <div className="flex items-center gap-2 border-b border-gray-200 mb-6 overflow-x-auto custom-scrollbar pb-3">
           {VIEW_TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -190,10 +191,9 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
 
         {activeTab === "details" ? (
           <div className="space-y-6 animate-in fade-in">
-            {/* Profil Qapağı (Cover) və Avatar */}
-            <div className="relative rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 h-32 overflow-hidden shadow-sm">
+            <div className="relative rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 h-32 overflow-visible shadow-sm">
               <div className="absolute -bottom-10 left-6">
-                <Avatar className="w-24 h-24 shadow-xl border-4 border-white">
+                <Avatar className="w-24 h-24 shadow-xl border-4 border-white bg-white">
                   <AvatarImage src={user.avatar} />
                   <AvatarFallback className="bg-slate-100 text-blue-700 font-black text-3xl">
                     {user.name.substring(0, 2).toUpperCase()}
@@ -202,17 +202,17 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
               </div>
             </div>
             
-            <div className="pt-10 px-2 flex justify-between items-start">
+            <div className="pt-12 px-2 flex flex-col sm:flex-row justify-between items-start gap-4">
               <div>
                 <h3 className="text-2xl font-black text-slate-800 tracking-tight">{user.name}</h3>
                 <p className="text-sm font-semibold text-slate-500 mt-1 flex items-center gap-2">
-                  <Briefcase className="w-4 h-4" /> Data Analitika və Rəqəmsal İnkişaf Rəhbəri
+                  <Briefcase className="w-4 h-4" /> Peşəkar Mütəxəssis
                 </p>
-                <div className="flex items-center gap-2 mt-3">
-                  <span className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 bg-indigo-100 px-3 py-1 rounded-lg">
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <span className="flex items-center gap-1.5 text-[12px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-lg">
                     <ShieldCheck className="w-3.5 h-3.5" /> {user.role}
                   </span>
-                  <span className="flex items-center gap-1.5 text-[12px] font-bold text-green-700 bg-green-100 px-3 py-1 rounded-lg">
+                  <span className="flex items-center gap-1.5 text-[12px] font-bold text-green-700 bg-green-50 border border-green-100 px-3 py-1 rounded-lg">
                     <Activity className="w-3.5 h-3.5" /> Aktiv (Onlayn)
                   </span>
                 </div>
@@ -222,22 +222,15 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <InfoCard icon={Mail} label="Email Ünvanı" value={user.email} />
-              <InfoCard icon={Phone} label="Əlaqə Nömrəsi" value="+994 (55) 123 45 67" />
+              <InfoCard icon={Phone} label="Əlaqə Nömrəsi" value="+994 (55) 000 00 00" />
               <InfoCard icon={Clock} label="İş Saatları" value="09:00 - 18:00 (B.E - Cümə)" />
-              <InfoCard icon={MapPin} label="Ünvan" value="Bakı şəh., Nərimanov r-nu" />
-            </div>
-
-            <div className="bg-slate-50 p-5 rounded-2xl border border-gray-200/80">
-              <h4 className="text-[13px] font-bold text-slate-500 uppercase tracking-wider mb-2">Haqqında (Bio)</h4>
-              <p className="text-sm font-medium text-slate-700 leading-relaxed">
-                Şirkətin verilənlər bazası arxitekturasının qurulması, data analitikası və hesabatlıq proseslərinin idarə edilməsi. Power BI, Python və SQL texnologiyalarından istifadə edərək biznes qərarlarının optimallaşdırılmasına dəstək verir.
-              </p>
+              <InfoCard icon={MapPin} label="Ünvan" value="Bakı şəh., Azərbaycan" />
             </div>
           </div>
         ) : (
-          <div className="py-24 flex flex-col items-center justify-center text-center animate-in fade-in">
+          <div className="py-20 flex flex-col items-center justify-center text-center animate-in fade-in">
             <div className="w-16 h-16 bg-blue-50 flex items-center justify-center rounded-2xl mb-4">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
             </div>
@@ -249,125 +242,111 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
         )}
       </CustomModal>
 
-      {/* ─── 2. MODAL: Edit My Details (Detallı Form) ─── */}
+      {/* ─── 2. MODAL: PROFİLİ YENİLƏ (EDIT) ─── */}
       <CustomModal isOpen={isEditOpen} onClose={() => setEditOpen(false)} title="Profil Məlumatlarını Yenilə" maxWidth="max-w-3xl">
         <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setEditOpen(false); }}>
           
-          <div className="flex items-center gap-4 p-4 bg-blue-50 rounded-2xl border border-blue-100">
-            <Avatar className="w-16 h-16 shadow-sm border border-white">
+          <div className="flex items-center gap-5 p-5 bg-slate-50 rounded-2xl border border-gray-200/80">
+            <Avatar className="w-20 h-20 shadow-sm border border-gray-200">
               <AvatarImage src={user.avatar} />
-              <AvatarFallback className="bg-blue-600 text-white font-bold">{user.name.substring(0,2)}</AvatarFallback>
+              <AvatarFallback className="bg-blue-600 text-white font-bold text-xl">{user.name.substring(0,2)}</AvatarFallback>
             </Avatar>
             <div>
-              <h4 className="text-sm font-bold text-slate-800">Profil Şəkli</h4>
-              <p className="text-xs text-slate-500 mb-2">JPG, GIF və ya PNG. Maksimum 5MB.</p>
-              <button type="button" className="text-[12px] font-bold bg-white border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">
-                Şəkil Yüklə
+              <h4 className="text-sm font-bold text-slate-800 mb-1">Profil Şəkli</h4>
+              <p className="text-xs font-medium text-slate-500 mb-3">Tövsiyə olunan ölçü: 400x400px. Maksimum 5MB.</p>
+              <button type="button" className="flex items-center gap-2 text-[12px] font-bold bg-white border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-slate-700">
+                <ImageIcon className="w-4 h-4" /> Şəkil Yüklə
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <div className="space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Ad və Soyad *</label>
-              <input defaultValue={user.name} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-semibold focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+              <input defaultValue={user.name} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-semibold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-sm" />
             </div>
             <div className="space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Email Ünvanı *</label>
-              <input type="email" defaultValue={user.email} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-semibold focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+              <input type="email" defaultValue={user.email} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-semibold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-sm" />
             </div>
             
             <div className="space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">İcazə Rolu</label>
               <div className="relative">
-                <input defaultValue={user.role} disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-100/80 text-gray-500 text-[14px] font-semibold cursor-not-allowed" />
+                <input defaultValue={user.role} disabled className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-[14px] font-semibold cursor-not-allowed shadow-sm" />
                 <ShieldCheck className="absolute right-3 top-3.5 w-4 h-4 text-gray-400" />
               </div>
-              <p className="text-[10px] text-red-400 font-medium pl-1">Rolu yalnız Super Admin dəyişə bilər.</p>
             </div>
             
             <div className="space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Əlaqə Nömrəsi</label>
-              <input defaultValue="+994551234567" placeholder="+994 (__) ___ __ __" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-semibold focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all" />
+              <input defaultValue="+994550000000" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-semibold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-sm" />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">İş Saatları</label>
-              <input defaultValue="09:00 - 18:00 (B.E - Cümə)" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all" />
-            </div>
-            
-            <div className="space-y-1.5">
+            <div className="col-span-1 sm:col-span-2 space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Yaşayış / İş Ünvanı</label>
-              <input defaultValue="Bakı şəh., Nərimanov r-nu" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all" />
-            </div>
-
-            <div className="col-span-1 md:col-span-2 space-y-1.5">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Haqqında (Bio) qısa məlumat</label>
-              <textarea 
-                rows={3} 
-                defaultValue="Şirkətin verilənlər bazası arxitekturasının qurulması, data analitikası və hesabatlıq proseslərinin idarə edilməsi."
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-semibold focus:bg-white focus:border-blue-500 outline-none transition-all resize-none" 
-              />
+              <input defaultValue="Bakı şəh., Azərbaycan" className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-semibold focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all shadow-sm" />
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
-            <button type="button" onClick={() => setEditOpen(false)} className="px-6 py-3 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+          <div className="pt-4 mt-2 flex justify-end gap-3 border-t border-gray-100">
+            <button type="button" onClick={() => setEditOpen(false)} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">
               Ləğv Et
             </button>
-            <button type="submit" className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-md transition-all active:scale-95">
+            <button type="submit" className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-md transition-all active:scale-95">
               Yadda Saxla
             </button>
           </div>
         </form>
       </CustomModal>
 
-      {/* ─── 3. MODAL: Company / Department Info (Detallı və Peşəkar) ─── */}
-      <CustomModal isOpen={isCompanyOpen} onClose={() => setCompanyOpen(false)} title={isSuperAdmin ? "Şirkət Məlumatları (Super Admin)" : "Şöbə Məlumatları"} maxWidth="max-w-3xl">
+      {/* ─── 3. MODAL: ŞİRKƏT VƏ YA ŞÖBƏ MƏLUMATLARI ─── */}
+      <CustomModal isOpen={isCompanyOpen} onClose={() => setCompanyOpen(false)} title={isSuperAdmin ? "Şirkət Məlumatları" : "Şöbə Məlumatları"} maxWidth="max-w-3xl">
         <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setCompanyOpen(false); }}>
           
-          <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl mb-4">
-            <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center flex-shrink-0">
+          <div className="flex items-start gap-4 p-5 bg-gradient-to-r from-slate-50 to-blue-50/50 border border-gray-200/80 rounded-2xl mb-2">
+            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0">
               <Building className="w-6 h-6 text-blue-600" />
             </div>
             <div>
-              <h4 className="text-[15px] font-black text-blue-900 mb-1">Struktur və İdarəetmə Paneli</h4>
-              <p className="text-[13px] font-medium text-blue-800/80 leading-relaxed">
-                Bu bölmədəki məlumatlar bütün sistem üçün qlobal dəyər daşıyır. {isSuperAdmin ? "Siz Super Admin olaraq rəsmi şirkət rekvizitlərini və profilini buradan redaktə edə bilərsiniz." : "Siz yalnız rəhbəri olduğunuz şöbənin məlumatlarına baxa və dəyişə bilərsiniz."}
+              <h4 className="text-[15px] font-black text-slate-800 mb-1">Struktur və İdarəetmə</h4>
+              <p className="text-[13px] font-medium text-slate-500 leading-relaxed">
+                {isSuperAdmin 
+                  ? "Siz Super Admin olaraq rəsmi şirkət rekvizitlərini buradan redaktə edə bilərsiniz." 
+                  : "Siz yalnız rəhbəri olduğunuz şöbənin məlumatlarına baxa və dəyişə bilərsiniz."}
               </p>
             </div>
           </div>
 
-          {/* Statistika Kartları */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="border border-gray-200/80 rounded-xl p-4 bg-white shadow-sm text-center">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Aktiv Layihələr</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="border border-gray-200/80 rounded-xl p-4 bg-white shadow-sm flex flex-col items-center justify-center">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Layihələr</p>
               <p className="text-2xl font-black text-slate-800">12</p>
             </div>
-            <div className="border border-gray-200/80 rounded-xl p-4 bg-white shadow-sm text-center">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Ümumi İşçi Sayı</p>
+            <div className="border border-gray-200/80 rounded-xl p-4 bg-white shadow-sm flex flex-col items-center justify-center">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">İşçi Sayı</p>
               <p className="text-2xl font-black text-slate-800">45</p>
             </div>
-            <div className="border border-gray-200/80 rounded-xl p-4 bg-white shadow-sm text-center">
-              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Aylıq Səmərəlilik</p>
-              <p className="text-2xl font-black text-green-600 flex items-center justify-center gap-1"><TrendingUp className="w-4 h-4"/> 92%</p>
+            <div className="border border-gray-200/80 rounded-xl p-4 bg-white shadow-sm flex flex-col items-center justify-center">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Səmərəlilik</p>
+              <p className="text-2xl font-black text-green-600 flex items-center gap-1"><TrendingUp className="w-5 h-5"/> 92%</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="col-span-1 md:col-span-2 space-y-1.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
+            <div className="col-span-1 sm:col-span-2 space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">{isSuperAdmin ? "Şirkətin Rəsmi Adı" : "Şöbə Adı"}</label>
               <input 
-                defaultValue={isSuperAdmin ? "M-Trans Logistics & Supply Chain MMC" : "İnformasiya Texnologiyaları Şöbəsi"} 
+                defaultValue={isSuperAdmin ? "Şirkət Adı MMC" : "İnformasiya Texnologiyaları Şöbəsi"} 
                 disabled={!isSuperAdmin}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-bold focus:bg-white focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500 transition-colors" 
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-bold focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-colors shadow-sm" 
               />
             </div>
             
             <div className="space-y-1.5">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">{isSuperAdmin ? "VÖEN / Qeydiyyat Nömrəsi" : "Şöbə Kodu"}</label>
+              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">{isSuperAdmin ? "VÖEN" : "Şöbə Kodu"}</label>
               <div className="relative">
-                <input defaultValue={isSuperAdmin ? "1234567891" : "IT-001"} disabled={!isSuperAdmin} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-bold focus:bg-white focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500 transition-colors pl-10" />
+                <input defaultValue={isSuperAdmin ? "1234567891" : "IT-001"} disabled={!isSuperAdmin} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-bold focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-colors pl-10 shadow-sm" />
                 <FileText className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
               </div>
             </div>
@@ -375,29 +354,29 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
             <div className="space-y-1.5">
               <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Veb-sayt</label>
               <div className="relative">
-                <input defaultValue="www.m-trans.az" disabled={!isSuperAdmin} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-bold focus:bg-white focus:border-blue-500 outline-none disabled:bg-gray-100 disabled:text-gray-500 transition-colors pl-10" />
+                <input defaultValue="www.saytadi.az" disabled={!isSuperAdmin} className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-bold focus:border-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-500 transition-colors pl-10 shadow-sm" />
                 <Globe className="absolute left-3.5 top-3.5 w-4 h-4 text-gray-400" />
               </div>
             </div>
 
-            <div className="col-span-1 md:col-span-2 space-y-1.5">
-              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Ümumi Təsvir və Məqsəd</label>
+            <div className="col-span-1 sm:col-span-2 space-y-1.5">
+              <label className="text-[12px] font-bold text-slate-500 uppercase tracking-wider pl-1">Təsvir</label>
               <textarea 
-                rows={4}
-                defaultValue={isSuperAdmin ? "Ölkənin aparıcı logistika, nəqliyyat və təchizat zənciri idarəetmə provayderi. Qlobal standartlara cavab verən tam rəqəmsallaşdırılmış ERP infrastrukturu ilə xidmət göstərir." : "Şirkətin bütün rəqəmsal infrastrukturunu quran, serverləri idarə edən və kiber təhlükəsizliyi təmin edən aparıcı bölmə."} 
+                rows={3}
+                defaultValue="Şirkətin və ya şöbənin əsas məqsəd və fəaliyyət istiqamətləri."
                 disabled={!isSuperAdmin}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-[14px] font-medium leading-relaxed focus:bg-white focus:border-blue-500 outline-none resize-none disabled:bg-gray-100 disabled:text-gray-500 transition-colors" 
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-[14px] font-medium focus:border-blue-500 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-500 transition-colors shadow-sm" 
               />
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-end gap-3 sticky bottom-0 bg-white">
-            <button type="button" onClick={() => setCompanyOpen(false)} className="px-6 py-3 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">
+          <div className="pt-4 mt-2 border-t border-gray-100 flex justify-end gap-3">
+            <button type="button" onClick={() => setCompanyOpen(false)} className="px-6 py-2.5 rounded-xl text-[13px] font-bold text-slate-600 hover:bg-slate-100 transition-colors">
               Bağla
             </button>
             {isSuperAdmin && (
-              <button type="submit" className="px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-md transition-all active:scale-95">
-                Dəyişikliyi Təsdiqlə
+              <button type="submit" className="px-8 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-bold shadow-md transition-all active:scale-95">
+                Təsdiqlə
               </button>
             )}
           </div>
@@ -407,16 +386,16 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
   );
 }
 
-// Kiçik köməkçi UI komponenti (Məlumat Kartları üçün)
+// Kiçik köməkçi UI komponenti
 function InfoCard({ icon: Icon, label, value }: { icon: any; label: string; value: string }) {
   return (
-    <div className="bg-white p-5 rounded-2xl border border-gray-200/80 shadow-sm flex items-center gap-4 hover:border-blue-200 transition-colors">
-      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl flex-shrink-0">
+    <div className="bg-slate-50 p-4 rounded-xl border border-gray-200/80 shadow-sm flex items-center gap-4 hover:border-gray-300 transition-colors">
+      <div className="p-2.5 bg-white text-blue-600 rounded-lg border border-gray-100 shadow-sm flex-shrink-0">
         <Icon className="w-5 h-5" />
       </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-        <p className="text-[14px] font-black text-slate-800 truncate">{value}</p>
+        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">{label}</p>
+        <p className="text-[14px] font-bold text-slate-800 truncate">{value}</p>
       </div>
     </div>
   );
