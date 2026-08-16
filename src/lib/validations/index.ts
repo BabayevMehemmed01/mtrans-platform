@@ -62,6 +62,7 @@ export const updateCompanySchema = z.object({
   description: z.string().max(500).optional(),
   website: z.string().url("Düzgün URL daxil edin").optional().or(z.literal("")),
   logo: z.string().url().optional(),
+  taxId: z.string().optional().nullable(),
 });
 
 export type UpdateCompanyInput = z.infer<typeof updateCompanySchema>;

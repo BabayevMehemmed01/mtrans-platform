@@ -27,7 +27,7 @@ export async function PATCH(req: NextRequest) {
         { status: 400 }
       );
     }
-    const data = parsed.data;
+    const data = parsed.data as any; // ts xətasının qarşısını almaq üçün
 
     const updated = await prisma.company.update({
       where: { id: companyId },
@@ -36,6 +36,7 @@ export async function PATCH(req: NextRequest) {
         ...(data.description !== undefined && { description: data.description }),
         ...(data.website !== undefined && { website: data.website }),
         ...(data.logo !== undefined && { logo: data.logo }),
+        ...(data.taxId !== undefined && { taxId: data.taxId }), // YENİ: VÖEN əlavə edildi
       },
     });
 
