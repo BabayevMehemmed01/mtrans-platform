@@ -46,6 +46,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               address: true,
               bio: true,
               workingHours: true,
+              language: true, // BURA ƏLAVƏ OLUNDU (DİL ÜÇÜN)
               companyId: true,
               company: {
                 select: {
@@ -117,6 +118,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           address: user.address,
           bio: user.bio,
           workingHours: user.workingHours,
+          language: user.language, // BURA ƏLAVƏ OLUNDU
           companyId: user.companyId,
           company: user.company,
           role: user.role
@@ -143,6 +145,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.address = (user as any).address;
         token.bio = (user as any).bio;
         token.workingHours = (user as any).workingHours;
+        token.language = (user as any).language || 'az'; // BURA ƏLAVƏ OLUNDU
         token.companyId = (user as any).companyId;
         token.company = (user as any).company;
         token.role = (user as any).role;
@@ -160,6 +163,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         (session.user as any).address = token.address as string;
         (session.user as any).bio = token.bio as string;
         (session.user as any).workingHours = token.workingHours as string;
+        (session.user as any).language = token.language as string; // BURA ƏLAVƏ OLUNDU
         session.user.companyId = token.companyId as string;
         session.user.company = token.company as any;
         session.user.role = token.role as any;

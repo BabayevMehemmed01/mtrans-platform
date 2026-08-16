@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "title": "System Settings",
+    "description": "Manage appearance, security, permissions, and company settings here.",
+    "appearance": "Appearance & Language",
+    "theme": "Interface Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System",
+    "save": "Apply Changes",
+    "saving": "Saving..."
+  }
+}

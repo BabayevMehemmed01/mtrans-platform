@@ -1,0 +1,13 @@
+{
+  "settings": {
+    "title": "Sistem Ayarları",
+    "description": "Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin.",
+    "appearance": "Görünüş və Dil",
+    "theme": "İnterfeys Mövzusu (Theme)",
+    "light": "Gündüz",
+    "dark": "Gecə",
+    "system": "Sistem",
+    "save": "Dəyişiklikləri Tətbiq Et",
+    "saving": "Yadda saxlanılır..."
+  }
+}
