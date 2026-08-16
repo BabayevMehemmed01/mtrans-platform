@@ -9,5 +9,25 @@
     "system": "Система",
     "save": "Применить изменения",
     "saving": "Сохранение..."
+  },
+  "menu": {
+    "dashboard": "Главная",
+    "myWork": "Мои дела",
+    "projects": "Проекты",
+    "collab": "Сотрудничество",
+    "team": "Команда",
+    "departments": "Отделы",
+    "crm": "CRM",
+    "messages": "Сообщения",
+    "reports": "Отчеты",
+    "roles": "Роли и Права",
+    "labels": "Метки",
+    "settings": "Настройки",
+    "main": "Основное",
+    "administration": "Администрация",
+    "collapse": "Свернуть",
+    "expand": "Развернуть",
+    "workspace": "WorkSpace",
+    "platform": "ERP Платформа"
   }
 }

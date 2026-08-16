@@ -9,5 +9,25 @@
     "system": "System",
     "save": "Apply Changes",
     "saving": "Saving..."
+  },
+  "menu": {
+    "dashboard": "Dashboard",
+    "myWork": "My Work",
+    "projects": "Projects",
+    "collab": "Collab",
+    "team": "Team",
+    "departments": "Departments",
+    "crm": "CRM",
+    "messages": "Messages",
+    "reports": "Reports",
+    "roles": "Roles & Permissions",
+    "labels": "Labels",
+    "settings": "Settings",
+    "main": "Main",
+    "administration": "Administration",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "workspace": "WorkSpace",
+    "platform": "ERP Platform"
   }
 }

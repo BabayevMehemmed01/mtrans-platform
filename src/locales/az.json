@@ -9,5 +9,25 @@
     "system": "Sistem",
     "save": "Dəyişiklikləri Tətbiq Et",
     "saving": "Yadda saxlanılır..."
+  },
+  "menu": {
+    "dashboard": "Ana Səhifə",
+    "myWork": "Mənim İşlərim",
+    "projects": "Layihələr",
+    "collab": "Collab (Ortaq)",
+    "team": "Komanda",
+    "departments": "Şöbələr",
+    "crm": "CRM",
+    "messages": "Mesajlar",
+    "reports": "Hesabatlar",
+    "roles": "Rollar & İcazələr",
+    "labels": "Etiketlər",
+    "settings": "Parametrlər",
+    "main": "Əsas",
+    "administration": "Administrasiya",
+    "collapse": "Daralt",
+    "expand": "Genişlət",
+    "workspace": "WorkSpace",
+    "platform": "ERP Platform"
   }
 }

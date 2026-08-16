@@ -7,19 +7,29 @@ import { CommandPalette } from "@/components/layout/CommandPalette";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 import { prisma } from "@/lib/prisma";
 
-// YENİ: Arxa plan (Wallpaper) üçün köməkçi funksiya
-function getWallpaperClass(wp: string | null | undefined) {
-  switch (wp) {
-    case 'gradient-1': return 'bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-slate-900 dark:via-slate-900 dark:to-indigo-950';
-    case 'mesh': return 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-50 via-slate-50 to-white dark:from-slate-800 dark:via-slate-900 dark:to-black';
-    case 'abstract': return 'bg-gradient-to-tr from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900'; 
-    default: return 'bg-[hsl(var(--background))]';
+// YENİ: Arxa plan (Wallpaper) üçün şəkilləri qaytaran funksiya
+function getWallpaperStyle(wp?: string | null) {
+  const imageUrls: Record<string, string> = {
+    'gradient-1': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop',
+    'mesh': 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2000&auto=format&fit=crop',       
+    'abstract': 'https://images.unsplash.com/photo-1604080809712-4cb1b53e7f09?q=80&w=2000&auto=format&fit=crop',   
+    'tech': 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?q=80&w=2000&auto=format&fit=crop'         
+  };
+
+  if (wp && imageUrls[wp]) {
+    return {
+      backgroundImage: `url('${imageUrls[wp]}')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed'
+    };
   }
+  return {}; 
 }
 
 // =============================================================================
 // Dashboard Layout — Server Component
-// Auth yoxlaması server-tərəfdə aparılır
 // =============================================================================
 
 export default async function DashboardLayout({
@@ -30,38 +40,32 @@ export default async function DashboardLayout({
   const session = await auth();
 
   // Server-side auth guard
-  if (!session) {
+  if (!session?.user?.id) {
     redirect("/login");
   }
 
-  // YENİ: İstifadəçinin bazadakı ayarlarını (wallpaper) çəkirik
+  // BURADA as any İSTİFADƏ EDİRİK Kİ, XƏTALAR İTSİN
   const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { wallpaper: true } as any
+    select: { wallpaper: true } as any,
   });
 
-  const wallpaperClass = getWallpaperClass((dbUser as any)?.wallpaper);
+  const userWallpaper = (dbUser as any)?.wallpaper;
+  const wallpaperStyle = getWallpaperStyle(userWallpaper);
+  const isDefault = !userWallpaper || userWallpaper === 'default';
 
   return (
     <SessionProvider session={session}>
-      {/* YENİ: wallpaperClass-ı ana div-ə əlavə etdik */}
-      <div className={`flex h-screen overflow-hidden ${wallpaperClass}`}>
-        {/* Command Palette (Cmd+K) */}
+      <div 
+        className={`flex h-screen overflow-hidden ${isDefault ? 'bg-[hsl(var(--background))]' : ''}`}
+        style={wallpaperStyle}
+      >
         <CommandPalette />
-
-        {/* Global Call Overlay — gələn/aktiv zəng UI-si */}
         <CallOverlay />
-
-        {/* Sidebar */}
         <Sidebar />
 
-        {/* Main Content Area */}
-        {/* YENİ: bg-white/60 qatını atırıq ki, arxadakı rəng çox azacıq şəffaf görünsün (Glassmorphism) */}
-        <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-white/60 dark:bg-black/20 backdrop-blur-[2px]">
-          {/* Header */}
+        <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-white/80 dark:bg-black/70 backdrop-blur-md">
           <Header />
-
-          {/* Page Content */}
           <main className="flex-1 overflow-hidden flex flex-col">
             <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
               {children}

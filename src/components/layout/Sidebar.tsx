@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/useSidebarStore";
+import { getTranslation } from "@/lib/i18n";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -23,52 +25,61 @@ import {
 } from "lucide-react";
 
 // =============================================================================
-// Navigasiya Linkləri
+// Navigasiya Linkləri (tKey əlavə olundu)
 // =============================================================================
 const navItems = [
   {
     title: "Ana Səhifə",
+    tKey: "menu.dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     exact: true,
   },
   {
     title: "Mənim İşlərim",
+    tKey: "menu.myWork",
     href: "/dashboard/my-work",
     icon: CircleUser,
   },
   {
     title: "Layihələr",
+    tKey: "menu.projects",
     href: "/dashboard/projects",
     icon: FolderKanban,
   },
   {
     title: "Collab (Ortaq)",
+    tKey: "menu.collab",
     href: "/dashboard/collab",
     icon: Network,
   },
   {
     title: "Komanda",
+    tKey: "menu.team",
     href: "/dashboard/members",
     icon: Users,
   },
   {
     title: "Şöbələr",
+    tKey: "menu.departments",
     href: "/dashboard/departments",
     icon: Building2,
   },
   {
     title: "CRM",
+    tKey: "menu.crm",
     href: "/dashboard/crm",
     icon: Contact,
   },
   {
     title: "Mesajlar",
+    tKey: "menu.messages",
     href: "/dashboard/chat",
     icon: MessageSquare,
   },
   {
     title: "Hesabatlar",
+    tKey: "menu.reports",
     href: "/dashboard/reports",
     icon: BarChart3,
   },
@@ -77,16 +88,19 @@ const navItems = [
 const adminItems = [
   {
     title: "Rollar & İcazələr",
+    tKey: "menu.roles",
     href: "/dashboard/roles",
     icon: ShieldCheck,
   },
   {
     title: "Etiketlər",
+    tKey: "menu.labels",
     href: "/dashboard/labels",
     icon: Tag,
   },
   {
     title: "Parametrlər",
+    tKey: "menu.settings",
     href: "/dashboard/settings",
     icon: Settings,
   },
@@ -98,6 +112,11 @@ const adminItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const { isCollapsed, collapse, expand } = useSidebarStore();
+
+  // Sessiyadan dili oxuyuruq və tərcümə funksiyasını çağırırıq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   const isActive = (href: string, exact = false) => {
     if (exact) return pathname === href;
@@ -125,9 +144,9 @@ export function Sidebar() {
         </div>
         {!isCollapsed && (
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">WorkSpace</p>
+            <p className="text-sm font-bold text-white truncate">{t("menu.workspace") || "WorkSpace"}</p>
             <p className="text-xs text-[hsl(var(--sidebar-foreground)/0.5)] truncate">
-              ERP Platform
+              {t("menu.platform") || "ERP Platform"}
             </p>
           </div>
         )}
@@ -140,7 +159,8 @@ export function Sidebar() {
           items={navItems}
           isCollapsed={isCollapsed}
           isActive={isActive}
-          label="Əsas"
+          label={t("menu.main") || "Əsas"}
+          t={t}
         />
 
         {/* Divider */}
@@ -151,7 +171,8 @@ export function Sidebar() {
           items={adminItems}
           isCollapsed={isCollapsed}
           isActive={isActive}
-          label="Administrasiya"
+          label={t("menu.administration") || "Administrasiya"}
+          t={t}
         />
       </nav>
 
@@ -165,14 +186,14 @@ export function Sidebar() {
             "hover:bg-[hsl(var(--sidebar-accent))] transition-colors",
             isCollapsed && "justify-center"
           )}
-          title={isCollapsed ? "Genişlət" : "Daralt"}
+          title={isCollapsed ? (t("menu.expand") || "Genişlət") : (t("menu.collapse") || "Daralt")}
         >
           {isCollapsed ? (
             <ChevronRight className="w-4 h-4" />
           ) : (
             <>
               <ChevronLeft className="w-4 h-4" />
-              <span>Daralt</span>
+              <span>{t("menu.collapse") || "Daralt"}</span>
             </>
           )}
         </button>
@@ -189,11 +210,13 @@ function NavGroup({
   isCollapsed,
   isActive,
   label,
+  t,
 }: {
   items: typeof navItems;
   isCollapsed: boolean;
   isActive: (href: string, exact?: boolean) => boolean;
   label: string;
+  t: (key: string) => string;
 }) {
   return (
     <div>
@@ -206,12 +229,14 @@ function NavGroup({
         {items.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href, (item as any).exact);
+          // Tərcümə açarı varsa lüğətdən oxuyur, yoxdursa orijinal title-ı saxlayır
+          const displayTitle = item.tKey ? t(item.tKey) : item.title;
 
           return (
             <li key={item.href}>
               <Link
                 href={item.href}
-                title={isCollapsed ? item.title : undefined}
+                title={isCollapsed ? displayTitle : undefined}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
                   isCollapsed && "justify-center px-0 py-2.5",
@@ -228,7 +253,7 @@ function NavGroup({
                   )}
                 />
                 {!isCollapsed && (
-                  <span className="truncate">{item.title}</span>
+                  <span className="truncate">{displayTitle}</span>
                 )}
                 {active && !isCollapsed && (
                   <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[hsl(var(--sidebar-primary))]" />
