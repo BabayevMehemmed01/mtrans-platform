@@ -41,6 +41,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               passwordHash: true,
               status: true,
               jobTitle: true,
+              // YENİ ƏLAVƏLƏR: Prisma-ya qoyduğumuz yeni sahələri çəkirik
+              phone: true,
+              address: true,
+              bio: true,
+              workingHours: true,
               companyId: true,
               company: {
                 select: {
@@ -49,6 +54,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   slug: true,
                   logo: true,
                   plan: true,
+                  // YENİ ƏLAVƏLƏR: Şirkət üçün detallar
+                  taxId: true,
+                  website: true,
+                  description: true,
                 },
               },
               role: {
@@ -103,6 +112,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           image: user.avatar,
           jobTitle: user.jobTitle,
+          // YENİ ƏLAVƏLƏR: Token-a göndəririk
+          phone: user.phone,
+          address: user.address,
+          bio: user.bio,
+          workingHours: user.workingHours,
           companyId: user.companyId,
           company: user.company,
           role: user.role
@@ -124,6 +138,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id;
         token.jobTitle = (user as any).jobTitle;
+        // YENİ ƏLAVƏLƏR
+        token.phone = (user as any).phone;
+        token.address = (user as any).address;
+        token.bio = (user as any).bio;
+        token.workingHours = (user as any).workingHours;
         token.companyId = (user as any).companyId;
         token.company = (user as any).company;
         token.role = (user as any).role;
@@ -136,6 +155,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (token && session.user) {
         session.user.id = token.id as string;
         session.user.jobTitle = token.jobTitle as string;
+        // YENİ ƏLAVƏLƏR (Frontend-də istifadə üçün)
+        (session.user as any).phone = token.phone as string;
+        (session.user as any).address = token.address as string;
+        (session.user as any).bio = token.bio as string;
+        (session.user as any).workingHours = token.workingHours as string;
         session.user.companyId = token.companyId as string;
         session.user.company = token.company as any;
         session.user.role = token.role as any;
@@ -154,8 +178,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 gün
   },
 
-  // NextAuth v5: AUTH_SECRET env dəyişənini avtomatik oxuyur.
-  // NEXTAUTH_SECRET köhnə v4 adıdır — v5-də işləmir.
-  // secret: process.env.AUTH_SECRET — NextAuth v5 bunu özü oxuyur
   trustHost: true,
 });

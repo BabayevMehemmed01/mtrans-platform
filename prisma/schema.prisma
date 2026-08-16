@@ -9,6 +9,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // =============================================================================
@@ -173,6 +174,7 @@ model Company {
   description String?
   logo        String? // URL
   website     String?
+  taxId       String?     // YENİ: VÖEN və ya Qeydiyyat Nömrəsi
   plan        CompanyPlan @default(FREE)
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
@@ -210,6 +212,7 @@ model Company {
 model Department {
   id          String   @id @default(cuid())
   name        String
+  code        String?  // YENİ: Şöbə Kodu (Məsələn: IT-001)
   description String?
   color       String   @default("#6366f1") // Hex color for UI
   icon        String? // Lucide icon name
@@ -331,6 +334,9 @@ model User {
   status       UserStatus @default(ACTIVE)
   jobTitle     String? // "Senior Developer", "Product Manager"
   phone        String?
+  address      String?    // YENİ: Yaşayış/İş ünvanı
+  bio          String?    // YENİ: Haqqında qısa məlumat
+  workingHours String     @default("09:00 - 18:00 (B.E - Cümə)") // YENİ: İş saatları
   timezone     String     @default("Asia/Baku")
   lastLoginAt  DateTime?
   createdAt    DateTime   @default(now())
@@ -549,14 +555,14 @@ model Comment {
 // =============================================================================
 
 model Attachment {
-  id             String   @id @default(cuid())
-  fileName       String // Original file name
-  fileUrl        String // UploadThing CDN URL
-  fileKey        String   @unique // UploadThing file key (silmək üçün)
-  fileType       String // MIME type: "image/png", "application/pdf"
-  fileSize       Int // Bytes
+  id           String   @id @default(cuid())
+  fileName     String // Original file name
+  fileUrl      String // UploadThing CDN URL
+  fileKey      String   @unique // UploadThing file key (silmək üçün)
+  fileType     String // MIME type: "image/png", "application/pdf"
+  fileSize     Int // Bytes
   thumbnailUrl String? // Şəkillər üçün thumbnail URL
-  createdAt      DateTime @default(now())
+  createdAt    DateTime @default(now())
 
   // Tapşırığa bağlı
   taskId String
