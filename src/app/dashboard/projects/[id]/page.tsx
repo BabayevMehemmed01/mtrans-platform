@@ -5,19 +5,25 @@ import type { Metadata } from "next";
 import { ProjectHeader } from "@/components/project/ProjectHeader";
 import { ProjectViews } from "@/components/project/ProjectViews";
 import { canViewProject } from "@/lib/permissions";
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 interface Props {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ task?: string; tab?: string }>;
 }
 
+// YENİ: Brauzer tabındakı adın dinamik tərcüməsi
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const session = await auth();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const project = await prisma.project.findUnique({
     where: { id },
     select: { name: true },
   });
-  return { title: project?.name ?? "Layihə" };
+  return { title: project?.name ?? (t("projectDetail.defaultTitle") || "Layihə") };
 }
 
 export default async function ProjectDetailPage({ params, searchParams }: Props) {
@@ -78,7 +84,7 @@ export default async function ProjectDetailPage({ params, searchParams }: Props)
       where: { companyId },
       orderBy: { name: "asc" },
     }),
-prisma.user.findMany({
+    prisma.user.findMany({
       where: { companyId, status: "ACTIVE" },
       select: { 
         id: true, 
@@ -86,10 +92,10 @@ prisma.user.findMany({
         email: true, 
         avatar: true, 
         jobTitle: true,
-        department: { select: { id: true, name: true } } // <--- BURA ƏLAVƏ EDİLDİ
+        department: { select: { id: true, name: true } }
       },
       orderBy: { name: "asc" },
-  })
+    })
   ]);
 
   const memberOptions = project.members.map((m) => ({

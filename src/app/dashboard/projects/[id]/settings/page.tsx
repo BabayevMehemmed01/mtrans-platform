@@ -4,11 +4,18 @@ import { redirect, notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ProjectSettingsClient } from "./ProjectSettingsClient";
 import { hasPermission } from "@/lib/permissions";
-
-export const metadata: Metadata = { title: "Layihə Parametrləri" };
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+// YENİ: Brauzer tabındakı adın dinamik tərcüməsi
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await auth();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+  return { title: t("projectSettings.title") || "Layihə Parametrləri" };
 }
 
 export default async function ProjectSettingsPage({ params }: Props) {
@@ -17,6 +24,10 @@ export default async function ProjectSettingsPage({ params }: Props) {
   if (!session?.user) redirect("/login");
 
   const companyId = (session.user as any).companyId;
+
+  // YENİ: Dili oxuyuruq
+  const lang = (session.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   const [project, departments, member, canEditCompanyWide, canDeleteCompanyWide] = await Promise.all([
     prisma.project.findFirst({ where: { id, companyId } }),
@@ -37,10 +48,17 @@ export default async function ProjectSettingsPage({ params }: Props) {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-3xl">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Layihə Parametrləri</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          {t("projectSettings.title") || "Layihə Parametrləri"}
+        </h2>
         <p className="text-[hsl(var(--muted-foreground))]">{project.name}</p>
       </div>
-      <ProjectSettingsClient project={project} departments={departments} canManage={canManage} canDelete={canDelete} />
+      <ProjectSettingsClient 
+        project={project} 
+        departments={departments} 
+        canManage={canManage} 
+        canDelete={canDelete} 
+      />
     </div>
   );
 }

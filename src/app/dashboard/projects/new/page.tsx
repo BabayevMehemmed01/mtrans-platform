@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { NewProjectForm } from "./NewProjectForm";
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 export default async function NewProjectPage({
   searchParams,
@@ -15,6 +16,10 @@ export default async function NewProjectPage({
 
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
+
+  // YENİ: Dili oxuyuruq
+  const lang = (session.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   const { departmentId } = await searchParams;
 
@@ -35,9 +40,11 @@ export default async function NewProjectPage({
           <ArrowLeft className="w-4 h-4" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold">Yeni Layihə</h1>
+          <h1 className="text-xl font-bold">
+            {t("newProject.title") || "Yeni Layihə"}
+          </h1>
           <p className="text-sm text-[hsl(var(--muted-foreground))]">
-            Yeni iş layihəsi yaradın
+            {t("newProject.subtitle") || "Yeni iş layihəsi yaradın"}
           </p>
         </div>
       </div>
