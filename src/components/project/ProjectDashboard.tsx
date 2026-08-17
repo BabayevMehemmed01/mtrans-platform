@@ -8,6 +8,8 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import type { KanbanTask, TaskMember } from "@/components/kanban/types";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface ProjectDashboardProps {
   tasks: KanbanTask[];
@@ -16,6 +18,11 @@ interface ProjectDashboardProps {
 }
 
 export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboardProps) {
+  // Tərcümə mühərriki
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const activeTasks = tasks.filter((t) => !t.isArchived);
   const done = activeTasks.filter((t) => t.status === "DONE").length;
   const inProgress = activeTasks.filter((t) => t.status === "IN_PROGRESS").length;
@@ -32,23 +39,27 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
   ).length;
 
   const statCards = [
-    { label: "Ümumi Tapşırıq", value: total, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
-    { label: "Tamamlandı", value: done, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 border-green-100" },
-    { label: "Davam Edir", value: inProgress, icon: Clock, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
-    { label: "Gecikmiş", value: overdue, icon: AlertCircle, color: "text-red-600", bg: "bg-red-50 border-red-100" },
+    { label: t("projectDashboard.totalTasks") || "Ümumi Tapşırıq", value: total, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50 border-blue-100" },
+    { label: t("projectDashboard.completed") || "Tamamlandı", value: done, icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 border-green-100" },
+    { label: t("projectDashboard.inProgress") || "Davam Edir", value: inProgress, icon: Clock, color: "text-amber-600", bg: "bg-amber-50 border-amber-100" },
+    { label: t("projectDashboard.overdue") || "Gecikmiş", value: overdue, icon: AlertCircle, color: "text-red-600", bg: "bg-red-50 border-red-100" },
   ];
 
   return (
     <div className="p-6 overflow-auto h-full max-w-[1600px] mx-auto space-y-6">
       <div className="flex items-center gap-2 mb-2">
         <LayoutDashboard className="w-5 h-5 text-slate-500" />
-        <h2 className="text-lg font-bold text-slate-800 tracking-tight">Layihə Analitikası</h2>
+        <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+          {t("projectDashboard.analytics") || "Layihə Analitikası"}
+        </h2>
       </div>
 
       {/* Progress bar */}
       <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-700">Ümumi Tərəqqi (Progress)</h3>
+          <h3 className="font-bold text-slate-700">
+            {t("projectDashboard.overallProgress") || "Ümumi Tərəqqi (Progress)"}
+          </h3>
           <span className="text-2xl font-black text-blue-600">{percent}%</span>
         </div>
         <div className="h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
@@ -58,7 +69,9 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
           />
         </div>
         <p className="text-[13px] font-medium text-slate-500 mt-3">
-          {done} / {total} tapşırıq tamamlandı
+          {(t("projectDashboard.tasksCompleted") || "{done} / {total} tapşırıq tamamlandı")
+            .replace("{done}", String(done))
+            .replace("{total}", String(total))}
         </p>
       </div>
 
@@ -82,7 +95,9 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status Breakdown */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm">
-          <h3 className="font-bold text-slate-700 mb-5">Status Bölgüsü</h3>
+          <h3 className="font-bold text-slate-700 mb-5">
+            {t("projectDashboard.statusBreakdown") || "Status Bölgüsü"}
+          </h3>
           <div className="space-y-4">
             {[
               { label: "To Do", count: todo, color: "#6366f1" },
@@ -113,9 +128,11 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
         {/* Members Widget */}
         <div className="bg-white rounded-2xl border border-gray-200/80 p-6 shadow-sm flex flex-col">
           <div className="flex items-center justify-between mb-5">
-            <h3 className="font-bold text-slate-700">Aktiv Üzvlər</h3>
+            <h3 className="font-bold text-slate-700">
+              {t("projectDashboard.activeMembers") || "Aktiv Üzvlər"}
+            </h3>
             <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full">
-              {memberCount} Nəfər
+              {memberCount} {t("projectDashboard.person") || "Nəfər"}
             </span>
           </div>
           <div className="flex-1 space-y-4 overflow-auto max-h-[300px] custom-scrollbar pr-2">
@@ -133,7 +150,7 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
             {memberCount > 8 && (
               <div className="text-center pt-2">
                 <p className="text-[12px] font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg inline-block">
-                  +{memberCount - 8} daha çox üzv layihədə iştirak edir
+                  {(t("projectDashboard.moreMembers") || "+{count} daha çox üzv layihədə iştirak edir").replace("{count}", String(memberCount - 8))}
                 </p>
               </div>
             )}

@@ -247,5 +247,45 @@
     "deleteDesc": "This action cannot be undone. The project and all its tasks will be permanently deleted.",
     "deleting": "Deleting...",
     "deleteBtn": "Delete Permanently"
+  },
+  "projectCalendar": {
+    "today": "Today",
+    "addTitle": "Add new task/event for today",
+    "inputPlaceholder": "Type name, press Enter...",
+    "weekDays": {
+      "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat", "sun": "Sun"
+    }
+  },
+  "projectChat": {
+    "generalChat": "General Project Chat",
+    "chatDesc": "Direct communication with the team",
+    "today": "Today",
+    "placeholder": "Type your message...",
+    "you": "You",
+    "demoMsg1": "Hello team! The project has started, I've assigned the initial tasks.",
+    "demoMsg2": "Great, I'm taking the frontend part.",
+    "demoMsg3": "Where did you upload the design files?",
+    "demoMsg4": "I uploaded them to the 'Files' tab and Figma. I'll drop the link in the group.",
+    "admin": "Admin",
+    "designer": "Designer"
+  },
+  "projectDashboard": {
+    "analytics": "Project Analytics",
+    "overallProgress": "Overall Progress",
+    "tasksCompleted": "{done} / {total} tasks completed",
+    "totalTasks": "Total Tasks",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "overdue": "Overdue",
+    "statusBreakdown": "Status Breakdown",
+    "activeMembers": "Active Members",
+    "person": "Person",
+    "moreMembers": "+{count} more members participate in the project"
+  },
+  "projectHeader": {
+    "settings": "Settings",
+    "peopleCount": "{count} People",
+    "taskCount": "{count} Tasks",
+    "prioritySuffix": "Priority"
   }
 }

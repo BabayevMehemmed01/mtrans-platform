@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Send, Paperclip, Smile, MoreVertical } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface ProjectChatProps {
   projectId: string;
@@ -12,13 +14,19 @@ interface ProjectChatProps {
 }
 
 export function ProjectChat({ projectId, chatChannels, currentUserRole }: ProjectChatProps) {
+  // Tərcüməni qoşuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [message, setMessage] = useState("");
-  // Müvəqqəti mesajlar (Demo) - Gələcəkdə API-dan çəkiləcək
+  
+  // Müvəqqəti mesajlar (Demo) - Tərcümə olunmuş vəziyyətdə
   const [messages, setMessages] = useState([
-    { id: 1, text: "Salam komanda! Layihəyə başladıq, ilk taskları təyin etdim.", sender: "Admin", isMe: false, time: "10:30" },
-    { id: 2, text: "Əla, mən frontend hissəsini götürürəm.", sender: "Sən", isMe: true, time: "10:32" },
-    { id: 3, text: "Bəs dizayn fayllarını hara yüklədiniz?", sender: "Sən", isMe: true, time: "10:33" },
-    { id: 4, text: "Faylları 'Files' tabına və Figma-ya yükləmişəm. Linki qrupa atıram.", sender: "Dizayner", isMe: false, time: "10:35" },
+    { id: 1, text: t("projectChat.demoMsg1") || "Salam komanda! Layihəyə başladıq, ilk taskları təyin etdim.", sender: t("projectChat.admin") || "Admin", isMe: false, time: "10:30" },
+    { id: 2, text: t("projectChat.demoMsg2") || "Əla, mən frontend hissəsini götürürəm.", sender: t("projectChat.you") || "Sən", isMe: true, time: "10:32" },
+    { id: 3, text: t("projectChat.demoMsg3") || "Bəs dizayn fayllarını hara yüklədiniz?", sender: t("projectChat.you") || "Sən", isMe: true, time: "10:33" },
+    { id: 4, text: t("projectChat.demoMsg4") || "Faylları 'Files' tabına və Figma-ya yükləmişəm. Linki qrupa atıram.", sender: t("projectChat.designer") || "Dizayner", isMe: false, time: "10:35" },
   ]);
 
   const handleSend = (e: React.FormEvent) => {
@@ -29,7 +37,7 @@ export function ProjectChat({ projectId, chatChannels, currentUserRole }: Projec
     setMessages([...messages, {
       id: Date.now(),
       text: message,
-      sender: "Sən",
+      sender: t("projectChat.you") || "Sən",
       isMe: true,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }]);
@@ -46,8 +54,12 @@ export function ProjectChat({ projectId, chatChannels, currentUserRole }: Projec
             <span className="text-white font-bold text-sm">#</span>
           </div>
           <div>
-            <h2 className="text-[15px] font-bold text-slate-800">Ümumi Layihə Çatı</h2>
-            <p className="text-[12px] font-medium text-slate-500">Komanda ilə birbaşa əlaqə</p>
+            <h2 className="text-[15px] font-bold text-slate-800">
+              {t("projectChat.generalChat") || "Ümumi Layihə Çatı"}
+            </h2>
+            <p className="text-[12px] font-medium text-slate-500">
+              {t("projectChat.chatDesc") || "Komanda ilə birbaşa əlaqə"}
+            </p>
           </div>
         </div>
         <Button variant="ghost" size="icon" className="text-gray-500">
@@ -58,7 +70,9 @@ export function ProjectChat({ projectId, chatChannels, currentUserRole }: Projec
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
         <div className="text-center">
-          <span className="text-[11px] font-bold text-slate-400 bg-slate-200/50 px-3 py-1 rounded-full">Bu gün</span>
+          <span className="text-[11px] font-bold text-slate-400 bg-slate-200/50 px-3 py-1 rounded-full">
+            {t("projectChat.today") || "Bu gün"}
+          </span>
         </div>
 
         {messages.map((msg) => (
@@ -91,7 +105,7 @@ export function ProjectChat({ projectId, chatChannels, currentUserRole }: Projec
             type="text"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="Mesajınızı yazın..."
+            placeholder={t("projectChat.placeholder") || "Mesajınızı yazın..."}
             className="w-full bg-slate-100/80 border border-slate-200 rounded-full py-3 pl-12 pr-24 text-[14px] font-medium text-slate-800 outline-none focus:border-blue-400 focus:bg-white transition-all shadow-inner"
           />
           

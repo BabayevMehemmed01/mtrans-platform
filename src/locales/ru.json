@@ -247,5 +247,45 @@
     "deleteDesc": "Это действие нельзя отменить. Проект и все его задачи будут навсегда удалены.",
     "deleting": "Удаление...",
     "deleteBtn": "Удалить навсегда"
+  },
+  "projectCalendar": {
+    "today": "Сегодня",
+    "addTitle": "Добавить новую задачу/событие на сегодня",
+    "inputPlaceholder": "Введите имя, нажмите Enter...",
+    "weekDays": {
+      "mon": "Пн", "tue": "Вт", "wed": "Ср", "thu": "Чт", "fri": "Пт", "sat": "Сб", "sun": "Вс"
+    }
+  },
+  "projectChat": {
+    "generalChat": "Общий чат проекта",
+    "chatDesc": "Прямое общение с командой",
+    "today": "Сегодня",
+    "placeholder": "Введите ваше сообщение...",
+    "you": "Вы",
+    "demoMsg1": "Всем привет! Мы начали проект, я назначил первые задачи.",
+    "demoMsg2": "Отлично, я беру на себя фронтенд.",
+    "demoMsg3": "Куда вы загрузили файлы дизайна?",
+    "demoMsg4": "Я загрузил их во вкладку 'Files' и в Figma. Скину ссылку в группу.",
+    "admin": "Админ",
+    "designer": "Дизайнер"
+  },
+  "projectDashboard": {
+    "analytics": "Аналитика проекта",
+    "overallProgress": "Общий прогресс",
+    "tasksCompleted": "{done} / {total} задач завершено",
+    "totalTasks": "Всего задач",
+    "completed": "Завершено",
+    "inProgress": "В процессе",
+    "overdue": "Просрочено",
+    "statusBreakdown": "Распределение статусов",
+    "activeMembers": "Активные участники",
+    "person": "Чел.",
+    "moreMembers": "Еще +{count} участников в проекте"
+  },
+  "projectHeader": {
+    "settings": "Настройки",
+    "peopleCount": "{count} Людей",
+    "taskCount": "{count} Задач",
+    "prioritySuffix": "Приоритет"
   }
 }

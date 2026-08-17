@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
-import { ChevronLeft, ChevronRight, Plus, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { cn } from "@/lib/utils";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 import { TaskDetailSheet } from "@/components/kanban/TaskDetailSheet";
@@ -18,10 +20,14 @@ interface ProjectCalendarProps {
 }
 
 export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdated, onTaskDeleted, onTaskCreated }: ProjectCalendarProps) {
+  // Tərcüməni qoşuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
   
-  // Yeni Task əlavə etmək üçün state-lər
   const [addingDate, setAddingDate] = useState<Date | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [loadingDay, setLoadingDay] = useState<Date | null>(null);
@@ -32,11 +38,21 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 }); // Bazar ertəsi ilə başlasın
+  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
   const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
-  const weekDays = ["B.e", "Ç.a", "Çər", "C.a", "Cüm", "Şən", "Baz"];
+  
+  // Gün adlarını lüğətdən çəkirik
+  const weekDays = [
+    t("projectCalendar.weekDays.mon") || "B.e",
+    t("projectCalendar.weekDays.tue") || "Ç.a",
+    t("projectCalendar.weekDays.wed") || "Çər",
+    t("projectCalendar.weekDays.thu") || "C.a",
+    t("projectCalendar.weekDays.fri") || "Cüm",
+    t("projectCalendar.weekDays.sat") || "Şən",
+    t("projectCalendar.weekDays.sun") || "Baz"
+  ];
 
   const handleQuickAdd = async (day: Date) => {
     if (!newTaskTitle.trim()) {
@@ -52,7 +68,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
           title: newTaskTitle.trim(),
           projectId,
           status: "TODO",
-          dueDate: day.toISOString() // Seçilən günə təyin edirik
+          dueDate: day.toISOString()
         }),
       });
       if (res.ok) {
@@ -70,7 +86,6 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
 
   return (
     <div className="h-full flex flex-col bg-slate-50/50 overflow-hidden">
-      {/* Calendar Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
         <div className="flex items-center gap-4">
           <div className="flex bg-slate-100 rounded-lg p-1 border border-gray-200">
@@ -78,7 +93,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button onClick={today} className="px-4 py-1.5 text-sm font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all rounded-md">
-              Bu gün
+              {t("projectCalendar.today") || "Bu gün"}
             </button>
             <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
               <ChevronRight className="w-5 h-5" />
@@ -90,11 +105,9 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
         </div>
       </div>
 
-      {/* Calendar Grid Container (Kəsilmə problemini həll edən scroll sahəsi) */}
       <div className="flex-1 overflow-auto p-4 sm:p-6 custom-scrollbar">
         <div className="min-w-[900px] min-h-[750px] h-full flex flex-col bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden">
           
-          {/* Week Days */}
           <div className="grid grid-cols-7 border-b border-gray-200 bg-slate-50/80">
             {weekDays.map((day, i) => (
               <div key={i} className="py-3 text-center text-[12px] font-black text-slate-500 uppercase tracking-wider">
@@ -103,7 +116,6 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
             ))}
           </div>
 
-          {/* Days Grid */}
           <div className="flex-1 grid grid-cols-7 auto-rows-[minmax(120px,1fr)]">
             {days.map((day, i) => {
               const dayTasks = tasks.filter(t => t.dueDate && isSameDay(new Date(t.dueDate), day) && !t.isArchived);
@@ -119,7 +131,6 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                     isToday(day) && "bg-blue-50/20"
                   )}
                 >
-                  {/* Günün rəqəmi və Əlavə et düyməsi */}
                   <div className="flex items-center justify-between mb-2">
                     <span className={cn("text-[13px] font-bold w-7 h-7 flex items-center justify-center rounded-full", isToday(day) ? "bg-blue-600 text-white shadow-sm" : "text-slate-700")}>
                       {format(day, "d")}
@@ -128,13 +139,12 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                     <button
                       onClick={() => { setAddingDate(day); setNewTaskTitle(""); }}
                       className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-blue-100 text-blue-600 transition-all"
-                      title="Bu günə yeni tədbir/task əlavə et"
+                      title={t("projectCalendar.addTitle") || "Bu günə yeni tədbir/task əlavə et"}
                     >
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
 
-                  {/* Task əlavə etmə qutusu (İnput) */}
                   {isAdding && (
                     <div className="mb-2">
                       <input
@@ -145,14 +155,13 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                           if (e.key === "Enter") handleQuickAdd(day);
                           if (e.key === "Escape") setAddingDate(null);
                         }}
-                        placeholder="Adı yaz, Enter bas..."
+                        placeholder={t("projectCalendar.inputPlaceholder") || "Adı yaz, Enter bas..."}
                         disabled={isLoading !== null}
                         className="w-full px-2 py-1.5 text-[11px] font-bold border-2 border-blue-400 rounded-md outline-none bg-white shadow-sm placeholder:font-medium placeholder:text-blue-300"
                       />
                     </div>
                   )}
 
-                  {/* Tasklar Siyahısı */}
                   <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-1">
                     {isLoading && (
                       <div className="flex justify-center py-1">
@@ -182,7 +191,6 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
         </div>
       </div>
 
-      {/* Task Detail Sheet (Üstünə basanda açılan detal pəncərəsi) */}
       {selectedTask && (
         <TaskDetailSheet
           task={selectedTask}

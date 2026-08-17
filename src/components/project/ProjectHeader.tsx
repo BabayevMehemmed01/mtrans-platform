@@ -3,6 +3,8 @@
 import { getStatusColor, getPriorityColor } from "@/lib/utils";
 import Link from "next/link";
 import { ArrowLeft, Users, CheckSquare, Settings, FolderKanban } from "lucide-react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface ProjectHeaderProps {
   project: {
@@ -19,15 +21,27 @@ interface ProjectHeaderProps {
   taskCount: number;
 }
 
-const statusLabels: Record<string, string> = {
-  PLANNING: "Planlanır", ACTIVE: "Aktiv", ON_HOLD: "Dayandırılıb",
-  COMPLETED: "Tamamlandı", CANCELLED: "Ləğv edildi",
-};
-const priorityLabels: Record<string, string> = {
-  LOW: "Aşağı", MEDIUM: "Orta", HIGH: "Yüksək", URGENT: "Təcili",
-};
-
 export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeaderProps) {
+  // Tərcümə mühərriki
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
+  // Status etiketlərini daxildə təyin edirik ki, 't' funksiyasını işlədə bilək
+  const statusLabels: Record<string, string> = {
+    PLANNING: t("projectStatus.PLANNING") || "Planlanır", 
+    ACTIVE: t("projectStatus.ACTIVE") || "Aktiv", 
+    ON_HOLD: t("projectStatus.ON_HOLD") || "Dayandırılıb",
+    COMPLETED: t("projectStatus.COMPLETED") || "Tamamlandı", 
+    CANCELLED: t("projectStatus.CANCELLED") || "Ləğv edildi",
+  };
+  const priorityLabels: Record<string, string> = {
+    LOW: t("priority.LOW") || "Aşağı", 
+    MEDIUM: t("priority.MEDIUM") || "Orta", 
+    HIGH: t("priority.HIGH") || "Yüksək", 
+    URGENT: t("priority.URGENT") || "Təcili",
+  };
+
   return (
     <div className="flex-shrink-0 px-6 py-5 border-b border-[hsl(var(--border))] bg-white">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -56,7 +70,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
                   {statusLabels[project.status]}
                 </span>
                 <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${getPriorityColor(project.priority)}`}>
-                  {priorityLabels[project.priority]} Prioritet
+                  {priorityLabels[project.priority]} {t("projectHeader.prioritySuffix") || "Prioritet"}
                 </span>
               </div>
             </div>
@@ -70,7 +84,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-white hover:bg-muted text-sm font-medium transition-colors shadow-sm"
           >
             <Settings className="w-4 h-4 text-muted-foreground" />
-            <span>Ayarlar</span>
+            <span>{t("projectHeader.settings") || "Ayarlar"}</span>
           </Link>
         </div>
       </div>
@@ -86,12 +100,12 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
         <div className="w-1 h-1 rounded-full bg-slate-300" />
         <span className="flex items-center gap-1.5">
           <Users className="w-3.5 h-3.5" /> 
-          {memberCount} İnsan
+          {(t("projectHeader.peopleCount") || "{count} İnsan").replace("{count}", String(memberCount))}
         </span>
         <div className="w-1 h-1 rounded-full bg-slate-300" />
         <span className="flex items-center gap-1.5">
           <CheckSquare className="w-3.5 h-3.5" /> 
-          {taskCount} Task
+          {(t("projectHeader.taskCount") || "{count} Task").replace("{count}", String(taskCount))}
         </span>
         
         {project.description && (

@@ -247,5 +247,45 @@
     "deleteDesc": "Bu əməliyyat geri qaytarıla bilməz. Layihə və ona aid bütün tapşırıqlar həmişəlik silinəcək.",
     "deleting": "Silinir...",
     "deleteBtn": "Layihəni Həmişəlik Sil"
+  },
+  "projectCalendar": {
+    "today": "Bu gün",
+    "addTitle": "Bu günə yeni tədbir/task əlavə et",
+    "inputPlaceholder": "Adı yaz, Enter bas...",
+    "weekDays": {
+      "mon": "B.e", "tue": "Ç.a", "wed": "Çər", "thu": "C.a", "fri": "Cüm", "sat": "Şən", "sun": "Baz"
+    }
+  },
+  "projectChat": {
+    "generalChat": "Ümumi Layihə Çatı",
+    "chatDesc": "Komanda ilə birbaşa əlaqə",
+    "today": "Bu gün",
+    "placeholder": "Mesajınızı yazın...",
+    "you": "Sən",
+    "demoMsg1": "Salam komanda! Layihəyə başladıq, ilk taskları təyin etdim.",
+    "demoMsg2": "Əla, mən frontend hissəsini götürürəm.",
+    "demoMsg3": "Bəs dizayn fayllarını hara yüklədiniz?",
+    "demoMsg4": "Faylları 'Files' tabına və Figma-ya yükləmişəm. Linki qrupa atıram.",
+    "admin": "Admin",
+    "designer": "Dizayner"
+  },
+  "projectDashboard": {
+    "analytics": "Layihə Analitikası",
+    "overallProgress": "Ümumi Tərəqqi (Progress)",
+    "tasksCompleted": "{done} / {total} tapşırıq tamamlandı",
+    "totalTasks": "Ümumi Tapşırıq",
+    "completed": "Tamamlandı",
+    "inProgress": "Davam Edir",
+    "overdue": "Gecikmiş",
+    "statusBreakdown": "Status Bölgüsü",
+    "activeMembers": "Aktiv Üzvlər",
+    "person": "Nəfər",
+    "moreMembers": "+{count} daha çox üzv layihədə iştirak edir"
+  },
+  "projectHeader": {
+    "settings": "Ayarlar",
+    "peopleCount": "{count} İnsan",
+    "taskCount": "{count} Task",
+    "prioritySuffix": "Prioritet"
   }
 }
