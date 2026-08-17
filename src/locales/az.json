@@ -19,7 +19,15 @@
     "workspace": "WorkSpace",
     "platform": "ERP Platform"
   },
+  "header": {
+    "search": "Axtar...",
+    "notifications": "Bildirişlər",
+    "markAllRead": "Hamısını oxunmuş et",
+    "noNotifications": "Bildiriş yoxdur",
+    "defaultRole": "İstifadəçi"
+  },
   "settings": {
+    "error": "Xəta baş verdi",
     "tabs": {
       "appearance": "Görünüş və Dil",
       "defaults": "Dəvət Ayarları",
@@ -38,13 +46,94 @@
       "apply": "Dəyişiklikləri Tətbiq Et",
       "saving": "Yadda saxlanılır...",
       "success": "Görünüş və dil tənzimləmələri yadda saxlanıldı."
+    },
+    "defaults": {
+      "title": "Onboarding & İcazələr",
+      "desc": "Yeni əməkdaş və ya müştəri dəvət edərkən onlara sistem tərəfindən avtomatik veriləcək rolları və layihə girişlərini buradan idarə edə bilərsiniz.",
+      "memberRole": "İşçilər üçün Rol (Member)",
+      "selectRole": "Rol Seçin",
+      "guestRole": "Qonaqlar üçün Rol (Guest)",
+      "autoProjects": "Avtomatik Qoşulacaqları Layihələr",
+      "save": "Dəvət Ayarlarını Yadda Saxla",
+      "saving": "Saxlanılır...",
+      "permTemplate": "İcazə Qəlibi",
+      "permDesc": "Yuxarıda seçdiyiniz rolun hansı hüquqlara sahib olacağını tənzimləyin.",
+      "permissionsCount": "icazə",
+      "selectMemberFirstInfo": "İcazələri tənzimləmək üçün yuxarıdan İşçi Rolu seçin.",
+      "permSave": "İcazələri Təsdiqlə",
+      "success": "Standart dəvət ayarları yeniləndi.",
+      "selectMemberFirstError": "Əvvəlcə standart rol seçin.",
+      "permSuccess": "İcazə qəlibi uğurla yeniləndi."
+    },
+    "company": {
+      "title": "Şirkət Rəsmi Məlumatları",
+      "name": "Şirkətin Adı *",
+      "taxId": "VÖEN / Qeydiyyat Kodu",
+      "website": "Veb-sayt",
+      "desc": "Fəaliyyət Sahəsi və Məqsəd",
+      "save": "Şirkət Profilini Yenilə",
+      "saving": "Yadda saxlanılır...",
+      "nameRequired": "Şirkət adı mütləqdir.",
+      "success": "Şirkət profili yeniləndi."
+    },
+    "notifications": {
+      "title": "Bildiriş Ayarları",
+      "wipTitle": "Bildiriş Mərkəzi Hazırlanır",
+      "wipDesc": "Email xəbərdarlıqları, səsli xəbərdarlıqlar və brauzer bildirişləri növbəti yenilənmədə aktiv olacaq."
+    },
+    "security": {
+      "title": "Hesab Təhlükəsizliyi",
+      "updatePass": "Şifrəni Yenilə",
+      "oldPass": "Köhnə şifrə",
+      "newPass": "Yeni şifrə",
+      "changePass": "Şifrəni Dəyiş",
+      "logoutAll": "Bütün Cihazlardan Çıxış Et",
+      "logoutDesc": "Əgər hesabınızın başqa bir cihazda açıq qaldığından şübhələnirsinizsə, bütün aktiv sessiyaları sonlandıra bilərsiniz.",
+      "logoutBtn": "İndi Çıxış Et"
     }
   },
-  "header": {
-    "search": "Axtar...",
-    "notifications": "Bildirişlər",
-    "markAllRead": "Hamısını oxunmuş et",
-    "noNotifications": "Bildiriş yoxdur",
-    "defaultRole": "İstifadəçi"
+  "dashboard": {
+    "welcome": "Xoş gəlmisiniz, {name}! 👋",
+    "subtitle": "Bugünkü iş vəziyyətinizə və statistikalarınıza nəzər yetirin.",
+    "activeProjects": "Aktiv Layihələr",
+    "fromProjects": "{total} layihədən",
+    "thisMonth": "+{count} bu ay",
+    "completedTasks": "Tamamlanan Tapşırıqlar",
+    "fromTasks": "{total} tapşırıqdan",
+    "percentCompleted": "{percentage}% tamamlanıb",
+    "inProgress": "Davam edən",
+    "taskActive": "tapşırıq aktivdir",
+    "teamMembers": "Komanda Üzvləri",
+    "activeMembers": "sistemdəki aktiv üzv",
+    "overallProgress": "Ümumi İcra Faizi",
+    "completedCount": "{count} tamamlandı",
+    "remainingCount": "{count} qalır",
+    "last14DaysTasks": "Son 14 Gün — Tamamlanan Tapşırıqlar",
+    "tasksByStatus": "Statusa görə Tapşırıqlar",
+    "tasksByStatusDesc": "Şirkət üzrə bütün tapşırıqların cari bölgüsü",
+    "recentActivity": "Sistemdəki Son Fəaliyyətlər",
+    "recentTasks": "Son Tapşırıqlar",
+    "viewAll": "Hamısı",
+    "noTasks": "Hələ tapşırıq yoxdur",
+    "recentProjects": "Son Layihələr",
+    "noProjects": "Hələ layihə yoxdur",
+    "taskCount": "{count} tapşırıq",
+    "memberCount": "{count} üzv",
+    "topLabels": "Populyar Etiketlər",
+    "noLabels": "Hələ etiket yoxdur"
+  },
+  "status": {
+    "BACKLOG": "Növbəti",
+    "TODO": "Gözləyir",
+    "IN_PROGRESS": "Davam edir",
+    "IN_REVIEW": "Nəzərdən keç.",
+    "DONE": "Tamamlandı",
+    "CANCELLED": "Ləğv edildi"
+  },
+  "priority": {
+    "LOW": "Aşağı",
+    "MEDIUM": "Orta",
+    "HIGH": "Yüksək",
+    "URGENT": "Təcili"
   }
 }

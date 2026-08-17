@@ -19,7 +19,15 @@
     "workspace": "WorkSpace",
     "platform": "ERP Platform"
   },
+  "header": {
+    "search": "Search...",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "defaultRole": "User"
+  },
   "settings": {
+    "error": "An error occurred",
     "tabs": {
       "appearance": "Appearance & Language",
       "defaults": "Invitation Defaults",
@@ -38,13 +46,94 @@
       "apply": "Apply Changes",
       "saving": "Saving...",
       "success": "Appearance and language settings saved."
+    },
+    "defaults": {
+      "title": "Onboarding & Permissions",
+      "desc": "Manage the default roles and project access automatically assigned to new team members or guests here.",
+      "memberRole": "Role for Members",
+      "selectRole": "Select Role",
+      "guestRole": "Role for Guests",
+      "autoProjects": "Auto-Join Projects",
+      "save": "Save Default Settings",
+      "saving": "Saving...",
+      "permTemplate": "Permission Template",
+      "permDesc": "Configure the exact permissions for the Member role selected above.",
+      "permissionsCount": "permissions",
+      "selectMemberFirstInfo": "Please select a Member Role above to configure permissions.",
+      "permSave": "Confirm Permissions",
+      "success": "Default invitation settings updated.",
+      "selectMemberFirstError": "First select a standard Member role.",
+      "permSuccess": "Permission template successfully updated."
+    },
+    "company": {
+      "title": "Official Company Details",
+      "name": "Company Name *",
+      "taxId": "Tax ID / Registration Code",
+      "website": "Website",
+      "desc": "Field of Activity and Purpose",
+      "save": "Update Company Profile",
+      "saving": "Saving...",
+      "nameRequired": "Company name is required.",
+      "success": "Company profile updated."
+    },
+    "notifications": {
+      "title": "Notification Settings",
+      "wipTitle": "Notification Center in Progress",
+      "wipDesc": "Email alerts, sound notifications, and browser push notifications will be active in the next update."
+    },
+    "security": {
+      "title": "Account Security",
+      "updatePass": "Update Password",
+      "oldPass": "Old password",
+      "newPass": "New password",
+      "changePass": "Change Password",
+      "logoutAll": "Log Out of All Devices",
+      "logoutDesc": "If you suspect your account is open on another device, you can terminate all active sessions.",
+      "logoutBtn": "Log Out Now"
     }
   },
-  "header": {
-    "search": "Search...",
-    "notifications": "Notifications",
-    "markAllRead": "Mark all as read",
-    "noNotifications": "No notifications",
-    "defaultRole": "User"
+  "dashboard": {
+    "welcome": "Welcome back, {name}! 👋",
+    "subtitle": "Here's an overview of your work status and statistics today.",
+    "activeProjects": "Active Projects",
+    "fromProjects": "out of {total} projects",
+    "thisMonth": "+{count} this month",
+    "completedTasks": "Completed Tasks",
+    "fromTasks": "out of {total} tasks",
+    "percentCompleted": "{percentage}% completed",
+    "inProgress": "In Progress",
+    "taskActive": "active tasks",
+    "teamMembers": "Team Members",
+    "activeMembers": "active members in system",
+    "overallProgress": "Overall Progress",
+    "completedCount": "{count} completed",
+    "remainingCount": "{count} remaining",
+    "last14DaysTasks": "Last 14 Days — Completed Tasks",
+    "tasksByStatus": "Tasks by Status",
+    "tasksByStatusDesc": "Current distribution of all tasks across the company",
+    "recentActivity": "Recent System Activity",
+    "recentTasks": "Recent Tasks",
+    "viewAll": "View All",
+    "noTasks": "No tasks yet",
+    "recentProjects": "Recent Projects",
+    "noProjects": "No projects yet",
+    "taskCount": "{count} tasks",
+    "memberCount": "{count} members",
+    "topLabels": "Popular Labels",
+    "noLabels": "No labels yet"
+  },
+  "status": {
+    "BACKLOG": "Backlog",
+    "TODO": "To Do",
+    "IN_PROGRESS": "In Progress",
+    "IN_REVIEW": "In Review",
+    "DONE": "Done",
+    "CANCELLED": "Cancelled"
+  },
+  "priority": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "URGENT": "Urgent"
   }
 }

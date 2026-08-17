@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { format } from "date-fns";
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə sistemi
 import {
   FolderKanban,
   CheckCircle2,
@@ -34,6 +35,10 @@ export default async function DashboardPage() {
 
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
+
+  // YENİ: Dili sessiyadan tapırıq və tərcümə obyektini (t) yaradırıq
+  const lang = (session.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   // --- Tarix aralıqları ---
   const today = new Date();
@@ -126,7 +131,11 @@ export default async function DashboardPage() {
   const inProgressTasks = taskStats.find((s) => s.status === "IN_PROGRESS")?._count ?? 0;
   const overallProgress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
-  const activeProjectsTrend = projectsThisMonth > 0 ? `+${projectsThisMonth} bu ay` : undefined;
+  // Tərcüməli formalaşdırmalar
+  const firstName = session.user.name?.split(" ")[0] || "";
+  const activeProjectsTrend = projectsThisMonth > 0 
+    ? (t("dashboard.thisMonth") || "+{count} bu ay").replace("{count}", String(projectsThisMonth)) 
+    : undefined;
 
   // --- Son 14 gün üzrə tamamlanan tapşırıq trendi ---
   const tasksTrendData = (() => {
@@ -155,45 +164,45 @@ export default async function DashboardPage() {
       {/* Greeting */}
       <div>
         <h1 className="text-[26px] font-black tracking-tight text-slate-800">
-          Xoş gəlmisiniz, {session.user.name?.split(" ")[0]}! 👋
+          {(t("dashboard.welcome") || "Xoş gəlmisiniz, {name}! 👋").replace("{name}", firstName)}
         </h1>
         <p className="text-slate-500 font-medium mt-1 text-[15px]">
-          Bugünkü iş vəziyyətinizə və statistikalarınıza nəzər yetirin.
+          {t("dashboard.subtitle") || "Bugünkü iş vəziyyətinizə və statistikalarınıza nəzər yetirin."}
         </p>
       </div>
 
       {/* DİNAMİK KPI CARDS (KLİKLƏNƏ BİLƏN) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          title="Aktiv Layihələr"
+          title={t("dashboard.activeProjects") || "Aktiv Layihələr"}
           value={activeProjects}
-          subtext={`${totalProjects} layihədən`}
+          subtext={(t("dashboard.fromProjects") || "{total} layihədən").replace("{total}", String(totalProjects))}
           icon={FolderKanban}
           iconColor="bg-blue-100 text-blue-600"
           trend={activeProjectsTrend}
           href="/dashboard/projects"
         />
         <StatCard
-          title="Tamamlanan Tapşırıqlar"
+          title={t("dashboard.completedTasks") || "Tamamlanan Tapşırıqlar"}
           value={doneTasks}
-          subtext={`${totalTasks} tapşırıqdan`}
+          subtext={(t("dashboard.fromTasks") || "{total} tapşırıqdan").replace("{total}", String(totalTasks))}
           icon={CheckCircle2}
           iconColor="bg-green-100 text-green-600"
-          trend={`${overallProgress}% tamamlanıb`}
+          trend={(t("dashboard.percentCompleted") || "{percentage}% tamamlanıb").replace("{percentage}", String(overallProgress))}
           href="/dashboard/my-work"
         />
         <StatCard
-          title="Davam edən"
+          title={t("dashboard.inProgress") || "Davam edən"}
           value={inProgressTasks}
-          subtext="tapşırıq aktivdir"
+          subtext={t("dashboard.taskActive") || "tapşırıq aktivdir"}
           icon={Clock}
           iconColor="bg-amber-100 text-amber-600"
           href="/dashboard/my-work"
         />
         <StatCard
-          title="Komanda Üzvləri"
+          title={t("dashboard.teamMembers") || "Komanda Üzvləri"}
           value={memberCount}
-          subtext="sistemdəki aktiv üzv"
+          subtext={t("dashboard.activeMembers") || "sistemdəki aktiv üzv"}
           icon={Users}
           iconColor="bg-purple-100 text-purple-600"
           href="/dashboard/members"
@@ -205,7 +214,7 @@ export default async function DashboardPage() {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-blue-600" />
-            <span className="text-[15px] font-bold text-slate-800">Ümumi İcra Faizi</span>
+            <span className="text-[15px] font-bold text-slate-800">{t("dashboard.overallProgress") || "Ümumi İcra Faizi"}</span>
           </div>
           <span className="text-3xl font-black text-blue-600">
             {overallProgress}%
@@ -218,8 +227,8 @@ export default async function DashboardPage() {
           />
         </div>
         <div className="flex justify-between text-[13px] font-medium text-slate-500 mt-3">
-          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-500" /> {doneTasks} tamamlandı</span>
-          <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-amber-500" /> {totalTasks - doneTasks} qalır</span>
+          <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-500" /> {(t("dashboard.completedCount") || "{count} tamamlandı").replace("{count}", String(doneTasks))}</span>
+          <span className="flex items-center gap-1.5"><Clock className="w-4 h-4 text-amber-500" /> {(t("dashboard.remainingCount") || "{count} qalır").replace("{count}", String(totalTasks - doneTasks))}</span>
         </div>
       </div>
 
@@ -227,13 +236,13 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
           <h2 className="text-[16px] font-black text-slate-800 mb-6">
-            Son 14 Gün — Tamamlanan Tapşırıqlar
+            {t("dashboard.last14DaysTasks") || "Son 14 Gün — Tamamlanan Tapşırıqlar"}
           </h2>
           <TasksTrendChart data={tasksTrendData} />
         </div>
         <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm flex flex-col">
-          <h2 className="text-[16px] font-black text-slate-800 mb-2">Statusa görə Tapşırıqlar</h2>
-          <p className="text-[13px] font-medium text-slate-500 mb-6">Şirkət üzrə bütün tapşırıqların cari bölgüsü</p>
+          <h2 className="text-[16px] font-black text-slate-800 mb-2">{t("dashboard.tasksByStatus") || "Statusa görə Tapşırıqlar"}</h2>
+          <p className="text-[13px] font-medium text-slate-500 mb-6">{t("dashboard.tasksByStatusDesc") || "Şirkət üzrə bütün tapşırıqların cari bölgüsü"}</p>
           <div className="flex-1 flex items-center justify-center">
             <TasksByStatusChart data={statusChartData} />
           </div>
@@ -244,7 +253,7 @@ export default async function DashboardPage() {
       <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2 mb-6">
           <Activity className="w-5 h-5 text-indigo-600" />
-          <h2 className="text-[16px] font-black text-slate-800">Sistemdəki Son Fəaliyyətlər</h2>
+          <h2 className="text-[16px] font-black text-slate-800">{t("dashboard.recentActivity") || "Sistemdəki Son Fəaliyyətlər"}</h2>
         </div>
         <RecentActivityFeed logs={recentActivity} />
       </div>
@@ -254,13 +263,13 @@ export default async function DashboardPage() {
         {/* Recent Tasks */}
         <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[16px] font-black text-slate-800">Son Tapşırıqlar</h2>
+            <h2 className="text-[16px] font-black text-slate-800">{t("dashboard.recentTasks") || "Son Tapşırıqlar"}</h2>
             <Link href="/dashboard/my-work" className="text-[12px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
-              Hamısı <ArrowRight className="w-3.5 h-3.5" />
+              {t("dashboard.viewAll") || "Hamısı"} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
           {recentTasks.length === 0 ? (
-            <EmptyState icon={AlertCircle} message="Hələ tapşırıq yoxdur" />
+            <EmptyState icon={AlertCircle} message={t("dashboard.noTasks") || "Hələ tapşırıq yoxdur"} />
           ) : (
             <ul className="space-y-4">
               {recentTasks.map((task) => (
@@ -273,8 +282,8 @@ export default async function DashboardPage() {
                       </Link>
                       <p className="text-[14px] font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors mt-0.5">{task.title}</p>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${getStatusColor(task.status)}`}>{statusLabel(task.status)}</span>
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${getPriorityColor(task.priority)}`}>{priorityLabel(task.priority)}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${getStatusColor(task.status)}`}>{statusLabel(task.status, t)}</span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${getPriorityColor(task.priority)}`}>{priorityLabel(task.priority, t)}</span>
                       </div>
                     </div>
                   </div>
@@ -287,13 +296,13 @@ export default async function DashboardPage() {
         {/* Recent Projects */}
         <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[16px] font-black text-slate-800">Son Layihələr</h2>
+            <h2 className="text-[16px] font-black text-slate-800">{t("dashboard.recentProjects") || "Son Layihələr"}</h2>
             <Link href="/dashboard/projects" className="text-[12px] font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors">
-              Hamısı <ArrowRight className="w-3.5 h-3.5" />
+              {t("dashboard.viewAll") || "Hamısı"} <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
           {recentProjects.length === 0 ? (
-            <EmptyState icon={AlertCircle} message="Hələ layihə yoxdur" />
+            <EmptyState icon={AlertCircle} message={t("dashboard.noProjects") || "Hələ layihə yoxdur"} />
           ) : (
             <ul className="space-y-3">
               {recentProjects.map((proj) => (
@@ -305,8 +314,8 @@ export default async function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-[14px] font-bold text-slate-700 truncate group-hover:text-blue-600 transition-colors">{proj.name}</p>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="text-[11px] font-bold text-slate-400">{proj._count.tasks} tapşırıq</span>
-                        <span className="text-[11px] font-bold text-slate-400">{proj._count.members} üzv</span>
+                        <span className="text-[11px] font-bold text-slate-400">{(t("dashboard.taskCount") || "{count} tapşırıq").replace("{count}", String(proj._count.tasks))}</span>
+                        <span className="text-[11px] font-bold text-slate-400">{(t("dashboard.memberCount") || "{count} üzv").replace("{count}", String(proj._count.members))}</span>
                       </div>
                     </div>
                   </Link>
@@ -319,10 +328,10 @@ export default async function DashboardPage() {
         {/* Top Labels */}
         <div className="rounded-2xl border border-gray-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-[16px] font-black text-slate-800">Populyar Etiketlər</h2>
+            <h2 className="text-[16px] font-black text-slate-800">{t("dashboard.topLabels") || "Populyar Etiketlər"}</h2>
           </div>
           {topLabels.length === 0 ? (
-            <EmptyState icon={Tag} message="Hələ etiket yoxdur" />
+            <EmptyState icon={Tag} message={t("dashboard.noLabels") || "Hələ etiket yoxdur"} />
           ) : (
             <ul className="space-y-3">
               {topLabels.map((label) => (
@@ -334,7 +343,7 @@ export default async function DashboardPage() {
                     <span className="text-[13px] font-bold text-slate-700">{label.name}</span>
                   </div>
                   <span className="text-[11px] font-bold px-2.5 py-1 bg-white border border-gray-200 rounded-md text-slate-500 shadow-sm">
-                    {label._count.taskLabels} tapşırıq
+                    {(t("dashboard.taskCount") || "{count} tapşırıq").replace("{count}", String(label._count.taskLabels))}
                   </span>
                 </li>
               ))}
@@ -388,24 +397,22 @@ function EmptyState({ icon: Icon, message }: { icon: React.ElementType; message:
   );
 }
 
-// Label helpers
-function statusLabel(s: string) {
+// Label helpers (Tərcümə sisteminə inteqrasiya edilib)
+function statusLabel(s: string, t: (k: string) => string) {
+  const translated = t(`status.${s}`);
+  if (translated && translated !== `status.${s}`) return translated;
   const map: Record<string, string> = {
     BACKLOG: "Növbəti", TODO: "Gözləyir", IN_PROGRESS: "Davam edir",
     IN_REVIEW: "Nəzərdən keç.", DONE: "Tamamlandı", CANCELLED: "Ləğv edildi",
   };
   return map[s] ?? s;
 }
-function priorityLabel(p: string) {
+
+function priorityLabel(p: string, t: (k: string) => string) {
+  const translated = t(`priority.${p}`);
+  if (translated && translated !== `priority.${p}`) return translated;
   const map: Record<string, string> = {
     LOW: "Aşağı", MEDIUM: "Orta", HIGH: "Yüksək", URGENT: "Təcili",
   };
   return map[p] ?? p;
-}
-function projectStatusLabel(s: string) {
-  const map: Record<string, string> = {
-    PLANNING: "Planlanır", ACTIVE: "Aktiv", ON_HOLD: "Dayandırıldı",
-    COMPLETED: "Tamamlandı", CANCELLED: "Ləğv edildi",
-  };
-  return map[s] ?? s;
 }
