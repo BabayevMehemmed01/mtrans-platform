@@ -20,6 +20,8 @@ import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskDetailSheet } from "@/components/kanban/TaskDetailSheet";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
+import { useSession } from "next-auth/react"; // YENİ: Tərcümə üçün
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 // ── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_MAP = {
@@ -69,10 +71,12 @@ function AddTaskRow({
   status,
   projectId,
   onCreated,
+  t // YENİ
 }: {
   status: string;
   projectId: string;
   onCreated: (task: KanbanTask) => void;
+  t: any; // YENİ
 }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -105,7 +109,7 @@ function AddTaskRow({
         className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50 transition-colors rounded-lg mt-1"
       >
         <Plus className="w-4 h-4" />
-        Tapşırıq əlavə et
+        {t("taskListView.addTaskBtn") || "Tapşırıq əlavə et"}
       </button>
     );
   }
@@ -121,13 +125,13 @@ function AddTaskRow({
           if (e.key === "Enter") submit();
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
-        placeholder="Tapşırıq adı yazın, Enter-ə basın..."
+        placeholder={t("taskListView.addTaskPlaceholder") || "Tapşırıq adı yazın, Enter-ə basın..."}
         className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-blue-400/70"
         disabled={loading}
       />
       {loading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
       <button onClick={() => { setOpen(false); setTitle(""); }} className="text-xs font-semibold text-gray-500 hover:text-gray-800">
-        Ləğv et
+        {t("taskListView.cancel") || "Ləğv et"}
       </button>
     </div>
   );
@@ -138,10 +142,12 @@ function AddSubtaskRow({
   parentId,
   projectId,
   onCreated,
+  t // YENİ
 }: {
   parentId: string;
   projectId: string;
   onCreated: (task: SubtaskItem) => void;
+  t: any; // YENİ
 }) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -174,7 +180,7 @@ function AddSubtaskRow({
         className="flex items-center gap-2 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50 transition-colors rounded-lg mt-1"
       >
         <Plus className="w-3.5 h-3.5" />
-        Alt tapşırıq əlavə et
+        {t("taskListView.addSubtaskBtn") || "Alt tapşırıq əlavə et"}
       </button>
     );
   }
@@ -190,13 +196,13 @@ function AddSubtaskRow({
           if (e.key === "Enter") submit();
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
-        placeholder="Alt tapşırıq adı yazın, Enter-ə basın..."
+        placeholder={t("taskListView.addSubtaskPlaceholder") || "Alt tapşırıq adı yazın, Enter-ə basın..."}
         className="flex-1 bg-transparent text-xs outline-none placeholder:text-blue-400/70"
         disabled={loading}
       />
       {loading && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
       <button onClick={() => { setOpen(false); setTitle(""); }} className="text-[11px] font-semibold text-gray-500 hover:text-gray-800">
-        Ləğv et
+        {t("taskListView.cancel") || "Ləğv et"}
       </button>
     </div>
   );
@@ -208,11 +214,13 @@ function StatusBadge({
   status,
   onChanged,
   compact,
+  t // YENİ
 }: {
   taskId: string;
   status: string;
   onChanged: (raw: any) => void;
   compact?: boolean;
+  t: any; // YENİ
 }) {
   const [open, setOpen] = useState(false);
   const st = STATUS_MAP[status as keyof typeof STATUS_MAP];
@@ -246,7 +254,7 @@ function StatusBadge({
           backgroundColor: `${st?.color}15`,
         }}
       >
-        {st?.label}
+        {t(`status.${status}`) || st?.label}
       </button>
       {open && (
         <div className="absolute left-0 top-7 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-36">
@@ -260,7 +268,7 @@ function StatusBadge({
                 className="w-2.5 h-2.5 rounded-full"
                 style={{ backgroundColor: val.color }}
               />
-              {val.label}
+              {t(`status.${key}`) || val.label}
             </button>
           ))}
         </div>
@@ -276,12 +284,14 @@ function AssigneeCell({
   members,
   onChanged,
   compact,
+  t // YENİ
 }: {
   taskId: string;
   assignee?: { id: string; name: string | null; avatar?: string | null } | null;
   members: TaskMember[];
   onChanged: (raw: any) => void;
   compact?: boolean;
+  t: any; // YENİ
 }) {
   const [open, setOpen] = useState(false);
 
@@ -307,7 +317,7 @@ function AssigneeCell({
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-2 hover:opacity-80 transition-opacity rounded-md"
-        title="İcraçını dəyiş"
+        title={t("taskListView.titleAssignee") || "İcraçını dəyiş"}
       >
         {assignee ? (
           <>
@@ -338,7 +348,7 @@ function AssigneeCell({
             <div className="w-5 h-5 rounded-full border border-dashed border-gray-400 flex items-center justify-center flex-shrink-0 bg-gray-50">
               <User className="w-3 h-3 text-gray-400" />
             </div>
-            Təyin edilməyib
+            {t("taskListView.notAssigned") || "Təyin edilməyib"}
           </button>
           {members.map((m) => (
             <button
@@ -366,12 +376,14 @@ function DueDateCell({
   isDone,
   onChanged,
   compact,
+  t // YENİ
 }: {
   taskId: string;
   dueDate?: Date | string | null;
   isDone?: boolean;
   onChanged: (raw: any) => void;
   compact?: boolean;
+  t: any; // YENİ
 }) {
   const [open, setOpen] = useState(false);
   const [val, setVal] = useState(dueDate ? format(new Date(dueDate), "yyyy-MM-dd") : "");
@@ -406,7 +418,7 @@ function DueDateCell({
           compact ? "text-[11px]" : "text-[12px] font-medium",
           isOverdue ? "text-red-600 bg-red-50" : dueDate ? "text-gray-600" : "text-gray-400"
         )}
-        title="Son tarixi dəyiş"
+        title={t("taskListView.titleDate") || "Son tarixi dəyiş"}
       >
         <Calendar className={compact ? "w-3 h-3" : "w-3.5 h-3.5"} />
         {dueDate ? format(new Date(dueDate), "dd MMM") : "—"}
@@ -422,10 +434,10 @@ function DueDateCell({
           />
           <div className="flex items-center justify-between mt-3">
             <button onClick={() => save("")} className="text-[11px] font-semibold text-gray-500 hover:text-red-500">
-              Təmizlə
+              {t("taskListView.clearDate") || "Təmizlə"}
             </button>
             <button onClick={() => save(val)} className="text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md">
-              Təsdiqlə
+              {t("taskListView.confirmDate") || "Təsdiqlə"}
             </button>
           </div>
         </div>
@@ -440,17 +452,19 @@ function SubtaskRow({
   members,
   onUpdated,
   onDeleted,
+  t // YENİ
 }: {
   subtask: SubtaskItem;
   members: TaskMember[];
   onUpdated: (raw: any) => void;
   onDeleted: (id: string) => void;
+  t: any; // YENİ
 }) {
   const [hovered, setHovered] = useState(false);
   const dot = STATUS_MAP[subtask.status as keyof typeof STATUS_MAP];
 
   const deleteSub = async () => {
-    if (!confirm("Bu alt tapşırığı silmək istədiyinizə əminsiniz?")) return;
+    if (!confirm(t("taskListView.confirmSubtaskDelete") || "Bu alt tapşırığı silmək istədiyinizə əminsiniz?")) return;
     try {
       await fetch(`/api/tasks/${subtask.id}`, { method: "DELETE" });
       onDeleted(subtask.id);
@@ -471,7 +485,7 @@ function SubtaskRow({
       <div className="w-5 flex-shrink-0" />
       {/* Visual icon only, not clickable anymore */}
       <div className="w-6 flex-shrink-0 flex items-center justify-center">
-        <div title={subtask.status === "DONE" ? "Tamamlandı" : "Gözləyir"}>
+        <div title={subtask.status === "DONE" ? (t("status.DONE") || "Tamamlandı") : (t("status.TODO") || "Gözləyir")}>
           {subtask.status === "DONE" ? (
             <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
@@ -483,7 +497,7 @@ function SubtaskRow({
       </div>
 
       <div className="w-28 flex-shrink-0">
-        <StatusBadge taskId={subtask.id} status={subtask.status} onChanged={onUpdated} compact />
+        <StatusBadge taskId={subtask.id} status={subtask.status} onChanged={onUpdated} compact t={t} />
       </div>
 
       <span className={cn("flex-1 min-w-0 text-[13px] font-medium text-gray-700 truncate", subtask.status === "DONE" && "line-through text-gray-400")}>
@@ -493,11 +507,11 @@ function SubtaskRow({
       <div className="w-24 flex-shrink-0" /> {/* Indicators Placeholder */}
 
       <div className="w-32 flex-shrink-0 flex justify-center">
-        <AssigneeCell taskId={subtask.id} assignee={subtask.assignee} members={members} onChanged={onUpdated} compact />
+        <AssigneeCell taskId={subtask.id} assignee={subtask.assignee} members={members} onChanged={onUpdated} compact t={t} />
       </div>
 
       <div className="w-28 flex-shrink-0 flex justify-end">
-        <DueDateCell taskId={subtask.id} dueDate={subtask.dueDate} isDone={subtask.status === "DONE"} onChanged={onUpdated} compact />
+        <DueDateCell taskId={subtask.id} dueDate={subtask.dueDate} isDone={subtask.status === "DONE"} onChanged={onUpdated} compact t={t} />
       </div>
 
       <div className="w-24 hidden md:block flex-shrink-0" /> {/* Priority Placeholder */}
@@ -506,7 +520,7 @@ function SubtaskRow({
         <button
           onClick={deleteSub}
           className={cn("p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}
-          title="Sil"
+          title={t("taskListView.titleDelete") || "Sil"}
         >
           <Trash2 className="w-3.5 h-3.5" />
         </button>
@@ -522,12 +536,14 @@ function TaskRow({
   onUpdated,
   onDeleted,
   onTaskClick,
+  t // YENİ
 }: {
   task: KanbanTask;
   members: TaskMember[];
   onUpdated: (t: KanbanTask) => void;
   onDeleted: (id: string) => void;
   onTaskClick: (task: KanbanTask) => void;
+  t: any; // YENİ
 }) {
   const [hovered, setHovered] = useState(false);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -538,7 +554,7 @@ function TaskRow({
   const [subtasks, setSubtasks] = useState<SubtaskItem[] | null>(null);
   const [loadingSubtasks, setLoadingSubtasks] = useState(false);
 
-  const prio = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.MEDIUM;
+  const prio = PRIORITY_MAP[task.priority as keyof typeof PRIORITY_MAP] ?? PRIORITY_MAP.MEDIUM;
 
   const loadSubtasks = useCallback(async () => {
     setLoadingSubtasks(true);
@@ -588,7 +604,7 @@ function TaskRow({
   };
 
   const deleteTask = async () => {
-    if (!confirm("Bu tapşırığı silmək istədiyinizə əminsiniz?")) return;
+    if (!confirm(t("taskListView.confirmTaskDelete") || "Bu tapşırığı silmək istədiyinizə əminsiniz?")) return;
     try {
       await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
       onDeleted(task.id);
@@ -628,7 +644,7 @@ function TaskRow({
 
         {/* 2. Status Icon (Sırf vizual, basıla bilməz) */}
         <div className="w-6 flex-shrink-0 flex items-center justify-center">
-          <div className="flex-shrink-0" title={task.status === "DONE" ? "Tamamlandı" : "Gözləyir"}>
+          <div className="flex-shrink-0" title={task.status === "DONE" ? (t("status.DONE") || "Tamamlandı") : (t("status.TODO") || "Gözləyir")}>
             {task.status === "DONE" ? (
               <CheckCircleIcon />
             ) : (
@@ -639,7 +655,7 @@ function TaskRow({
 
         {/* 3. Status Badge */}
         <div className="w-28 flex-shrink-0">
-          <StatusBadge taskId={task.id} status={task.status} onChanged={(raw) => onUpdated({ ...task, ...raw })} />
+          <StatusBadge taskId={task.id} status={task.status} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
         </div>
 
         {/* 4. Title & Labels */}
@@ -698,27 +714,27 @@ function TaskRow({
 
         {/* 6. Assignee */}
         <div className="w-32 flex-shrink-0 flex justify-center">
-          <AssigneeCell taskId={task.id} assignee={task.assignee} members={members} onChanged={(raw) => onUpdated({ ...task, ...raw })} />
+          <AssigneeCell taskId={task.id} assignee={task.assignee} members={members} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
         </div>
 
         {/* 7. Due Date */}
         <div className="w-28 flex-shrink-0 flex justify-end">
-          <DueDateCell taskId={task.id} dueDate={task.dueDate} isDone={task.status === "DONE"} onChanged={(raw) => onUpdated({ ...task, ...raw })} />
+          <DueDateCell taskId={task.id} dueDate={task.dueDate} isDone={task.status === "DONE"} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
         </div>
 
         {/* 8. Priority */}
         <div className="w-24 flex-shrink-0 hidden md:flex justify-end">
           <span className={cn("text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider", prio.bg)}>
-            {prio.label}
+            {t(`priority.${task.priority}`) || prio.label}
           </span>
         </div>
 
         {/* 9. Actions */}
         <div className={cn("w-16 flex-shrink-0 flex items-center justify-end gap-1 transition-opacity pr-2", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}>
-          <button onClick={() => setEditingTitle(true)} className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors" title="Redaktə et">
+          <button onClick={() => setEditingTitle(true)} className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors" title={t("taskListView.titleEdit") || "Redaktə et"}>
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={deleteTask} className="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors" title="Sil">
+          <button onClick={deleteTask} className="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors" title={t("taskListView.titleDelete") || "Sil"}>
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -729,15 +745,15 @@ function TaskRow({
         <div className="bg-slate-50/50 border-b border-gray-100 py-1 shadow-inner">
           {loadingSubtasks ? (
             <div className="flex items-center gap-2 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> Alt tapşırıqlar yüklənir...
+              <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> {t("taskListView.loadingSubtasks") || "Alt tapşırıqlar yüklənir..."}
             </div>
           ) : (
             <>
               {(subtasks ?? []).map((sub) => (
-                <SubtaskRow key={sub.id} subtask={sub} members={members} onUpdated={handleSubtaskUpdated} onDeleted={handleSubtaskDeleted} />
+                <SubtaskRow key={sub.id} subtask={sub} members={members} onUpdated={handleSubtaskUpdated} onDeleted={handleSubtaskDeleted} t={t} />
               ))}
               <div className="pl-14 pr-4 py-1.5">
-                <AddSubtaskRow parentId={task.id} projectId={task.projectId} onCreated={handleSubtaskCreated} />
+                <AddSubtaskRow parentId={task.id} projectId={task.projectId} onCreated={handleSubtaskCreated} t={t} />
               </div>
             </>
           )}
@@ -767,6 +783,7 @@ function GroupSection({
   onTaskCreated,
   onTaskClick,
   defaultStatus,
+  t // YENİ
 }: {
   title: string;
   color: string;
@@ -778,6 +795,7 @@ function GroupSection({
   onTaskCreated: (t: KanbanTask) => void;
   onTaskClick: (task: KanbanTask) => void;
   defaultStatus: string;
+  t: any; // YENİ
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -807,10 +825,11 @@ function GroupSection({
               onUpdated={onTaskUpdated}
               onDeleted={onTaskDeleted}
               onTaskClick={onTaskClick}
+              t={t}
             />
           ))}
           <div className="px-3 py-2 bg-white rounded-b-xl">
-            <AddTaskRow status={defaultStatus} projectId={projectId} onCreated={onTaskCreated} />
+            <AddTaskRow status={defaultStatus} projectId={projectId} onCreated={onTaskCreated} t={t} />
           </div>
         </div>
       )}
@@ -829,6 +848,11 @@ export function TaskListView({
   onTaskCreated,
   initialTaskId,
 }: TaskListViewProps) {
+  // YENİ: Dili tapıb tərcümə obyektini formalaşdırırıq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
   const openedInitialTask = useRef(false);
 
@@ -842,12 +866,12 @@ export function TaskListView({
   }, [initialTaskId, tasks]);
 
   const GROUPS = [
-    { status: "TODO",        ...STATUS_MAP.TODO },
-    { status: "IN_PROGRESS", ...STATUS_MAP.IN_PROGRESS },
-    { status: "IN_REVIEW",   ...STATUS_MAP.IN_REVIEW },
-    { status: "DONE",        ...STATUS_MAP.DONE },
-    { status: "BACKLOG",     ...STATUS_MAP.BACKLOG },
-    { status: "CANCELLED",   ...STATUS_MAP.CANCELLED },
+    { status: "TODO",        ...STATUS_MAP.TODO,        label: t("status.TODO") || "To Do" },
+    { status: "IN_PROGRESS", ...STATUS_MAP.IN_PROGRESS, label: t("status.IN_PROGRESS") || "In Progress" },
+    { status: "IN_REVIEW",   ...STATUS_MAP.IN_REVIEW,   label: t("status.IN_REVIEW") || "In Review" },
+    { status: "DONE",        ...STATUS_MAP.DONE,        label: t("status.DONE") || "Done" },
+    { status: "BACKLOG",     ...STATUS_MAP.BACKLOG,     label: t("status.BACKLOG") || "Backlog" },
+    { status: "CANCELLED",   ...STATUS_MAP.CANCELLED,   label: t("status.CANCELLED") || "Cancelled" },
   ];
 
   const handleSheetUpdated = useCallback((updatedTask: KanbanTask) => {
@@ -867,12 +891,24 @@ export function TaskListView({
         <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
           <div className="w-5 flex-shrink-0" />
           <div className="w-6 flex-shrink-0" />
-          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Status</div>
-          <div className="flex-1 min-w-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">Tapşırıq Adı</div>
-          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Məlumat</div>
-          <div className="w-32 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">İcraçı</div>
-          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">Son Tarix</div>
-          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right hidden md:block">Prioritet</div>
+          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+            {t("taskListView.tableStatus") || "Status"}
+          </div>
+          <div className="flex-1 min-w-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+            {t("taskListView.tableTaskName") || "Tapşırıq Adı"}
+          </div>
+          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+            {t("taskListView.tableInfo") || "Məlumat"}
+          </div>
+          <div className="w-32 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
+            {t("taskListView.tableAssignee") || "İcraçı"}
+          </div>
+          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">
+            {t("taskListView.tableDueDate") || "Son Tarix"}
+          </div>
+          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right hidden md:block">
+            {t("taskListView.tablePriority") || "Prioritet"}
+          </div>
           <div className="w-16 flex-shrink-0" />
         </div>
 
@@ -895,6 +931,7 @@ export function TaskListView({
                 onTaskCreated={onTaskCreated}
                 onTaskClick={(task: KanbanTask) => setSelectedTask(task)}
                 defaultStatus={group.status}
+                t={t} // YENİ: Alt komponentlərə t-ni ötürürük
               />
             );
           })}

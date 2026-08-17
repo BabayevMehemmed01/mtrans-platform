@@ -2,13 +2,13 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n";  // YENİ
 import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,11 +36,11 @@ export interface ProjectMemberExt {
 interface ProjectMembersClientProps {
   projectId: string;
   projectMembers: ProjectMemberExt[];
-  companyUsers: any[]; // Artıq içində department məlumatı da gəlir
+  companyUsers: any[];
 }
 
 function getInitials(name: string) {
-  return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0,2)
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0,2);
 }
 
 export function ProjectMembersClient({
@@ -48,10 +48,12 @@ export function ProjectMembersClient({
   projectMembers,
   companyUsers,
 }: ProjectMembersClientProps) {
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [members, setMembers] = useState(projectMembers);
   const [loading, setLoading] = useState(false);
-  
-  // Tab State: INDIVIDUAL və ya DEPARTMENT
   const [inviteMode, setInviteMode] = useState<"INDIVIDUAL" | "DEPARTMENT">("INDIVIDUAL");
   
   const [selectedUserId, setSelectedUserId] = useState("");
@@ -60,12 +62,10 @@ export function ProjectMembersClient({
   
   const router = useRouter();
 
-  // Layihədə OLMAYAN istifadəçiləri tapırıq
   const availableUsers = useMemo(() => {
     return companyUsers.filter((u) => !members.some((m) => m.userId === u.id));
   }, [companyUsers, members]);
 
-  // Şirkətdəki unikal şöbələri çıxarırıq (Dropdown üçün)
   const uniqueDepartments = useMemo(() => {
     const depts = new Map();
     companyUsers.forEach(u => {
@@ -94,16 +94,14 @@ export function ProjectMembersClient({
       } 
       else if (inviteMode === "DEPARTMENT") {
         if (!selectedDeptId) return;
-        // Şöbəyə aid olan, amma hələ layihədə olmayan işçiləri tapırıq
         const usersToInvite = availableUsers.filter(u => u.department?.id === selectedDeptId);
         
         if (usersToInvite.length === 0) {
-          alert("Bu şöbənin bütün işçiləri artıq layihəyə əlavə edilib!");
+          alert(t("projectMembers.alertDeptDone") || "Bu şöbənin bütün işçiləri artıq layihəyə əlavə edilib!");
           setLoading(false);
           return;
         }
 
-        // Bütün işçiləri eyni anda API-a göndəririk (Promise.all ilə paralel sürətli yükləmə)
         const promises = usersToInvite.map(u => 
           fetch(`/api/projects/${projectId}/members`, {
             method: "POST",
@@ -115,20 +113,22 @@ export function ProjectMembersClient({
         const newMembers = await Promise.all(promises);
         setMembers([...members, ...newMembers]);
         setSelectedDeptId("");
-        alert(`${usersToInvite.length} nəfər şöbə işçisi uğurla layihəyə əlavə edildi!`);
+        
+        const successMsg = t("projectMembers.alertSuccess") || "{count} nəfər şöbə işçisi uğurla layihəyə əlavə edildi!";
+        alert(successMsg.replace("{count}", String(usersToInvite.length)));
       }
       
       router.refresh();
     } catch (e) {
       console.error(e);
-      alert("Xəta baş verdi");
+      alert(t("projectMembers.alertError") || "Xəta baş verdi");
     } finally {
       setLoading(false);
     }
   };
 
   const handleRemoveMember = async (userId: string) => {
-    if (!confirm("Bu istifadəçini layihədən çıxarmaq istədiyinizə əminsiniz?")) return;
+    if (!confirm(t("projectMembers.confirmRemove") || "Bu istifadəçini layihədən çıxarmaq istədiyinizə əminsiniz?")) return;
     try {
       const res = await fetch(`/api/projects/${projectId}/members`, {
         method: "DELETE",
@@ -144,9 +144,18 @@ export function ProjectMembersClient({
     }
   };
 
+  // Rol adını göstərmək üçün helper
+  const getRoleLabel = (roleStr: string) => {
+    switch (roleStr) {
+      case 'OWNER': return t("projectMembers.roleOwner") || "Sahib (Owner)";
+      case 'MANAGER': return t("projectMembers.roleManager") || "Menecer (Manager)";
+      case 'VIEWER': return t("projectMembers.roleViewer") || "İzləyici (Viewer)";
+      default: return t("projectMembers.roleMember") || "Üzv (Member)";
+    }
+  };
+
   return (
     <div className="p-6 max-w-[1600px] mx-auto space-y-6 overflow-auto h-full">
-      {/* ─── Add Member Toolbar (Ağıllı Dəvət) ─── */}
       <div className="bg-white border border-gray-200/80 rounded-xl p-5 shadow-sm flex flex-col xl:flex-row xl:items-start justify-between gap-6">
         
         <div className="flex flex-col gap-4">
@@ -155,24 +164,23 @@ export function ProjectMembersClient({
               {inviteMode === "INDIVIDUAL" ? <UserPlus className="w-6 h-6 text-blue-600" /> : <Users className="w-6 h-6 text-blue-600" />}
             </div>
             <div>
-              <h3 className="text-[16px] font-bold text-slate-800">Layihəyə Üzv Əlavə Et</h3>
-              <p className="text-[12px] font-medium text-slate-500">Collab və ya standart layihələrə işçiləri cəlb edin</p>
+              <h3 className="text-[16px] font-bold text-slate-800">{t("projectMembers.addMemberTitle")}</h3>
+              <p className="text-[12px] font-medium text-slate-500">{t("projectMembers.addMemberDesc")}</p>
             </div>
           </div>
 
-          {/* Toggle Buttons */}
           <div className="flex bg-slate-100/80 p-1 rounded-lg w-fit border border-gray-200/50">
             <button
               onClick={() => setInviteMode("INDIVIDUAL")}
               className={cn("px-4 py-1.5 text-[12px] font-bold rounded-md transition-all", inviteMode === "INDIVIDUAL" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-700")}
             >
-              Fərdi Seçim
+              {t("projectMembers.individualSelect")}
             </button>
             <button
               onClick={() => setInviteMode("DEPARTMENT")}
               className={cn("px-4 py-1.5 text-[12px] font-bold rounded-md transition-all", inviteMode === "DEPARTMENT" ? "bg-white text-blue-700 shadow-sm" : "text-slate-500 hover:text-slate-700")}
             >
-              Şöbəvi Seçim (Toplu)
+              {t("projectMembers.departmentSelect")}
             </button>
           </div>
         </div>
@@ -180,14 +188,14 @@ export function ProjectMembersClient({
         <form onSubmit={handleAddSubmit} className="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full xl:w-auto mt-2 xl:mt-0">
           {inviteMode === "INDIVIDUAL" ? (
             <div className="w-full sm:w-64 space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">İşçi Seçin</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">{t("projectMembers.selectWorker")}</label>
               <select
                 className="flex h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-[13px] font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                 value={selectedUserId}
                 onChange={(e) => setSelectedUserId(e.target.value)}
                 required
               >
-                <option value="" disabled>Siyahıdan seçin...</option>
+                <option value="" disabled>{t("projectMembers.selectWorkerPlaceholder")}</option>
                 {availableUsers.map((u: any) => (
                   <option key={u.id} value={u.id}>
                     {u.name} {u.department ? `(${u.department.name})` : ''}
@@ -197,14 +205,14 @@ export function ProjectMembersClient({
             </div>
           ) : (
             <div className="w-full sm:w-64 space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">Şöbə Seçin</label>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">{t("projectMembers.selectDepartment")}</label>
               <select
                 className="flex h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-[13px] font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
                 value={selectedDeptId}
                 onChange={(e) => setSelectedDeptId(e.target.value)}
                 required
               >
-                <option value="" disabled>Siyahıdan şöbə seçin...</option>
+                <option value="" disabled>{t("projectMembers.selectDepartmentPlaceholder")}</option>
                 {uniqueDepartments.map((d: any) => (
                   <option key={d.id} value={d.id}>{d.name}</option>
                 ))}
@@ -213,16 +221,16 @@ export function ProjectMembersClient({
           )}
           
           <div className="w-full sm:w-40 space-y-1.5">
-            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">İcazə Rolu</label>
+            <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">{t("projectMembers.permissionRole")}</label>
             <select
               className="flex h-11 w-full rounded-xl border border-gray-300 bg-white px-3 text-[13px] font-medium text-slate-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm"
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
             >
-              <option value="OWNER">Sahib (Owner)</option>
-              <option value="MANAGER">Menecer (Manager)</option>
-              <option value="MEMBER">Üzv (Member)</option>
-              <option value="VIEWER">İzləyici (Viewer)</option>
+              <option value="OWNER">{t("projectMembers.roleOwner")}</option>
+              <option value="MANAGER">{t("projectMembers.roleManager")}</option>
+              <option value="MEMBER">{t("projectMembers.roleMember")}</option>
+              <option value="VIEWER">{t("projectMembers.roleViewer")}</option>
             </select>
           </div>
           
@@ -231,17 +239,16 @@ export function ProjectMembersClient({
             disabled={loading || (inviteMode === "INDIVIDUAL" ? !selectedUserId : !selectedDeptId)} 
             className="h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 shadow-sm rounded-xl w-full sm:w-auto"
           >
-            {loading ? "Gözləyin..." : "Əlavə Et"}
+            {loading ? t("projectMembers.waitBtn") : t("projectMembers.addBtn")}
           </Button>
         </form>
       </div>
 
-      {/* ─── Members Table ─── */}
       <div className="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden">
         <div className="bg-slate-50/80 border-b border-gray-200 px-6 py-3 flex items-center gap-3">
-          <div className="flex-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">Üzv / Məlumat</div>
-          <div className="w-40 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">İcazə Rolu</div>
-          <div className="w-16 flex-shrink-0 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">İdarə</div>
+          <div className="flex-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t("projectMembers.tableMemberInfo")}</div>
+          <div className="w-40 text-[11px] font-bold text-slate-500 uppercase tracking-wider text-center">{t("projectMembers.tableRole")}</div>
+          <div className="w-16 flex-shrink-0 text-right text-[11px] font-bold text-slate-500 uppercase tracking-wider">{t("projectMembers.tableAction")}</div>
         </div>
 
         <Table>
@@ -271,7 +278,7 @@ export function ProjectMembersClient({
                     'bg-green-50 text-green-700 border-green-200'
                   }`}>
                     {member.role === 'OWNER' && <ShieldAlert className="w-3 h-3 mr-1" />}
-                    {member.role}
+                    {getRoleLabel(member.role)}
                   </span>
                 </TableCell>
 
@@ -291,7 +298,7 @@ export function ProjectMembersClient({
                         }}
                       >
                         <Trash className="mr-2 h-4 w-4" />
-                        <span>Layihədən Çıxar</span>
+                        <span>{t("projectMembers.removeMember")}</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -303,8 +310,8 @@ export function ProjectMembersClient({
                 <TableCell colSpan={3} className="text-center py-12">
                   <div className="flex flex-col items-center justify-center text-slate-500">
                     <UserPlus className="w-12 h-12 mb-3 opacity-20" />
-                    <p className="text-[14px] font-medium">Bu layihədə hələ heç bir üzv yoxdur.</p>
-                    <p className="text-[12px]">Yuxarıdakı paneldən yeni üzvlər cəlb edə bilərsiniz.</p>
+                    <p className="text-[14px] font-medium">{t("projectMembers.noMembersTitle")}</p>
+                    <p className="text-[12px]">{t("projectMembers.noMembersDesc")}</p>
                   </div>
                 </TableCell>
               </TableRow>
