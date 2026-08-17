@@ -135,7 +135,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    // YENİ: trigger və session parametrlərini əlavə etdik
+    async jwt({ token, user, trigger, session }) {
       // İlk giriş zamanı user məlumatlarını token-a əlavə et
       if (user) {
         token.id = user.id;
@@ -150,6 +151,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.company = (user as any).company;
         token.role = (user as any).role;
       }
+
+      // YENİ ƏLAVƏ: Ayarlardan update() çağırılanda token-i (dili) anında yeniləyirik!
+      if (trigger === "update" && session) {
+        if (session.language) {
+          token.language = session.language;
+        }
+      }
+
       return token;
     },
 
