@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { isSuperAdmin, isDepartmentHead, hasPermission } from "@/lib/permissions";
 import { DepartmentHeader } from "@/components/department/DepartmentHeader";
 import { DepartmentTabs } from "@/components/department/DepartmentTabs";
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -12,8 +13,12 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const session = await auth();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const department = await prisma.department.findUnique({ where: { id }, select: { name: true } });
-  return { title: department?.name ?? "Şöbə" };
+  return { title: department?.name ?? (t("departmentDetail.defaultTitle") || "Şöbə") };
 }
 
 export default async function DepartmentDetailPage({ params }: Props) {

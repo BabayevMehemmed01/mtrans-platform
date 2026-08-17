@@ -6,14 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
-
-const statusLabels: Record<string, string> = {
-  PLANNING: "Planlanır",
-  ACTIVE: "Aktiv",
-  ON_HOLD: "Dayandırılıb",
-  COMPLETED: "Tamamlandı",
-  CANCELLED: "Ləğv edildi",
-};
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface DepartmentProjectsTabProps {
   departmentId: string;
@@ -22,13 +16,20 @@ interface DepartmentProjectsTabProps {
 }
 
 export function DepartmentProjectsTab({ departmentId, projects, canCreateProject }: DepartmentProjectsTabProps) {
+  // YENİ: Tərcüməni qoşuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">{projects.length} layihə bu şöbəyə aiddir</p>
+        <p className="text-sm text-muted-foreground">
+          {(t("departmentProjectsTab.projectCountInfo") || "{count} layihə bu şöbəyə aiddir").replace("{count}", String(projects.length))}
+        </p>
         {canCreateProject && (
           <Link href={`/dashboard/projects/new?departmentId=${departmentId}`}>
-            <Button><Plus className="mr-2 h-4 w-4" /> Yeni Layihə</Button>
+            <Button><Plus className="mr-2 h-4 w-4" /> {t("departmentProjectsTab.newProjectBtn") || "Yeni Layihə"}</Button>
           </Link>
         )}
       </div>
@@ -47,7 +48,7 @@ export function DepartmentProjectsTab({ departmentId, projects, canCreateProject
                     <FolderKanban className="absolute -right-4 -bottom-6 h-28 w-28 text-white/10" />
                     <div className="relative flex items-center justify-between">
                       <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm">
-                        {statusLabels[project.status] ?? project.status}
+                        {t(`projectStatus.${project.status}`) || project.status}
                       </Badge>
                     </div>
                     <h3 className="relative line-clamp-2 text-xl font-bold text-white drop-shadow-sm">
@@ -67,11 +68,11 @@ export function DepartmentProjectsTab({ departmentId, projects, canCreateProject
                     <div className="mt-auto flex items-center gap-4 border-t border-[hsl(var(--border))] pt-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <CheckSquare className="h-4 w-4" />
-                        {project._count.tasks} tapşırıq
+                        {(t("departmentProjectsTab.tasks") || "{count} tapşırıq").replace("{count}", String(project._count.tasks))}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <Users className="h-4 w-4" />
-                        {project._count.members} üzv
+                        {(t("departmentProjectsTab.members") || "{count} üzv").replace("{count}", String(project._count.members))}
                       </span>
                     </div>
                   </div>
@@ -85,11 +86,11 @@ export function DepartmentProjectsTab({ departmentId, projects, canCreateProject
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <FolderKanban className="h-8 w-8 text-muted-foreground/60" />
           </div>
-          <h3 className="text-lg font-medium">Layihə Yoxdur</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Bu şöbədə hələ heç bir layihə yaradılmayıb.</p>
+          <h3 className="text-lg font-medium">{t("departmentProjectsTab.noProjects") || "Layihə Yoxdur"}</h3>
+          <p className="mb-4 text-sm text-muted-foreground">{t("departmentProjectsTab.noProjectsDesc") || "Bu şöbədə hələ heç bir layihə yaradılmayıb."}</p>
           {canCreateProject && (
             <Link href={`/dashboard/projects/new?departmentId=${departmentId}`}>
-              <Button><Plus className="mr-2 h-4 w-4" /> İlk Layihəni Yarat</Button>
+              <Button><Plus className="mr-2 h-4 w-4" /> {t("departmentProjectsTab.createFirstProject") || "İlk Layihəni Yarat"}</Button>
             </Link>
           )}
         </div>

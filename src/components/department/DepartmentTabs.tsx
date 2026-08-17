@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { FolderKanban, Users, Calendar, LayoutDashboard, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectDashboard } from "@/components/project/ProjectDashboard";
@@ -10,14 +12,6 @@ import { DepartmentPeopleTab } from "@/components/department/DepartmentPeopleTab
 import { DepartmentChatTab } from "@/components/department/DepartmentChatTab";
 
 type TabId = "projects" | "people" | "calendar" | "dashboard" | "chat";
-
-const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "projects", label: "Layihələr", icon: FolderKanban },
-  { id: "people", label: "İnsanlar", icon: Users },
-  { id: "calendar", label: "Təqvim", icon: Calendar },
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "chat", label: "Qrup Mesajı", icon: MessageSquare },
-];
 
 interface DepartmentTabsProps {
   departmentId: string;
@@ -44,6 +38,19 @@ export function DepartmentTabs({
   canInvite,
   currentUserId,
 }: DepartmentTabsProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
+  const TABS = useMemo(() => [
+    { id: "projects" as TabId,  label: t("departmentTabs.tabProjects") || "Layihələr", icon: FolderKanban },
+    { id: "people" as TabId,    label: t("departmentTabs.tabPeople") || "İnsanlar", icon: Users },
+    { id: "calendar" as TabId,  label: t("departmentTabs.tabCalendar") || "Təqvim", icon: Calendar },
+    { id: "dashboard" as TabId, label: t("departmentTabs.tabDashboard") || "Dashboard", icon: LayoutDashboard },
+    { id: "chat" as TabId,      label: t("departmentTabs.tabChat") || "Qrup Mesajı", icon: MessageSquare },
+  ], [t]);
+
   const [activeTab, setActiveTab] = useState<TabId>("projects");
 
   const calendarTasks: CalendarTaskItem[] = tasks

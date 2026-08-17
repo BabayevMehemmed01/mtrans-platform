@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSession } from "next-auth/react"; // YENİ: Sessiyadan dil üçün
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 import {
   Table,
   TableBody,
@@ -25,18 +27,6 @@ import {
 } from "@/components/ui/dialog";
 import { Mail, ShieldCheck, Shield } from "lucide-react";
 import { getInitials } from "@/lib/utils";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  COMPANY: "🏢 Şirkət İdarəetməsi",
-  ROLE: "🔐 Rol & İcazə",
-  DEPARTMENT: "🏬 Şöbə",
-  PROJECT: "📁 Layihə",
-  TASK: "✅ Tapşırıq",
-  SUBTASK: "📋 Alt Tapşırıq",
-  COMMENT: "💬 Şərhlər",
-  FILE: "📎 Fayllar",
-  REPORT: "📊 Hesabatlar",
-};
 
 interface PermissionRow {
   id: string;
@@ -82,6 +72,22 @@ function groupByCategory(permissions: PermissionRow[]) {
   }, {});
 }
 
+// Kateqoriya adlarını tərcümədən alan helper funksiyası
+const getCategoryLabel = (cat: string, t: any) => {
+  const map: Record<string, string> = {
+    COMPANY: t("departmentPeopleTab.catCompany") || "🏢 Şirkət İdarəetməsi",
+    ROLE: t("departmentPeopleTab.catRole") || "🔐 Rol & İcazə",
+    DEPARTMENT: t("departmentPeopleTab.catDepartment") || "🏬 Şöbə",
+    PROJECT: t("departmentPeopleTab.catProject") || "📁 Layihə",
+    TASK: t("departmentPeopleTab.catTask") || "✅ Tapşırıq",
+    SUBTASK: t("departmentPeopleTab.catSubtask") || "📋 Alt Tapşırıq",
+    COMMENT: t("departmentPeopleTab.catComment") || "💬 Şərhlər",
+    FILE: t("departmentPeopleTab.catFile") || "📎 Fayllar",
+    REPORT: t("departmentPeopleTab.catReport") || "📊 Hesabatlar",
+  };
+  return map[cat] ?? cat;
+};
+
 function PermissionsDialog({
   departmentId,
   member,
@@ -89,6 +95,7 @@ function PermissionsDialog({
   roles,
   open,
   onOpenChange,
+  t, // YENİ: Tərcümə obyekti
 }: {
   departmentId: string;
   member: MemberRow;
@@ -96,6 +103,7 @@ function PermissionsDialog({
   roles: RoleRow[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  t: any;
 }) {
   const [extraKeys, setExtraKeys] = useState<Set<string>>(
     new Set(member.extraPermissions.map((e) => e.permission.key))
@@ -133,7 +141,7 @@ function PermissionsDialog({
           return next;
         });
         const data = await res.json().catch(() => ({}));
-        alert(data.error || "Xəta baş verdi");
+        alert(data.error || (t("departmentPeopleTab.errorGeneric") || "Xəta baş verdi"));
       }
     } finally {
       setPending(null);
@@ -144,9 +152,11 @@ function PermissionsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{member.name} — Fərdi İcazələr</DialogTitle>
+          <DialogTitle>
+            {(t("departmentPeopleTab.permTitle") || "{name} — Fərdi İcazələr").replace("{name}", member.name)}
+          </DialogTitle>
           <DialogDescription>
-            Rolun verdiyi icazələr üstündən əlavə olaraq, bu istifadəçiyə spesifik icazələr verin.
+            {t("departmentPeopleTab.permDesc") || "Rolun verdiyi icazələr üstündən əlavə olaraq, bu istifadəçiyə spesifik icazələr verin."}
           </DialogDescription>
         </DialogHeader>
 
@@ -154,7 +164,7 @@ function PermissionsDialog({
           {Object.entries(grouped).map(([category, perms]) => (
             <div key={category}>
               <p className="text-xs font-semibold text-muted-foreground mb-2">
-                {CATEGORY_LABELS[category] ?? category}
+                {getCategoryLabel(category, t)}
               </p>
               <div className="space-y-2">
                 {perms.map((perm) => {
@@ -169,7 +179,7 @@ function PermissionsDialog({
                         <p className="text-sm font-medium truncate">{perm.name}</p>
                         {fromRole && (
                           <p className="text-[10px] text-muted-foreground flex items-center gap-1">
-                            <Shield className="w-3 h-3" /> Rol vasitəsilə artıq var
+                            <Shield className="w-3 h-3" /> {t("departmentPeopleTab.hasByRole") || "Rol vasitəsilə artıq var"}
                           </p>
                         )}
                       </div>
@@ -199,6 +209,11 @@ export function DepartmentPeopleTab({
   canInvite,
   currentUserId,
 }: DepartmentPeopleTabProps) {
+  // YENİ: Dili tapırıq və tərcümə obyektini (t) formalaşdırırıq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRoleId, setInviteRoleId] = useState("");
@@ -227,10 +242,10 @@ export function DepartmentPeopleTab({
         setInviteEmail("");
         setInviteRoleId("");
       } else {
-        setInviteError(data.error || "Xəta baş verdi");
+        setInviteError(data.error || (t("departmentPeopleTab.errorGeneric") || "Xəta baş verdi"));
       }
     } catch {
-      setInviteError("Şəbəkə xətası. Yenidən cəhd edin.");
+      setInviteError(t("departmentPeopleTab.networkError") || "Şəbəkə xətası. Yenidən cəhd edin.");
     } finally {
       setLoading(false);
     }
@@ -239,17 +254,19 @@ export function DepartmentPeopleTab({
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-muted-foreground">{members.length} işçi bu şöbəyə aiddir</p>
+        <p className="text-sm text-muted-foreground">
+          {(t("departmentPeopleTab.workerCount") || "{count} işçi bu şöbəyə aiddir").replace("{count}", String(members.length))}
+        </p>
         {canInvite && (
           <Dialog open={isInviteOpen} onOpenChange={(open) => { setIsInviteOpen(open); if (!open) { setInviteError(""); } }}>
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                <Mail className="w-4 h-4 mr-2" /> Şöbəyə Dəvət Et
+                <Mail className="w-4 h-4 mr-2" /> {t("departmentPeopleTab.inviteBtn") || "Şöbəyə Dəvət Et"}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Şöbəyə Yeni Üzv Dəvət Et</DialogTitle>
+                <DialogTitle>{t("departmentPeopleTab.inviteTitle") || "Şöbəyə Yeni Üzv Dəvət Et"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleInvite} className="space-y-4 mt-4">
                 {inviteError && (
@@ -258,25 +275,25 @@ export function DepartmentPeopleTab({
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="deptInviteEmail">Email</Label>
+                  <Label htmlFor="deptInviteEmail">{t("departmentPeopleTab.emailLabel") || "Email"}</Label>
                   <Input
                     id="deptInviteEmail"
                     type="email"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="ad@sirket.com"
+                    placeholder={t("departmentPeopleTab.emailPlaceholder") || "ad@sirket.com"}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="deptInviteRole">Rol</Label>
+                  <Label htmlFor="deptInviteRole">{t("departmentPeopleTab.roleLabel") || "Rol"}</Label>
                   <select
                     id="deptInviteRole"
                     className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                     value={inviteRoleId}
                     onChange={(e) => setInviteRoleId(e.target.value)}
                   >
-                    <option value="">Standart rol</option>
+                    <option value="">{t("departmentPeopleTab.standardRole") || "Standart rol"}</option>
                     {roles.map((r) => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
@@ -284,7 +301,7 @@ export function DepartmentPeopleTab({
                 </div>
                 <DialogFooter>
                   <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    {loading ? "Göndərilir..." : "Dəvət Göndər"}
+                    {loading ? (t("departmentPeopleTab.sending") || "Göndərilir...") : (t("departmentPeopleTab.sendInvite") || "Dəvət Göndər")}
                   </Button>
                 </DialogFooter>
               </form>
@@ -297,9 +314,9 @@ export function DepartmentPeopleTab({
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
-              <TableHead>Üzv</TableHead>
-              <TableHead>Rol</TableHead>
-              <TableHead>Fərdi İcazələr</TableHead>
+              <TableHead>{t("departmentPeopleTab.thMember") || "Üzv"}</TableHead>
+              <TableHead>{t("departmentPeopleTab.thRole") || "Rol"}</TableHead>
+              <TableHead>{t("departmentPeopleTab.thPerms") || "Fərdi İcazələr"}</TableHead>
               {canManage && <TableHead className="w-[160px]"></TableHead>}
             </TableRow>
           </TableHeader>
@@ -314,7 +331,7 @@ export function DepartmentPeopleTab({
                     </Avatar>
                     <div className="flex flex-col">
                       <span className="font-medium text-sm">
-                        {member.name} {member.id === currentUserId && <span className="text-xs text-muted-foreground">(Siz)</span>}
+                        {member.name} {member.id === currentUserId && <span className="text-xs text-muted-foreground">{t("departmentPeopleTab.you") || "(Siz)"}</span>}
                       </span>
                       <span className="text-xs text-[hsl(var(--muted-foreground))]">{member.jobTitle || member.email}</span>
                     </div>
@@ -333,7 +350,7 @@ export function DepartmentPeopleTab({
                 <TableCell>
                   {member.extraPermissions.length > 0 ? (
                     <span className="text-xs font-medium text-blue-600">
-                      +{member.extraPermissions.length} əlavə icazə
+                      {(t("departmentPeopleTab.extraPerms") || "+{count} əlavə icazə").replace("{count}", String(member.extraPermissions.length))}
                     </span>
                   ) : (
                     <span className="text-xs text-muted-foreground">-</span>
@@ -342,7 +359,7 @@ export function DepartmentPeopleTab({
                 {canManage && (
                   <TableCell>
                     <Button variant="outline" size="sm" onClick={() => setPermissionsMember(member)}>
-                      <Shield className="w-3.5 h-3.5 mr-1.5" /> İcazələr
+                      <Shield className="w-3.5 h-3.5 mr-1.5" /> {t("departmentPeopleTab.permsBtn") || "İcazələr"}
                     </Button>
                   </TableCell>
                 )}
@@ -351,7 +368,7 @@ export function DepartmentPeopleTab({
             {members.length === 0 && (
               <TableRow>
                 <TableCell colSpan={canManage ? 4 : 3} className="text-center text-sm text-muted-foreground py-8">
-                  Bu şöbədə hələ heç bir işçi yoxdur
+                  {t("departmentPeopleTab.emptyMembers") || "Bu şöbədə hələ heç bir işçi yoxdur"}
                 </TableCell>
               </TableRow>
             )}
@@ -367,6 +384,7 @@ export function DepartmentPeopleTab({
           roles={roles}
           open={!!permissionsMember}
           onOpenChange={(open) => { if (!open) setPermissionsMember(null); }}
+          t={t} // YENİ: Tərcümə obyektini Modal-a ötürürük
         />
       )}
     </div>

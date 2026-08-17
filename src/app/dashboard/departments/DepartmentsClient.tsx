@@ -3,6 +3,8 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react" // YENİ: Dil üçün sessiya
+import { getTranslation } from "@/lib/i18n" // YENİ: Tərcümə mühərriki
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -54,6 +56,10 @@ export function DepartmentsClient({
   canEdit,
   canDelete,
 }: DepartmentsClientProps) {
+  const { data: session } = useSession()
+  const lang = (session?.user as any)?.language || "az"
+  const t = getTranslation(lang)
+
   const [departments, setDepartments] = useState(initialData)
 
   // Dialog States
@@ -100,7 +106,7 @@ export function DepartmentsClient({
         router.refresh()
       } else {
         const data = await res.json().catch(() => ({}))
-        alert(data.error || "Xəta baş verdi")
+        alert(data.error || (t("departmentsClient.errorGeneric") || "Xəta baş verdi"))
       }
     } finally {
       setLoading(false)
@@ -139,7 +145,7 @@ export function DepartmentsClient({
         router.refresh()
       } else {
         const data = await res.json().catch(() => ({}))
-        alert(data.error || "Xəta baş verdi")
+        alert(data.error || (t("departmentsClient.errorGeneric") || "Xəta baş verdi"))
       }
     } finally {
       setLoading(false)
@@ -150,10 +156,11 @@ export function DepartmentsClient({
     e.preventDefault()
     e.stopPropagation()
     if (dept.isDefault) {
-      alert("Sancılmış (default) şöbələr silinə bilməz")
+      alert(t("departmentsClient.errorDefaultDelete") || "Sancılmış (default) şöbələr silinə bilməz")
       return
     }
-    if (!confirm(`"${dept.name}" şöbəsini silmək istədiyinizə əminsiniz?`)) return
+    const confirmMessage = (t("departmentsClient.confirmDelete") || `"{name}" şöbəsini silmək istədiyinizə əminsiniz?`).replace("{name}", dept.name);
+    if (!confirm(confirmMessage)) return
     try {
       const res = await fetch(`/api/departments/${dept.id}`, { method: "DELETE" })
       if (res.ok) {
@@ -161,7 +168,7 @@ export function DepartmentsClient({
         router.refresh()
       } else {
         const data = await res.json().catch(() => ({}))
-        alert(data.error || "Şöbəni silmək mümkün olmadı")
+        alert(data.error || (t("departmentsClient.errorDeleteFail") || "Şöbəni silmək mümkün olmadı"))
       }
     } catch (err) {
       console.error(err)
@@ -172,7 +179,8 @@ export function DepartmentsClient({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {departments.length} şöbə {canCreate ? "" : "— yeni şöbə yaratmaq yalnız Super Admin üçün mümkündür"}
+          {(t("departmentsClient.deptCount") || "{count} şöbə").replace("{count}", String(departments.length))} 
+          {canCreate ? "" : (t("departmentsClient.superAdminOnly") || "— yeni şöbə yaratmaq yalnız Super Admin üçün mümkündür")}
         </p>
 
         {canCreate && (
@@ -180,26 +188,26 @@ export function DepartmentsClient({
             <DialogTrigger asChild>
               <Button className="bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="w-4 h-4 mr-2" />
-                Yeni Şöbə
+                {t("departmentsClient.newDept") || "Yeni Şöbə"}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Yeni Şöbə</DialogTitle>
+                <DialogTitle>{t("departmentsClient.newDept") || "Yeni Şöbə"}</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4 mt-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Şöbənin adı</Label>
+                  <Label htmlFor="name">{t("departmentsClient.deptName") || "Şöbənin adı"}</Label>
                   <Input
                     id="name"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Məsələn: Marketing"
+                    placeholder={t("departmentsClient.deptNamePlaceholder") || "Məsələn: Marketing"}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="color">Rəng kodu</Label>
+                  <Label htmlFor="color">{t("departmentsClient.colorCode") || "Rəng kodu"}</Label>
                   <Input
                     id="color"
                     type="color"
@@ -210,14 +218,14 @@ export function DepartmentsClient({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="headUser">Şöbə Rəhbəri</Label>
+                  <Label htmlFor="headUser">{t("departmentsClient.deptHead") || "Şöbə Rəhbəri"}</Label>
                   <select
                     id="headUser"
                     className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                     value={headUserId}
                     onChange={(e) => setHeadUserId(e.target.value)}
                   >
-                    <option value="">Seçilməyib</option>
+                    <option value="">{t("departmentsClient.notSelected") || "Seçilməyib"}</option>
                     {users.map((u) => (
                       <option key={u.id} value={u.id}>{u.name}</option>
                     ))}
@@ -232,12 +240,12 @@ export function DepartmentsClient({
                   />
                   <span className="flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                    Sancılmış (default) şöbə et — silinə bilməyəcək
+                    {t("departmentsClient.makeDefault") || "Sancılmış (default) şöbə et — silinə bilməyəcək"}
                   </span>
                 </label>
                 <DialogFooter>
                   <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                    {loading ? "Yaradılır..." : "Yarat"}
+                    {loading ? (t("departmentsClient.creating") || "Yaradılır...") : (t("departmentsClient.create") || "Yarat")}
                   </Button>
                 </DialogFooter>
               </form>
@@ -249,11 +257,11 @@ export function DepartmentsClient({
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Şöbəni Redaktə Et</DialogTitle>
+            <DialogTitle>{t("departmentsClient.editDeptTitle") || "Şöbəni Redaktə Et"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="editName">Şöbənin adı</Label>
+              <Label htmlFor="editName">{t("departmentsClient.deptName") || "Şöbənin adı"}</Label>
               <Input
                 id="editName"
                 value={editName}
@@ -262,7 +270,7 @@ export function DepartmentsClient({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editColor">Rəng kodu</Label>
+              <Label htmlFor="editColor">{t("departmentsClient.colorCode") || "Rəng kodu"}</Label>
               <Input
                 id="editColor"
                 type="color"
@@ -273,14 +281,14 @@ export function DepartmentsClient({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="editHeadUser">Şöbə Rəhbəri</Label>
+              <Label htmlFor="editHeadUser">{t("departmentsClient.deptHead") || "Şöbə Rəhbəri"}</Label>
               <select
                 id="editHeadUser"
                 className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                 value={editHeadUserId}
                 onChange={(e) => setEditHeadUserId(e.target.value)}
               >
-                <option value="">Seçilməyib</option>
+                <option value="">{t("departmentsClient.notSelected") || "Seçilməyib"}</option>
                 {users.map((u) => (
                   <option key={u.id} value={u.id}>{u.name}</option>
                 ))}
@@ -296,13 +304,13 @@ export function DepartmentsClient({
                 />
                 <span className="flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                  Sancılmış (default) şöbə — silinə bilməyəcək
+                  {t("departmentsClient.isDefaultNote") || "Sancılmış (default) şöbə — silinə bilməyəcək"}
                 </span>
               </label>
             )}
             <DialogFooter>
               <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                {loading ? "Yadda saxlanılır..." : "Yadda saxla"}
+                {loading ? (t("departmentsClient.saving") || "Yadda saxlanılır...") : (t("departmentsClient.save") || "Yadda saxla")}
               </Button>
             </DialogFooter>
           </form>
@@ -328,7 +336,7 @@ export function DepartmentsClient({
                     <div className="relative flex items-center justify-between">
                       {dept.isDefault ? (
                         <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm gap-1">
-                          <Lock className="h-3 w-3" /> Default
+                          <Lock className="h-3 w-3" /> {t("departmentsClient.defaultBadge") || "Default"}
                         </Badge>
                       ) : <span />}
 
@@ -347,7 +355,7 @@ export function DepartmentsClient({
                             {canManageThis && (
                               <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(dept, e as any) }}>
                                 <Pencil className="mr-2 h-4 w-4" />
-                                <span>Redaktə et</span>
+                                <span>{t("departmentsClient.editBtn") || "Redaktə et"}</span>
                               </DropdownMenuItem>
                             )}
                             {canDeleteThis && (
@@ -356,7 +364,7 @@ export function DepartmentsClient({
                                 onSelect={(e) => { e.preventDefault(); handleDelete(dept, e as any) }}
                               >
                                 <Trash className="mr-2 h-4 w-4" />
-                                <span>Sil</span>
+                                <span>{t("departmentsClient.deleteBtn") || "Sil"}</span>
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -377,13 +385,13 @@ export function DepartmentsClient({
                           <AvatarFallback>{getInitials(dept.head.name)}</AvatarFallback>
                         </Avatar>
                         <span className="truncate text-sm text-muted-foreground">
-                          {dept.head.name} <span className="text-xs">(Rəhbər)</span>
+                          {dept.head.name} <span className="text-xs">{t("departmentsClient.headBadge") || "(Rəhbər)"}</span>
                         </span>
                       </div>
                     ) : (
                       <Badge variant="secondary" className="w-fit gap-1.5 text-muted-foreground">
                         <UserCircle className="h-3 w-3" />
-                        Rəhbər təyin edilməyib
+                        {t("departmentsClient.noHead") || "Rəhbər təyin edilməyib"}
                       </Badge>
                     )}
 
@@ -394,11 +402,11 @@ export function DepartmentsClient({
                     <div className="mt-auto flex items-center gap-4 border-t border-[hsl(var(--border))] pt-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <Users className="h-4 w-4" />
-                        {dept._count?.users ?? 0} işçi
+                        {(t("departmentsClient.workersCount") || "{count} işçi").replace("{count}", String(dept._count?.users ?? 0))}
                       </span>
                       <span className="flex items-center gap-1.5">
                         <FolderKanban className="h-4 w-4" />
-                        {dept._count?.projects ?? 0} layihə
+                        {(t("departmentsClient.projectsCount") || "{count} layihə").replace("{count}", String(dept._count?.projects ?? 0))}
                       </span>
                     </div>
                   </div>
@@ -412,8 +420,8 @@ export function DepartmentsClient({
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <Building2 className="h-8 w-8 text-muted-foreground/60" />
           </div>
-          <h3 className="text-lg font-medium">Şöbə Yoxdur</h3>
-          <p className="mb-4 text-sm text-muted-foreground">Hələ heç bir şöbə yaradılmayıb.</p>
+          <h3 className="text-lg font-medium">{t("departmentsClient.noDeptsTitle") || "Şöbə Yoxdur"}</h3>
+          <p className="mb-4 text-sm text-muted-foreground">{t("departmentsClient.noDeptsDesc") || "Hələ heç bir şöbə yaradılmayıb."}</p>
         </div>
       )}
     </div>

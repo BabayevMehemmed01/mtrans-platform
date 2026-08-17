@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Users } from "lucide-react";
 import { NewCollabForm } from "./NewCollabForm";
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 export default async function NewCollabPage() {
   const session = await auth();
@@ -10,6 +11,10 @@ export default async function NewCollabPage() {
 
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
+
+  // YENİ: Tərcümə
+  const lang = (session.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 p-6">
@@ -23,10 +28,10 @@ export default async function NewCollabPage() {
         <div>
           <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
             <Users className="w-5 h-5 text-blue-600" />
-            Yeni Ortaq (Collab) Layihə
+            {t("newCollab.title") || "Yeni Ortaq (Collab) Layihə"}
           </h1>
           <p className="text-xs font-medium text-slate-500 mt-0.5">
-            Bu layihəyə istənilən şöbədən işçi dəvət edə biləcəksiniz.
+            {t("newCollab.subtitle") || "Bu layihəyə istənilən şöbədən işçi dəvət edə biləcəksiniz."}
           </p>
         </div>
       </div>

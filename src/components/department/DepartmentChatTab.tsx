@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Send, Paperclip, Loader2, AlertCircle, Phone, Video, Users } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -13,6 +15,11 @@ import { UploadButton } from "@/utils/uploadthing";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function DepartmentChatTab({ departmentId, currentUserId }: { departmentId: string; currentUserId: string }) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { data: channel, error: channelError } = useSWR(`/api/departments/${departmentId}/channel`, fetcher);
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -59,13 +66,13 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
   };
 
   const handleGroupCall = () => {
-    alert("Qrup zəngləri hazırda hazırlanır — bu funksiya tezliklə tam işlək olacaq. Hələlik yalnız şəxsi (1:1) söhbətlərdə zəng mümkündür.");
+    alert(t("departmentChatTab.groupCallAlert") || "Qrup zəngləri hazırda hazırlanır...");
   };
 
   if (channelError) {
     return (
       <div className="p-6 text-red-500 flex items-center gap-2">
-        <AlertCircle className="w-5 h-5" /> Söhbət kanalını yükləyərkən xəta baş verdi
+        <AlertCircle className="w-5 h-5" /> {t("departmentChatTab.fetchError") || "Söhbət kanalını yükləyərkən xəta baş verdi"}
       </div>
     );
   }
@@ -85,14 +92,16 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
           <Users className="w-5 h-5" />
         </div>
         <div className="flex-1">
-          <h3 className="font-semibold text-lg">{channel.name} — Qrup Söhbəti</h3>
-          <p className="text-xs text-muted-foreground">{channel.members?.length || 0} üzv</p>
+          <h3 className="font-semibold text-lg">{channel.name} {t("departmentChatTab.groupChat") || "— Qrup Söhbəti"}</h3>
+          <p className="text-xs text-muted-foreground">
+            {(t("departmentChatTab.members") || "{count} üzv").replace("{count}", String(channel.members?.length || 0))}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleGroupCall} size="icon" variant="ghost" className="rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600" title="Səsli zəng">
+          <Button onClick={handleGroupCall} size="icon" variant="ghost" className="rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600" title={t("departmentChatTab.voiceCall") || "Səsli zəng"}>
             <Phone className="w-5 h-5" />
           </Button>
-          <Button onClick={handleGroupCall} size="icon" variant="ghost" className="rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600" title="Video zəng">
+          <Button onClick={handleGroupCall} size="icon" variant="ghost" className="rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600" title={t("departmentChatTab.videoCall") || "Video zəng"}>
             <Video className="w-5 h-5" />
           </Button>
         </div>
@@ -103,7 +112,7 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
           {!messages ? (
             <div className="flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
           ) : messages.length === 0 ? (
-            <div className="text-center text-gray-400 mt-20">Bu qrupda hələ mesaj yoxdur. İlk mesajı siz yazın!</div>
+            <div className="text-center text-gray-400 mt-20">{t("departmentChatTab.noMessages") || "Bu qrupda hələ mesaj yoxdur. İlk mesajı siz yazın!"}</div>
           ) : (
             messages.map((msg: any) => {
               const isMe = msg.sender?.id === currentUserId;
@@ -117,7 +126,7 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
                   </Avatar>
                   <div className={`max-w-[70%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
                     <div className="flex items-baseline gap-2 mb-1 px-1">
-                      <span className="text-xs font-medium text-gray-900">{isMe ? "Mən" : msg.sender?.name}</span>
+                      <span className="text-xs font-medium text-gray-900">{isMe ? (t("departmentChatTab.me") || "Mən") : msg.sender?.name}</span>
                       <span className="text-[10px] text-gray-400">{format(new Date(msg.createdAt), "HH:mm")}</span>
                     </div>
 
@@ -131,7 +140,7 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
                       <div className={`mt-1 p-2 rounded-xl border bg-white shadow-sm flex items-center gap-3 ${isMe ? "rounded-tr-sm" : "rounded-tl-sm"}`}>
                         <Paperclip className="w-5 h-5 text-gray-400" />
                         <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 hover:underline max-w-[200px] truncate">
-                          {msg.fileName || "Faylı yüklə"}
+                          {msg.fileName || (t("departmentChatTab.downloadFile") || "Faylı yüklə")}
                         </a>
                       </div>
                     )}
@@ -150,7 +159,9 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
             <UploadButton
               endpoint="chatAttachment"
               onClientUploadComplete={handleUploadComplete}
-              onUploadError={(error: Error) => { alert(`Xəta: ${error.message}`); }}
+              onUploadError={(error: Error) => { 
+                alert((t("departmentChatTab.errorPrefix") || "Xəta: {message}").replace("{message}", error.message)); 
+              }}
               appearance={{
                 button: "w-10 h-10 rounded-full bg-gray-100 border-0 hover:bg-gray-200 focus-within:ring-0 after:bg-transparent text-gray-600 p-0 focus:ring-0 outline-none",
                 allowedContent: "hidden",
@@ -161,7 +172,7 @@ export function DepartmentChatTab({ departmentId, currentUserId }: { departmentI
           <Input
             value={messageText}
             onChange={(e) => setMessageText(e.target.value)}
-            placeholder="Şöbə qrupuna mesaj yazın..."
+            placeholder={t("departmentChatTab.placeholder") || "Şöbə qrupuna mesaj yazın..."}
             className="flex-1 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
           />
           <Button type="submit" size="icon" className="rounded-full bg-blue-600 hover:bg-blue-700 flex-shrink-0">
