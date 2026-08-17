@@ -1,15 +1,4 @@
 {
-  "settings": {
-    "title": "System Settings",
-    "description": "Manage appearance, security, permissions, and company settings here.",
-    "appearance": "Appearance & Language",
-    "theme": "Interface Theme",
-    "light": "Light",
-    "dark": "Dark",
-    "system": "System",
-    "save": "Apply Changes",
-    "saving": "Saving..."
-  },
   "menu": {
     "dashboard": "Dashboard",
     "myWork": "My Work",
@@ -29,5 +18,33 @@
     "expand": "Expand",
     "workspace": "WorkSpace",
     "platform": "ERP Platform"
+  },
+  "settings": {
+    "tabs": {
+      "appearance": "Appearance & Language",
+      "defaults": "Invitation Defaults",
+      "company": "Company Profile",
+      "notifications": "Notifications",
+      "security": "Security"
+    },
+    "appearance": {
+      "title": "Appearance & Interface",
+      "theme": "Interface Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System",
+      "wallpaper": "Wallpaper",
+      "language": "System Language",
+      "apply": "Apply Changes",
+      "saving": "Saving...",
+      "success": "Appearance and language settings saved."
+    }
+  },
+  "header": {
+    "search": "Search...",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "defaultRole": "User"
   }
 }

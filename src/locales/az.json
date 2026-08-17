@@ -1,15 +1,4 @@
 {
-  "settings": {
-    "title": "Sistem Ayarları",
-    "description": "Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin.",
-    "appearance": "Görünüş və Dil",
-    "theme": "İnterfeys Mövzusu (Theme)",
-    "light": "Gündüz",
-    "dark": "Gecə",
-    "system": "Sistem",
-    "save": "Dəyişiklikləri Tətbiq Et",
-    "saving": "Yadda saxlanılır..."
-  },
   "menu": {
     "dashboard": "Ana Səhifə",
     "myWork": "Mənim İşlərim",
@@ -29,5 +18,33 @@
     "expand": "Genişlət",
     "workspace": "WorkSpace",
     "platform": "ERP Platform"
+  },
+  "settings": {
+    "tabs": {
+      "appearance": "Görünüş və Dil",
+      "defaults": "Dəvət Ayarları",
+      "company": "Şirkət Profili",
+      "notifications": "Bildirişlər",
+      "security": "Təhlükəsizlik"
+    },
+    "appearance": {
+      "title": "Görünüş və İnterfeys",
+      "theme": "İnterfeys Mövzusu (Theme)",
+      "light": "Gündüz",
+      "dark": "Gecə",
+      "system": "Sistem",
+      "wallpaper": "Divar Kağızı (Wallpaper)",
+      "language": "Sistem Dili",
+      "apply": "Dəyişiklikləri Tətbiq Et",
+      "saving": "Yadda saxlanılır...",
+      "success": "Görünüş və dil tənzimləmələri yadda saxlanıldı."
+    }
+  },
+  "header": {
+    "search": "Axtar...",
+    "notifications": "Bildirişlər",
+    "markAllRead": "Hamısını oxunmuş et",
+    "noNotifications": "Bildiriş yoxdur",
+    "defaultRole": "İstifadəçi"
   }
 }

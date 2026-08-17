@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import { useCommandPaletteStore } from "@/store/useCommandPaletteStore";
 import { UserProfileDropdown } from "./UserProfileDropdown";
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -22,32 +23,23 @@ interface NotificationItem {
 }
 
 // =============================================================================
-// Breadcrumb helper — URL path-i oxunaqlı ada çevirir
+// Breadcrumb helper — URL path-i oxunaqlı ada çevirir (Tərcümə ilə)
 // =============================================================================
-const routeLabels: Record<string, string> = {
-  dashboard: "Ana Səhifə",
-  projects: "Layihələr",
-  tasks: "Tapşırıqlar",
-  members: "Komanda",
-  departments: "Şöbələr",
-  reports: "Hesabatlar",
-  roles: "Rollar & İcazələr",
-  labels: "Etiketlər",
-  settings: "Parametrlər",
-  collab: "Collab (Ortaq)",
-  crm: "CRM",
-  chat: "Mesajlar",
-  "my-work": "Mənim İşlərim",
-};
-
-function useBreadcrumbs() {
+function useBreadcrumbs(t: (key: string) => string) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
-  return segments.map((seg, i) => ({
-    label: routeLabels[seg] ?? seg,
-    href: "/" + segments.slice(0, i + 1).join("/"),
-    isLast: i === segments.length - 1,
-  }));
+  return segments.map((seg, i) => {
+    // Əgər seqment "my-work" isə t("menu.myWork") oxunacaq. 
+    // Tapılmazsa seqmentin özünü böyük hərflə yazacaq.
+    const transKey = seg === "my-work" ? "myWork" : seg;
+    const label = t(`menu.${transKey}`) !== `menu.${transKey}` ? t(`menu.${transKey}`) : seg;
+    
+    return {
+      label,
+      href: "/" + segments.slice(0, i + 1).join("/"),
+      isLast: i === segments.length - 1,
+    };
+  });
 }
 
 // =============================================================================
@@ -55,7 +47,12 @@ function useBreadcrumbs() {
 // =============================================================================
 export function Header() {
   const { data: session } = useSession();
-  const breadcrumbs = useBreadcrumbs();
+  
+  // YENİ: Dili sessiyadan tapırıq və tərcümə obyektini (t) yaradırıq
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+  
+  const breadcrumbs = useBreadcrumbs(t);
   const router = useRouter();
 
   // Bildiriş pəncərəsi və Axtarış modulu üçün state-lər
@@ -76,7 +73,7 @@ export function Header() {
   // İstifadəçi rolu məlumatının formatlanması
   const roleName = typeof (user as any)?.role === "string"
     ? (user as any).role
-    : ((user as any)?.role?.name ?? "İstifadəçi");
+    : ((user as any)?.role?.name ?? (t("header.defaultRole") || "İstifadəçi"));
 
   // Bildirişə kliklədikdə oxunmuş edilməsi və müvafiq səhifəyə keçid
   const handleNotificationClick = async (notif: NotificationItem) => {
@@ -126,7 +123,7 @@ export function Header() {
         className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] transition-colors min-w-[200px] hidden md:flex"
       >
         <Search className="w-3.5 h-3.5" />
-        <span className="flex-1 text-left">Axtar...</span>
+        <span className="flex-1 text-left">{t("header.search") || "Axtar..."}</span>
         <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[hsl(var(--muted))] rounded border border-[hsl(var(--border))]">
           ⌘K
         </kbd>
@@ -137,7 +134,7 @@ export function Header() {
         <button
           onClick={() => setNotifMenuOpen((prev) => !prev)}
           className="relative p-2 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
-          title="Bildirişlər"
+          title={t("header.notifications") || "Bildirişlər"}
         >
           <Bell className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
           {unreadCount > 0 && (
@@ -154,21 +151,21 @@ export function Header() {
             />
             <div className="absolute right-0 top-full mt-1 z-40 w-80 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xl animate-scale-in overflow-hidden">
               <div className="flex items-center justify-between p-3 border-b border-[hsl(var(--border))]">
-                <p className="text-sm font-semibold">Bildirişlər</p>
+                <p className="text-sm font-semibold">{t("header.notifications") || "Bildirişlər"}</p>
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
                     className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
-                    Hamısını oxunmuş et
+                    {t("header.markAllRead") || "Hamısını oxunmuş et"}
                   </button>
                 )}
               </div>
               <div className="max-h-80 overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
                   <p className="p-4 text-sm text-center text-[hsl(var(--muted-foreground))]">
-                    Bildiriş yoxdur
+                    {t("header.noNotifications") || "Bildiriş yoxdur"}
                   </p>
                 ) : (
                   notifications.map((notif) => (
@@ -205,7 +202,7 @@ export function Header() {
       {/* ─── Sağ Yuxarı: İstifadəçi Profili və Ayarlar Menyu Kompleksi ─── */}
       <UserProfileDropdown
         user={{
-          name: user?.name || "İstifadəçi",
+          name: user?.name || (t("header.defaultRole") || "İstifadəçi"),
           email: user?.email || "Email qeyd edilməyib",
           role: roleName,
           avatar: user?.image || undefined,

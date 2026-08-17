@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import { SettingsClient } from "./SettingsClient";
 import type { Metadata } from "next";
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 export const metadata: Metadata = { title: "Ayarlar | WorkSpace ERP" };
 
@@ -12,6 +13,10 @@ export default async function SettingsPage() {
 
   const companyId = (session.user as any).companyId;
   if (!companyId) redirect("/onboarding");
+
+  // YENİ: Server Component daxilində dili tapırıq və tərcümə obyektini (t) yaradırıq
+  const lang = (session.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   // 1. Şirkət məlumatlarını çəkirik (Yeni əlavə edilən sütunlarla birlikdə)
   const company = await prisma.company.findUnique({
@@ -74,9 +79,13 @@ export default async function SettingsPage() {
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-[1200px] mx-auto animate-in fade-in duration-300">
       <div className="flex flex-col items-start gap-1 mb-2">
-        <h2 className="text-[28px] font-black tracking-tight text-slate-800">Sistem Ayarları</h2>
-        <p className="text-sm font-medium text-slate-500">
-          Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin.
+        {/* YENİ: "Sistem Ayarları" yazısı tərcüməyə bağlandı */}
+        <h2 className="text-[28px] font-black tracking-tight text-slate-800 dark:text-white">
+          {t("settings.title") || "Sistem Ayarları"}
+        </h2>
+        {/* YENİ: Açıqlama mətni tərcüməyə bağlandı */}
+        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          {t("settings.description") || "Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin."}
         </p>
       </div>
       
