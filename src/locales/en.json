@@ -27,6 +27,8 @@
     "defaultRole": "User"
   },
   "settings": {
+    "title": "System Settings",
+    "description": "Manage appearance, security, permissions, and company settings here.",
     "error": "An error occurred",
     "tabs": {
       "appearance": "Appearance & Language",
@@ -135,5 +137,44 @@
     "MEDIUM": "Medium",
     "HIGH": "High",
     "URGENT": "Urgent"
+  },
+  "projectStatus": {
+    "PLANNING": "Planning",
+    "ACTIVE": "Active",
+    "ON_HOLD": "On Hold",
+    "COMPLETED": "Completed",
+    "CANCELLED": "Cancelled"
+  },
+  "myWork": {
+    "title": "My Work",
+    "desc": "Your daily schedule, tasks, and reminders.",
+    "totalTasks": "Total Tasks",
+    "completed": "Completed",
+    "upcoming": "Upcoming (3 days)",
+    "overdue": "Overdue",
+    "calendar": "Calendar",
+    "calendarDesc": "Dates of your completed (green) and pending (orange) tasks.",
+    "activity": "Activity",
+    "activityDesc": "Departments and projects you are part of.",
+    "workers": "{count} workers",
+    "projects": "{count} projects",
+    "noDepartment": "You are not part of any department or project yet.",
+    "tasksCount": "{count} tasks",
+    "weeklyTrend": "Last 7 Days — Completed Tasks",
+    "weeklyTrendDesc": "Number of tasks you completed per day.",
+    "tasks": "Tasks",
+    "tasksDesc": "All tasks assigned to you — by status.",
+    "tabActive": "Active",
+    "tabCompleted": "Completed",
+    "tabAll": "All",
+    "allDone": "You've finished all your work! 🎉",
+    "noCompleted": "No completed tasks yet.",
+    "noTasks": "No tasks assigned to you yet.",
+    "recentComments": "Recent Comments",
+    "commentsDesc": "Comments written on your tasks.",
+    "noComments": "No recent comments.",
+    "taskLabel": "Task: {title}",
+    "fetchError": "An error occurred while fetching data.",
+    "overdueBadge": "Overdue"
   }
 }

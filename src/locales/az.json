@@ -27,6 +27,8 @@
     "defaultRole": "İstifadəçi"
   },
   "settings": {
+    "title": "Sistem Ayarları",
+    "description": "Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin.",
     "error": "Xəta baş verdi",
     "tabs": {
       "appearance": "Görünüş və Dil",
@@ -135,5 +137,44 @@
     "MEDIUM": "Orta",
     "HIGH": "Yüksək",
     "URGENT": "Təcili"
+  },
+  "projectStatus": {
+    "PLANNING": "Planlanır",
+    "ACTIVE": "Aktiv",
+    "ON_HOLD": "Dayandırılıb",
+    "COMPLETED": "Tamamlandı",
+    "CANCELLED": "Ləğv edildi"
+  },
+  "myWork": {
+    "title": "Mənim İşlərim",
+    "desc": "Gündəlik iş qrafikiniz, tapşırıqlar və xatırlatmalar.",
+    "totalTasks": "Cəmi Tapşırıq",
+    "completed": "Tamamlanan",
+    "upcoming": "Yaxınlaşan (3 gün)",
+    "overdue": "Gecikən",
+    "calendar": "Təqvim",
+    "calendarDesc": "Tamamlanmış (yaşıl) və gözləyən (narıncı) tapşırıqlarınızın tarixləri.",
+    "activity": "Aktivlik",
+    "activityDesc": "Daxil olduğunuz şöbə və layihələr.",
+    "workers": "{count} işçi",
+    "projects": "{count} layihə",
+    "noDepartment": "Hələ heç bir şöbə və ya layihəyə daxil deyilsiniz.",
+    "tasksCount": "{count} tapşırıq",
+    "weeklyTrend": "Son 7 Gün — Tamamladığım Tapşırıqlar",
+    "weeklyTrendDesc": "Gün üzrə tamamladığınız tapşırıqların sayı.",
+    "tasks": "Tapşırıqlar",
+    "tasksDesc": "Sizə təyin edilmiş bütün tapşırıqlar — statusa görə.",
+    "tabActive": "Aktiv",
+    "tabCompleted": "Tamamlanmış",
+    "tabAll": "Hamısı",
+    "allDone": "Bütün işləri bitirmisiniz! 🎉",
+    "noCompleted": "Hələ tamamlanmış tapşırıq yoxdur.",
+    "noTasks": "Sizə hələ tapşırıq təyin edilməyib.",
+    "recentComments": "Son Rəylər",
+    "commentsDesc": "Sizin tapşırıqlara yazılan şərhlər.",
+    "noComments": "Yaxın zamanda rəy yoxdur.",
+    "taskLabel": "Tapşırıq: {title}",
+    "fetchError": "Məlumatları yükləyərkən xəta baş verdi.",
+    "overdueBadge": "Gecikir"
   }
 }
