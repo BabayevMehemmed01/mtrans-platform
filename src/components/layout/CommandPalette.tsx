@@ -104,7 +104,7 @@ export function CommandPalette() {
     return null;
   };
 
-  // Nəzarət: Əgər open dəyəri yoxdursa ümumiyyətlə render etmə
+  // Nəzaarət: Əgər open dəyəri yoxdursa ümumiyyətlə render etmə
   if (typeof open === "undefined") return null;
 
   return (
