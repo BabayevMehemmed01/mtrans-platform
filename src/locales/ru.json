@@ -493,5 +493,37 @@
     "extraPerms": "+{count} доп. прав",
     "permsBtn": "Права",
     "emptyMembers": "В этом отделе пока нет сотрудников"
+  },
+  "chatPage": {
+    "title": "Сообщения",
+    "subtitle": "Оставайтесь на связи с коллегами."
+  },
+  "chatClient": {
+    "callFailed": "Не удалось начать звонок",
+    "fetchError": "Произошла ошибка при загрузке каналов",
+    "unknown": "Неизвестно",
+    "messages": "Сообщения",
+    "projectGroups": "Группы проектов",
+    "deptGroups": "Группы отделов",
+    "directMessages": "Личные сообщения",
+    "newChat": "Начать новый чат",
+    "privateChat": "Личный чат",
+    "membersCount": "{count} участников",
+    "voiceCall": "Голосовой звонок",
+    "videoCall": "Видеозвонок",
+    "noMessages": "В этом чате пока нет сообщений.",
+    "me": "Я",
+    "downloadFile": "Скачать файл",
+    "errorPrefix": "Ошибка: {message}",
+    "placeholder": "Введите ваше сообщение...",
+    "selectChatTitle": "Выберите чат",
+    "selectChatDesc": "Выберите проект, группу отдела или личное сообщение слева, чтобы начать общение."
+  },
+  "callOverlay": {
+    "incomingVideo": "Входящий видеозвонок...",
+    "incomingAudio": "Входящий аудиозвонок...",
+    "unknown": "Неизвестно",
+    "connecting": "Подключение...",
+    "callActive": "Звонок продолжается"
   }
 }

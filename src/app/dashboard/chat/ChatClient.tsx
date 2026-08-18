@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Send, Paperclip, Hash, User as UserIcon, Loader2, Building, MessageSquare, AlertCircle, Phone, Video } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -14,6 +16,11 @@ import { useCallStore } from "@/store/useCallStore";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export function ChatClient({ currentUser }: { currentUser: any }) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { data: channelsData, error: channelsError } = useSWR("/api/chat/channels", fetcher, { refreshInterval: 5000 });
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
@@ -84,7 +91,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        alert(err.error || "Zəng başladıla bilmədi");
+        alert(err.error || (t("chatClient.callFailed") || "Zəng başladıla bilmədi"));
         return;
       }
       const call = await res.json();
@@ -99,7 +106,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
       });
     } catch (err) {
       console.error(err);
-      alert("Zəng başladıla bilmədi");
+      alert(t("chatClient.callFailed") || "Zəng başladıla bilmədi");
     } finally {
       setCallStarting(false);
     }
@@ -115,7 +122,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     setActiveChannelId(channel.id);
   };
 
-  if (channelsError) return <div className="p-4 text-red-500 flex items-center"><AlertCircle className="w-5 h-5 mr-2" /> Kanalları yükləyərkən xəta baş verdi</div>;
+  if (channelsError) return <div className="p-4 text-red-500 flex items-center"><AlertCircle className="w-5 h-5 mr-2" /> {t("chatClient.fetchError") || "Kanalları yükləyərkən xəta baş verdi"}</div>;
   if (!channelsData) return <div className="p-4 flex items-center justify-center h-[50vh]"><Loader2 className="w-8 h-8 animate-spin text-blue-500" /></div>;
 
   const channels = channelsData.channels || [];
@@ -130,7 +137,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const getChannelName = (c: any) => {
     if (c.type !== "DIRECT") return c.name;
     const otherMember = c.members.find((m: any) => m.user.id !== currentUser.id);
-    return otherMember ? otherMember.user.name : "Naməlum";
+    return otherMember ? otherMember.user.name : (t("chatClient.unknown") || "Naməlum");
   };
 
   return (
@@ -138,7 +145,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
       {/* Sidebar */}
       <div className="w-72 bg-gray-50/50 border-r flex flex-col">
         <div className="p-4 border-b bg-white">
-          <h2 className="font-semibold text-lg">Mesajlar</h2>
+          <h2 className="font-semibold text-lg">{t("chatClient.messages") || "Mesajlar"}</h2>
         </div>
         <ScrollArea className="flex-1">
           <div className="p-4 space-y-6">
@@ -146,7 +153,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
             {/* Project Groups */}
             {projectChannels.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Layihə Qrupları</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t("chatClient.projectGroups") || "Layihə Qrupları"}</h3>
                 <div className="space-y-1">
                   {projectChannels.map((c: any) => (
                     <button
@@ -165,7 +172,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
             {/* Department Groups */}
             {deptChannels.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Şöbə Qrupları</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t("chatClient.deptGroups") || "Şöbə Qrupları"}</h3>
                 <div className="space-y-1">
                   {deptChannels.map((c: any) => (
                     <button
@@ -183,7 +190,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
 
             {/* Direct Messages */}
             <div>
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Şəxsi Söhbətlər</h3>
+                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">{t("chatClient.directMessages") || "Şəxsi Söhbətlər"}</h3>
                 <div className="space-y-1">
                   {directChannels.map((c: any) => (
                     <button
@@ -204,7 +211,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                 {/* Users to start chat */}
                 {companyUsers.length > 0 && (
                   <div className="mt-4">
-                     <p className="text-[10px] text-gray-400 uppercase mb-2 px-2">Yeni Söhbət Başla</p>
+                     <p className="text-[10px] text-gray-400 uppercase mb-2 px-2">{t("chatClient.newChat") || "Yeni Söhbət Başla"}</p>
                      {companyUsers.map((u: any) => (
                         <button
                           key={u.id}
@@ -242,7 +249,9 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
               <div className="flex-1">
                 <h3 className="font-semibold text-lg">{getChannelName(activeChannel)}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {activeChannel.type === "DIRECT" ? "Şəxsi söhbət" : `${activeChannel.members?.length || 0} üzv`}
+                  {activeChannel.type === "DIRECT" 
+                    ? (t("chatClient.privateChat") || "Şəxsi söhbət")
+                    : (t("chatClient.membersCount") || "{count} üzv").replace("{count}", String(activeChannel.members?.length || 0))}
                 </p>
               </div>
               {activeChannel.members?.length === 2 && (
@@ -253,7 +262,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                     size="icon"
                     variant="ghost"
                     className="rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600"
-                    title="Səsli zəng"
+                    title={t("chatClient.voiceCall") || "Səsli zəng"}
                   >
                     <Phone className="w-5 h-5" />
                   </Button>
@@ -263,7 +272,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                     size="icon"
                     variant="ghost"
                     className="rounded-full text-gray-600 hover:bg-blue-50 hover:text-blue-600"
-                    title="Video zəng"
+                    title={t("chatClient.videoCall") || "Video zəng"}
                   >
                     <Video className="w-5 h-5" />
                   </Button>
@@ -276,7 +285,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                 {!messages ? (
                   <div className="flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-gray-400" /></div>
                 ) : messages.length === 0 ? (
-                  <div className="text-center text-gray-400 mt-20">Bu söhbətdə hələ mesaj yoxdur.</div>
+                  <div className="text-center text-gray-400 mt-20">{t("chatClient.noMessages") || "Bu söhbətdə hələ mesaj yoxdur."}</div>
                 ) : (
                   messages.map((msg: any) => {
                     const isMe = msg.sender?.id === currentUser.id;
@@ -290,7 +299,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                         </Avatar>
                         <div className={`max-w-[70%] ${isMe ? 'items-end' : 'items-start'} flex flex-col`}>
                           <div className="flex items-baseline gap-2 mb-1 px-1">
-                            <span className="text-xs font-medium text-gray-900">{isMe ? 'Mən' : msg.sender?.name}</span>
+                            <span className="text-xs font-medium text-gray-900">{isMe ? (t("chatClient.me") || "Mən") : msg.sender?.name}</span>
                             <span className="text-[10px] text-gray-400">{format(new Date(msg.createdAt), "HH:mm")}</span>
                           </div>
                           
@@ -304,7 +313,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                             <div className={`mt-1 p-2 rounded-xl border bg-white shadow-sm flex items-center gap-3 ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}>
                                <Paperclip className="w-5 h-5 text-gray-400" />
                                <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-blue-600 hover:underline max-w-[200px] truncate">
-                                 {msg.fileName || "Faylı yüklə"}
+                                 {msg.fileName || (t("chatClient.downloadFile") || "Faylı yüklə")}
                                </a>
                             </div>
                           )}
@@ -323,7 +332,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                   <UploadButton
                     endpoint="chatAttachment"
                     onClientUploadComplete={handleUploadComplete}
-                    onUploadError={(error: Error) => { alert(`Xəta: ${error.message}`); }}
+                    onUploadError={(error: Error) => { alert((t("chatClient.errorPrefix") || "Xəta: {message}").replace("{message}", error.message)); }}
                     appearance={{
                       button: "w-10 h-10 rounded-full bg-gray-100 border-0 hover:bg-gray-200 focus-within:ring-0 after:bg-transparent text-gray-600 p-0 focus:ring-0 outline-none",
                       allowedContent: "hidden",
@@ -336,7 +345,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                 <Input 
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Mesajınızı yazın..." 
+                  placeholder={t("chatClient.placeholder") || "Mesajınızı yazın..."}
                   className="flex-1 rounded-full bg-gray-50 border-gray-200 focus-visible:ring-blue-500"
                 />
                 <Button type="submit" size="icon" className="rounded-full bg-blue-600 hover:bg-blue-700 flex-shrink-0">
@@ -350,8 +359,8 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
             <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mb-6">
               <MessageSquare className="w-10 h-10 text-blue-500" />
             </div>
-            <h3 className="text-xl font-medium text-gray-900 mb-2">Söhbət seçin</h3>
-            <p className="max-w-xs">Mesajlaşmağa başlamaq üçün sol tərəfdən layihə, şöbə qrupu və ya şəxsi söhbət seçin.</p>
+            <h3 className="text-xl font-medium text-gray-900 mb-2">{t("chatClient.selectChatTitle") || "Söhbət seçin"}</h3>
+            <p className="max-w-xs">{t("chatClient.selectChatDesc") || "Mesajlaşmağa başlamaq üçün sol tərəfdən layihə, şöbə qrupu və ya şəxsi söhbət seçin."}</p>
           </div>
         )}
       </div>

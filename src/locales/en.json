@@ -493,5 +493,37 @@
     "extraPerms": "+{count} extra permissions",
     "permsBtn": "Permissions",
     "emptyMembers": "There are no employees in this department yet"
+  },
+  "chatPage": {
+    "title": "Messaging",
+    "subtitle": "Stay connected with your teammates."
+  },
+  "chatClient": {
+    "callFailed": "Could not start the call",
+    "fetchError": "An error occurred while loading channels",
+    "unknown": "Unknown",
+    "messages": "Messages",
+    "projectGroups": "Project Groups",
+    "deptGroups": "Department Groups",
+    "directMessages": "Direct Messages",
+    "newChat": "Start New Chat",
+    "privateChat": "Private chat",
+    "membersCount": "{count} members",
+    "voiceCall": "Voice call",
+    "videoCall": "Video call",
+    "noMessages": "There are no messages in this chat yet.",
+    "me": "Me",
+    "downloadFile": "Download file",
+    "errorPrefix": "Error: {message}",
+    "placeholder": "Type your message...",
+    "selectChatTitle": "Select a chat",
+    "selectChatDesc": "Select a project, department group, or direct message from the left to start chatting."
+  },
+  "callOverlay": {
+    "incomingVideo": "Incoming video call...",
+    "incomingAudio": "Incoming audio call...",
+    "unknown": "Unknown",
+    "connecting": "Connecting...",
+    "callActive": "Call in progress"
   }
 }

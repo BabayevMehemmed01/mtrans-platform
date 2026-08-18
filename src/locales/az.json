@@ -493,5 +493,37 @@
     "extraPerms": "+{count} əlavə icazə",
     "permsBtn": "İcazələr",
     "emptyMembers": "Bu şöbədə hələ heç bir işçi yoxdur"
+  },
+  "chatPage": {
+    "title": "Mesajlaşma",
+    "subtitle": "Komanda yoldaşlarınızla əlaqədə qalın."
+  },
+  "chatClient": {
+    "callFailed": "Zəng başladıla bilmədi",
+    "fetchError": "Kanalları yükləyərkən xəta baş verdi",
+    "unknown": "Naməlum",
+    "messages": "Mesajlar",
+    "projectGroups": "Layihə Qrupları",
+    "deptGroups": "Şöbə Qrupları",
+    "directMessages": "Şəxsi Söhbətlər",
+    "newChat": "Yeni Söhbət Başla",
+    "privateChat": "Şəxsi söhbət",
+    "membersCount": "{count} üzv",
+    "voiceCall": "Səsli zəng",
+    "videoCall": "Video zəng",
+    "noMessages": "Bu söhbətdə hələ mesaj yoxdur.",
+    "me": "Mən",
+    "downloadFile": "Faylı yüklə",
+    "errorPrefix": "Xəta: {message}",
+    "placeholder": "Mesajınızı yazın...",
+    "selectChatTitle": "Söhbət seçin",
+    "selectChatDesc": "Mesajlaşmağa başlamaq üçün sol tərəfdən layihə, şöbə qrupu və ya şəxsi söhbət seçin."
+  },
+  "callOverlay": {
+    "incomingVideo": "Video zəng edir...",
+    "incomingAudio": "Səsli zəng edir...",
+    "unknown": "Naməlum",
+    "connecting": "Qoşulur...",
+    "callActive": "Zəng davam edir"
   }
 }

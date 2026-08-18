@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { useSession } from "next-auth/react"; // YENİ: Dil üçün
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 import {
   Phone,
   PhoneOff,
@@ -23,6 +25,11 @@ const INCOMING_POLL_INTERVAL_MS = 3000;
 // =============================================================================
 
 export function CallOverlay() {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const activeCall = useCallStore((s) => s.activeCall);
   const incomingCall = useCallStore((s) => s.incomingCall);
   const setActiveCall = useCallStore((s) => s.setActiveCall);
@@ -190,9 +197,13 @@ export function CallOverlay() {
               </AvatarFallback>
             </Avatar>
             <div className="text-center">
-              <p className="font-semibold text-lg text-gray-900">{incomingCall.peerName || "Naməlum"}</p>
+              <p className="font-semibold text-lg text-gray-900">
+                {incomingCall.peerName || (t("callOverlay.unknown") || "Naməlum")}
+              </p>
               <p className="text-sm text-gray-500">
-                {incomingCall.type === "VIDEO" ? "Video zəng edir..." : "Səsli zəng edir..."}
+                {incomingCall.type === "VIDEO" 
+                  ? (t("callOverlay.incomingVideo") || "Video zəng edir...") 
+                  : (t("callOverlay.incomingAudio") || "Səsli zəng edir...")}
               </p>
             </div>
             <div className="flex gap-4 mt-2">
@@ -237,7 +248,7 @@ export function CallOverlay() {
                 {!webrtc.remoteStream && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-300">
                     <Loader2 className="w-6 h-6 animate-spin" />
-                    <span className="text-xs">Qoşulur...</span>
+                    <span className="text-xs">{t("callOverlay.connecting") || "Qoşulur..."}</span>
                   </div>
                 )}
               </>
@@ -251,9 +262,13 @@ export function CallOverlay() {
                       {initials(activeCall.peerName)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-gray-200 text-sm font-medium">{activeCall.peerName || "Naməlum"}</span>
+                  <span className="text-gray-200 text-sm font-medium">
+                    {activeCall.peerName || (t("callOverlay.unknown") || "Naməlum")}
+                  </span>
                   <span className="text-gray-400 text-xs">
-                    {webrtc.connected ? "Zəng davam edir" : "Qoşulur..."}
+                    {webrtc.connected 
+                      ? (t("callOverlay.callActive") || "Zəng davam edir") 
+                      : (t("callOverlay.connecting") || "Qoşulur...")}
                   </span>
                 </div>
               </>
