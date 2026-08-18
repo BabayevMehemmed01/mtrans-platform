@@ -9,8 +9,15 @@ import CrmKanban from "@/components/crm/CrmKanban";
 import CrmDealsList from "@/components/crm/CrmDealsList";
 import CrmContacts from "@/components/crm/CrmContacts";
 import { useCrmBoard } from "@/components/crm/useCrmBoard";
+import { useSession } from "next-auth/react"; // YENİ: Tərcümə üçün sessiya
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 export default function CrmClient() {
+  // YENİ: Tərcüməni oxuyuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [activeTab, setActiveTab] = useState("deals");
   const [dealsView, setDealsView] = useState<"kanban" | "list">("kanban");
   const board = useCrmBoard();
@@ -21,8 +28,8 @@ export default function CrmClient() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <TabsList>
-            <TabsTrigger value="deals">Əqdlər</TabsTrigger>
-            <TabsTrigger value="contacts">Əlaqələr & Şirkətlər</TabsTrigger>
+            <TabsTrigger value="deals">{t("crm.tabDeals") || "Əqdlər"}</TabsTrigger>
+            <TabsTrigger value="contacts">{t("crm.tabContacts") || "Əlaqələr & Şirkətlər"}</TabsTrigger>
           </TabsList>
 
           {activeTab === "deals" && (
@@ -36,7 +43,7 @@ export default function CrmClient() {
                     : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))]"
                 )}
               >
-                <LayoutGrid className="w-3.5 h-3.5" /> Kanban
+                <LayoutGrid className="w-3.5 h-3.5" /> {t("crm.viewKanban") || "Kanban"}
               </button>
               <button
                 onClick={() => setDealsView("list")}
@@ -47,7 +54,7 @@ export default function CrmClient() {
                     : "text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))]"
                 )}
               >
-                <TableIcon className="w-3.5 h-3.5" /> Cədvəl
+                <TableIcon className="w-3.5 h-3.5" /> {t("crm.viewList") || "Cədvəl"}
               </button>
             </div>
           )}

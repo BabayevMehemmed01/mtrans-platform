@@ -5,6 +5,8 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn, getPriorityColor, timeAgo } from "@/lib/utils";
 import { MessageSquare, Paperclip, CheckSquare, GripVertical, CalendarDays } from "lucide-react";
 import type { KanbanTask } from "./types";
+import { useSession } from "next-auth/react"; // YENİ: Dil üçün
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 const PRIORITY_DOTS: Record<string, string> = {
   LOW: "bg-slate-400",
@@ -20,6 +22,11 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, isDragging, onClick }: TaskCardProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const {
     attributes,
     listeners,
@@ -88,7 +95,13 @@ export function TaskCard({ task, isDragging, onClick }: TaskCardProps) {
       <div className="flex items-center gap-2 mb-2.5">
         <span className={cn("w-2 h-2 rounded-full flex-shrink-0", PRIORITY_DOTS[task.priority])} />
         <span className={cn("text-xs font-medium", getPriorityColor(task.priority))}>
-          {task.priority === "URGENT" ? "Təcili" : task.priority === "HIGH" ? "Yüksək" : task.priority === "MEDIUM" ? "Orta" : "Aşağı"}
+          {task.priority === "URGENT" 
+            ? (t("taskCard.priorityUrgent") || "Təcili") 
+            : task.priority === "HIGH" 
+              ? (t("taskCard.priorityHigh") || "Yüksək") 
+              : task.priority === "MEDIUM" 
+                ? (t("taskCard.priorityMedium") || "Orta") 
+                : (t("taskCard.priorityLow") || "Aşağı")}
         </span>
         {task.dueDate && (
           <span className={cn(

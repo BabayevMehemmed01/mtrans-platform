@@ -6,6 +6,8 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CrmDealCard } from "./CrmDealCard";
 import type { CrmStage, CrmDeal } from "./types";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface CrmKanbanColumnProps {
   stage: CrmStage;
@@ -14,10 +16,12 @@ interface CrmKanbanColumnProps {
   onDealClick: (deal: CrmDeal) => void;
 }
 
-// =============================================================================
-// CrmKanbanColumn — Mirrors src/components/kanban/KanbanColumn.tsx
-// =============================================================================
 export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKanbanColumnProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   const totalValue = deals.reduce((sum, d) => sum + (d.value || 0), 0);
   const currency = deals[0]?.currency || "AZN";
@@ -39,13 +43,13 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
         <button
           onClick={onAddDeal}
           className="p-1 rounded-md hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-          title="Əqd əlavə et"
+          title={t("crmKanbanColumn.addDealTitle") || "Əqd əlavə et"}
         >
           <Plus className="w-4 h-4" />
         </button>
       </div>
       <p className="px-3 mb-2 text-[11px] text-[hsl(var(--muted-foreground))]">
-        {totalValue.toLocaleString()} {currency} məcmu
+        {totalValue.toLocaleString()} {currency} {t("crmKanbanColumn.total") || "məcmu"}
       </p>
 
       {/* Drop Zone */}
@@ -73,7 +77,7 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
             className="flex-1 flex items-center justify-center text-xs text-[hsl(var(--muted-foreground)/0.5)] py-8 cursor-pointer"
             onClick={onAddDeal}
           >
-            + Əqd əlavə et
+            {t("crmKanbanColumn.addDealEmpty") || "+ Əqd əlavə et"}
           </div>
         )}
       </div>

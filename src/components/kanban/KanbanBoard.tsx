@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useCallback, useOptimistic } from "react";
+import { useState, useCallback } from "react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import {
   DndContext,
   DragOverlay,
@@ -26,9 +28,9 @@ import { TaskDetailSheet } from "./TaskDetailSheet";
 import type { KanbanTask, KanbanColumn as ColType, TaskMember, KanbanLabel } from "./types";
 
 // =============================================================================
-// Kanban Status Sütunları
+// Kanban Status Sütunları (İlkin Statik Tərif)
 // =============================================================================
-const COLUMNS: ColType[] = [
+const COLUMNS_BASE: ColType[] = [
   { id: "BACKLOG",     label: "Backlog",     color: "#94a3b8", bgColor: "#94a3b8/10" },
   { id: "TODO",        label: "To Do",        color: "#6366f1", bgColor: "#6366f1/10" },
   { id: "IN_PROGRESS", label: "In Progress", color: "#f59e0b", bgColor: "#f59e0b/10" },
@@ -44,10 +46,24 @@ interface KanbanBoardProps {
   labels: KanbanLabel[];
 }
 
-// =============================================================================
-// Kanban Board — Drag & Drop
-// =============================================================================
 export function KanbanBoard({ projectId, initialTasks, members, labels }: KanbanBoardProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
+  // Kolon adlarını dilə görə dinamikləşdiririk
+  const COLUMNS = COLUMNS_BASE.map(col => {
+    let transKey = "";
+    if (col.id === "BACKLOG") transKey = "colBacklog";
+    if (col.id === "TODO") transKey = "colTodo";
+    if (col.id === "IN_PROGRESS") transKey = "colInProgress";
+    if (col.id === "IN_REVIEW") transKey = "colInReview";
+    if (col.id === "DONE") transKey = "colDone";
+    if (col.id === "CANCELLED") transKey = "colCancelled";
+    return { ...col, label: t(`kanbanBoard.${transKey}`) || col.label };
+  });
+
   const [tasks, setTasks] = useState<KanbanTask[]>(initialTasks);
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
   const [createCol, setCreateCol] = useState<string | null>(null);
@@ -71,7 +87,6 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // over → bir sütun ID-si olduqda
     const overColumn = COLUMNS.find((c) => c.id === overId);
     if (overColumn) {
       setTasks((prev) =>
@@ -82,7 +97,6 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
       return;
     }
 
-    // over → başqa bir task-ın üzərindəyik
     const overTask = tasks.find((t) => t.id === overId);
     if (!overTask) return;
 
@@ -90,13 +104,12 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
       const activeIndex = prev.findIndex((t) => t.id === activeId);
       const overIndex = prev.findIndex((t) => t.id === overId);
       const updated = [...prev];
-      // Sütunu dəyişdirirsə
       if (updated[activeIndex].status !== overTask.status) {
         updated[activeIndex] = { ...updated[activeIndex], status: overTask.status };
       }
       return arrayMove(updated, activeIndex, overIndex);
     });
-  }, [tasks]);
+  }, [tasks, COLUMNS]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -107,7 +120,6 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
     const movedTask = tasks.find((t) => t.id === activeId);
     if (!movedTask) return;
 
-    // API-ya yeni status göndər
     try {
       await fetch(`/api/tasks/${activeId}`, {
         method: "PATCH",
@@ -115,9 +127,9 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
         body: JSON.stringify({ status: movedTask.status }),
       });
     } catch (err) {
-      console.error("Task status update failed:", err);
+      console.error(t("kanbanBoard.errorStatusUpdate") || "Task status update failed:", err);
     }
-  }, [tasks]);
+  }, [tasks, t]);
 
   // ---- Task CRUD callbacks ----
   const handleTaskCreated = useCallback((newTask: KanbanTask) => {
@@ -167,7 +179,7 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
           })}
         </div>
 
-        {/* Drag Overlay — sürüklənən kartın "kölgəsi" */}
+        {/* Drag Overlay */}
         <DragOverlay>
           {activeTask ? (
             <TaskCard

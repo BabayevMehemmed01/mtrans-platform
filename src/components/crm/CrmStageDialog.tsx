@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { toast } from "react-hot-toast";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -16,10 +18,12 @@ interface CrmStageDialogProps {
   onCreated: (stage: CrmStage) => void;
 }
 
-// =============================================================================
-// CrmStageDialog — Satış qıfına yeni mərhələ (pipeline stage) əlavə etmək üçün.
-// =============================================================================
 export function CrmStageDialog({ open, onOpenChange, onCreated }: CrmStageDialogProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [name, setName] = useState("");
   const [color, setColor] = useState(STAGE_COLORS[0]);
   const [loading, setLoading] = useState(false);
@@ -27,7 +31,7 @@ export function CrmStageDialog({ open, onOpenChange, onCreated }: CrmStageDialog
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) {
-      toast.error("Mərhələ adı mütləqdir");
+      toast.error(t("crmStageDialog.errorNameRequired") || "Mərhələ adı mütləqdir");
       return;
     }
     setLoading(true);
@@ -37,15 +41,15 @@ export function CrmStageDialog({ open, onOpenChange, onCreated }: CrmStageDialog
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, color }),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Xəta baş verdi");
+      if (!res.ok) throw new Error((await res.json()).error || (t("crmStageDialog.errorGeneric") || "Xəta baş verdi"));
       const stage = await res.json();
       onCreated(stage);
-      toast.success("Mərhələ yaradıldı");
+      toast.success(t("crmStageDialog.successCreated") || "Mərhələ yaradıldı");
       onOpenChange(false);
       setName("");
       setColor(STAGE_COLORS[0]);
     } catch (err: any) {
-      toast.error(err.message || "Xəta baş verdi");
+      toast.error(err.message || (t("crmStageDialog.errorGeneric") || "Xəta baş verdi"));
     } finally {
       setLoading(false);
     }
@@ -55,21 +59,21 @@ export function CrmStageDialog({ open, onOpenChange, onCreated }: CrmStageDialog
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle>Yeni Mərhələ</DialogTitle>
+          <DialogTitle>{t("crmStageDialog.title") || "Yeni Mərhələ"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Mərhələnin adı</Label>
+            <Label>{t("crmStageDialog.stageNameLabel") || "Mərhələnin adı"}</Label>
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Məs: Təklif göndərildi"
+              placeholder={t("crmStageDialog.stageNamePlaceholder") || "Məs: Təklif göndərildi"}
               autoFocus
               required
             />
           </div>
           <div className="space-y-2">
-            <Label>Rəng</Label>
+            <Label>{t("crmStageDialog.colorLabel") || "Rəng"}</Label>
             <div className="grid grid-cols-8 gap-2">
               {STAGE_COLORS.map((c) => (
                 <button
@@ -85,7 +89,7 @@ export function CrmStageDialog({ open, onOpenChange, onCreated }: CrmStageDialog
             </div>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Yaradılır..." : "Yarat"}
+            {loading ? (t("crmStageDialog.creating") || "Yaradılır...") : (t("crmStageDialog.create") || "Yarat")}
           </Button>
         </form>
       </DialogContent>

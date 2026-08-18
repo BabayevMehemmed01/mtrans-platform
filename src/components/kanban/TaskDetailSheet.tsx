@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import {
   X, Loader2, Trash2, Calendar, User, Tag, Clock,
   MessageSquare, Paperclip, CheckSquare, AlertTriangle,
@@ -25,31 +26,31 @@ import {
 import { UploadButton } from "@/utils/uploadthing";
 import type { KanbanTask, TaskMember, KanbanLabel } from "./types";
 
-// ─── Constants ──────────────────────────────────────────────────────────────
-const STATUS_OPTIONS = [
-  { value: "TODO",        label: "To Do",        color: "#6366f1" },
-  { value: "IN_PROGRESS", label: "In Progress",  color: "#f59e0b" },
-  { value: "DONE",        label: "Done",         color: "#22c55e" },
-  { value: "BACKLOG",     label: "Backlog",      color: "#94a3b8" },
-  { value: "IN_REVIEW",   label: "In Review",    color: "#8b5cf6" },
-  { value: "CANCELLED",   label: "Ləğv Edildi",  color: "#ef4444" },
+// ─── Constants (Dynamic) ───────────────────────────────────────────────────
+const getStatusOptions = (t: any) => [
+  { value: "TODO",        label: t("taskDetailSheet.statusTodo") || "To Do",         color: "#6366f1" },
+  { value: "IN_PROGRESS", label: t("taskDetailSheet.statusInProgress") || "İcra Edilir", color: "#f59e0b" },
+  { value: "DONE",        label: t("taskDetailSheet.statusDone") || "Tamamlandı",      color: "#22c55e" },
+  { value: "BACKLOG",     label: t("taskDetailSheet.statusBacklog") || "Backlog",       color: "#94a3b8" },
+  { value: "IN_REVIEW",   label: t("taskDetailSheet.statusInReview") || "Yoxlanılır",    color: "#8b5cf6" },
+  { value: "CANCELLED",   label: t("taskDetailSheet.statusCancelled") || "Ləğv Edildi",   color: "#ef4444" },
 ];
 
-const PRIORITY_OPTIONS = [
-  { value: "LOW",    label: "Aşağı",   color: "#94a3b8" },
-  { value: "MEDIUM", label: "Orta",    color: "#f59e0b" },
-  { value: "HIGH",   label: "Yüksək",  color: "#f97316" },
-  { value: "URGENT", label: "Təcili",  color: "#ef4444" },
+const getPriorityOptions = (t: any) => [
+  { value: "LOW",    label: t("taskDetailSheet.priorityLow") || "Aşağı",    color: "#94a3b8" },
+  { value: "MEDIUM", label: t("taskDetailSheet.priorityMedium") || "Orta",     color: "#f59e0b" },
+  { value: "HIGH",   label: t("taskDetailSheet.priorityHigh") || "Yüksək",   color: "#f97316" },
+  { value: "URGENT", label: t("taskDetailSheet.priorityUrgent") || "Təcili",   color: "#ef4444" },
 ];
 
 type TabId = "details" | "subtasks" | "comments" | "files" | "time";
 
-const SHEET_TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-  { id: "details",  label: "Detallar",      icon: FileText },
-  { id: "subtasks", label: "Alt Tapşırıqlar", icon: CheckSquare },
-  { id: "comments", label: "Şərhlər",       icon: MessageSquare },
-  { id: "files",    label: "Fayllar",        icon: Paperclip },
-  { id: "time",     label: "Vaxt",           icon: Timer },
+const getSheetTabs = (t: any) => [
+  { id: "details" as TabId,  label: t("taskDetailSheet.tabDetails") || "Detallar",        icon: FileText },
+  { id: "subtasks" as TabId, label: t("taskDetailSheet.tabSubtasks") || "Alt Tapşırıqlar", icon: CheckSquare },
+  { id: "comments" as TabId, label: t("taskDetailSheet.tabComments") || "Şərhlər",        icon: MessageSquare },
+  { id: "files" as TabId,    label: t("taskDetailSheet.tabFiles") || "Fayllar",         icon: Paperclip },
+  { id: "time" as TabId,     label: t("taskDetailSheet.tabTime") || "Vaxt",            icon: Timer },
 ];
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -107,6 +108,15 @@ export function TaskDetailSheet({
   onDeleted,
   onClose,
 }: TaskDetailSheetProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
+  const STATUS_OPTIONS = getStatusOptions(t);
+  const PRIORITY_OPTIONS = getPriorityOptions(t);
+  const SHEET_TABS = getSheetTabs(t);
+
   const [activeTab, setActiveTab] = useState<TabId>("details");
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -125,8 +135,7 @@ export function TaskDetailSheet({
     labelIds: task.labels.map((l) => l.label.id),
   });
 
-  // Tab-level count overrides — sub-tabs report live counts back so the
-  // header badges stay in sync without re-fetching the whole task.
+  // Tab-level count overrides
   const [counts, setCounts] = useState(task._count);
 
   // ── API helper ─────────────────────────────────────────────
@@ -175,7 +184,7 @@ export function TaskDetailSheet({
   };
 
   const handleDelete = async () => {
-    if (!confirm("Bu tapşırığı silmək istədiyinizə əminsiniz?")) return;
+    if (!confirm(t("taskDetailSheet.confirmDeleteTask") || "Bu tapşırığı silmək istədiyinizə əminsiniz?")) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/tasks/${task.id}`, { method: "DELETE" });
@@ -211,7 +220,7 @@ export function TaskDetailSheet({
 
         {/* ─── Header ──────────────────────────────────────────── */}
         <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-gray-100">
-          <SheetTitle className="sr-only">Tapşırıq Detalları</SheetTitle>
+          <SheetTitle className="sr-only">{t("taskDetailSheet.srOnlyTitle") || "Tapşırıq Detalları"}</SheetTitle>
 
           {/* Title row */}
           <div className="flex items-start gap-3 pr-8">
@@ -262,10 +271,10 @@ export function TaskDetailSheet({
               )}
               {/* Meta row under title */}
               <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
-                {task.createdAt && <span>Yaradılıb {timeAgo(new Date(task.createdAt))}</span>}
+                {task.createdAt && <span>{t("taskDetailSheet.createdText") || "Yaradılıb"} {timeAgo(new Date(task.createdAt))}</span>}
                 {task.isArchived && (
                   <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
-                    Arxivləşdirilib
+                    {t("taskDetailSheet.archived") || "Arxivləşdirilib"}
                   </span>
                 )}
                 {loading && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -281,7 +290,7 @@ export function TaskDetailSheet({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-colors"
             >
               {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-              Sil
+              {t("taskDetailSheet.deleteBtn") || "Sil"}
             </button>
 
             <DropdownMenu>
@@ -294,11 +303,11 @@ export function TaskDetailSheet({
                 <DropdownMenuItem onClick={handleArchiveToggle} disabled={archiving}>
                   {task.isArchived ? (
                     <>
-                      <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> Arxivdən çıxar
+                      <ArchiveRestore className="w-3.5 h-3.5 mr-2" /> {t("taskDetailSheet.unarchive") || "Arxivdən çıxar"}
                     </>
                   ) : (
                     <>
-                      <Archive className="w-3.5 h-3.5 mr-2" /> Arxivləşdir
+                      <Archive className="w-3.5 h-3.5 mr-2" /> {t("taskDetailSheet.archive") || "Arxivləşdir"}
                     </>
                   )}
                 </DropdownMenuItem>
@@ -359,6 +368,7 @@ export function TaskDetailSheet({
               patchField={patchField}
               toggleLabel={toggleLabel}
               task={task}
+              t={t}
             />
           )}
 
@@ -366,6 +376,7 @@ export function TaskDetailSheet({
             <SubtasksTab
               task={task}
               onCountChange={(n) => setCounts((c) => ({ ...c, subtasks: n }))}
+              t={t}
             />
           )}
 
@@ -374,6 +385,7 @@ export function TaskDetailSheet({
               taskId={task.id}
               members={members}
               onCountChange={(n) => setCounts((c) => ({ ...c, comments: n }))}
+              t={t}
             />
           )}
 
@@ -381,11 +393,12 @@ export function TaskDetailSheet({
             <FilesTab
               taskId={task.id}
               onCountChange={(n) => setCounts((c) => ({ ...c, attachments: n }))}
+              t={t}
             />
           )}
 
           {activeTab === "time" && (
-            <TimeTab estimatedHours={form.estimatedHours} />
+            <TimeTab estimatedHours={form.estimatedHours} t={t} />
           )}
         </div>
       </SheetContent>
@@ -398,19 +411,22 @@ export function TaskDetailSheet({
 // ═══════════════════════════════════════════════════════════════════════════
 function DetailsTab({
   form, setForm, members, labels, currentStatus, currentPriority,
-  handleChange, patchField, toggleLabel, task,
+  handleChange, patchField, toggleLabel, task, t
 }: any) {
+  const STATUS_OPTIONS = getStatusOptions(t);
+  const PRIORITY_OPTIONS = getPriorityOptions(t);
+
   return (
     <div className="p-6 space-y-6">
       {/* ── Properties Grid ──────────────────────────────────── */}
       <div className="space-y-4">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-          Xüsusiyyətlər
+          {t("taskDetailSheet.features") || "Xüsusiyyətlər"}
         </h3>
 
         <div className="grid grid-cols-2 gap-3">
           {/* Status */}
-          <PropertyField label="Status" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
+          <PropertyField label={t("taskDetailSheet.statusLabel") || "Status"} icon={<AlertTriangle className="w-3.5 h-3.5" />}>
             <select
               value={form.status}
               onChange={handleChange("status")}
@@ -423,7 +439,7 @@ function DetailsTab({
           </PropertyField>
 
           {/* Priority */}
-          <PropertyField label="Prioritet" icon={<AlertTriangle className="w-3.5 h-3.5" />}>
+          <PropertyField label={t("taskDetailSheet.priorityLabel") || "Prioritet"} icon={<AlertTriangle className="w-3.5 h-3.5" />}>
             <select
               value={form.priority}
               onChange={handleChange("priority")}
@@ -436,13 +452,13 @@ function DetailsTab({
           </PropertyField>
 
           {/* Assignee */}
-          <PropertyField label="İcraçı" icon={<User className="w-3.5 h-3.5" />}>
+          <PropertyField label={t("taskDetailSheet.assigneeLabel") || "İcraçı"} icon={<User className="w-3.5 h-3.5" />}>
             <select
               value={form.assigneeId}
               onChange={handleChange("assigneeId")}
               className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
             >
-              <option value="">Seçilməyib</option>
+              <option value="">{t("taskDetailSheet.notSelected") || "Seçilməyib"}</option>
               {members.map((m: TaskMember) => (
                 <option key={m.id} value={m.id}>{m.name}</option>
               ))}
@@ -450,7 +466,7 @@ function DetailsTab({
           </PropertyField>
 
           {/* Due date */}
-          <PropertyField label="Son Tarix" icon={<Calendar className="w-3.5 h-3.5" />}>
+          <PropertyField label={t("taskDetailSheet.dueDateLabel") || "Son Tarix"} icon={<Calendar className="w-3.5 h-3.5" />}>
             <input
               type="date"
               value={form.dueDate}
@@ -464,14 +480,14 @@ function DetailsTab({
       {/* ── Description ──────────────────────────────────────── */}
       <div className="space-y-2">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-          Təsvir
+          {t("taskDetailSheet.description") || "Təsvir"}
         </h3>
         <textarea
           value={form.description}
           onChange={(e) => setForm((p: any) => ({ ...p, description: e.target.value }))}
           onBlur={() => patchField("description", form.description)}
           rows={5}
-          placeholder="Tapşırıq haqqında ətraflı yazın..."
+          placeholder={t("taskDetailSheet.descPlaceholder") || "Tapşırıq haqqında ətraflı yazın..."}
           className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all resize-none leading-relaxed"
         />
       </div>
@@ -480,7 +496,7 @@ function DetailsTab({
       {labels.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Tag className="w-3 h-3" /> Etiketlər
+            <Tag className="w-3 h-3" /> {t("taskDetailSheet.labels") || "Etiketlər"}
           </h3>
           <div className="flex flex-wrap gap-1.5">
             {labels.map((label: KanbanLabel) => {
@@ -505,7 +521,7 @@ function DetailsTab({
       )}
 
       {/* ── Estimated Hours ──────────────────────────────────── */}
-      <PropertyField label="Təxmini Vaxt (saat)" icon={<Clock className="w-3.5 h-3.5" />}>
+      <PropertyField label={t("taskDetailSheet.estimatedTime") || "Təxmini Vaxt (saat)"} icon={<Clock className="w-3.5 h-3.5" />}>
         <input
           type="number"
           min={0}
@@ -532,9 +548,11 @@ interface SubtaskItem {
 function SubtasksTab({
   task,
   onCountChange,
+  t,
 }: {
   task: KanbanTask;
   onCountChange: (count: number) => void;
+  t: any;
 }) {
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
@@ -648,7 +666,7 @@ function SubtasksTab({
   return (
     <div className="p-6 space-y-4">
       <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-        Alt Tapşırıqlar ({subtasks.length})
+        {(t("taskDetailSheet.subtasksTitle") || "Alt Tapşırıqlar ({count})").replace("{count}", String(subtasks.length))}
       </h3>
 
       {/* Existing subtasks */}
@@ -675,7 +693,7 @@ function SubtasksTab({
             <button
               onClick={() => deleteSubtask(sub)}
               className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
-              title="Sil"
+              title={t("taskDetailSheet.deleteBtn") || "Sil"}
             >
               <Trash2 className="w-3.5 h-3.5" />
             </button>
@@ -693,7 +711,7 @@ function SubtasksTab({
         <input
           value={subtaskTitle}
           onChange={(e) => setSubtaskTitle(e.target.value)}
-          placeholder="Alt tapşırıq əlavə et..."
+          placeholder={t("taskDetailSheet.addSubtaskPlaceholder") || "Alt tapşırıq əlavə et..."}
           disabled={creating}
           className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
           onKeyDown={(e) => {
@@ -817,10 +835,12 @@ function CommentsTab({
   taskId,
   members,
   onCountChange,
+  t,
 }: {
   taskId: string;
   members: TaskMember[];
   onCountChange: (count: number) => void;
+  t: any;
 }) {
   const { data: session } = useSession();
   const currentUser = session?.user as any;
@@ -873,7 +893,7 @@ function CommentsTab({
       authorId: currentUserId ?? "",
       author: {
         id: currentUserId ?? "",
-        name: currentUser?.name ?? "Mən",
+        name: currentUser?.name ?? (t("taskDetailSheet.me") || "Mən"),
         avatar: currentUser?.image,
       },
     };
@@ -931,7 +951,7 @@ function CommentsTab({
   };
 
   const deleteComment = async (comment: CommentItem) => {
-    if (!confirm("Bu şərhi silmək istədiyinizə əminsiniz?")) return;
+    if (!confirm(t("taskDetailSheet.confirmDeleteComment") || "Bu şərhi silmək istədiyinizə əminsiniz?")) return;
     const snapshot = comments;
     setComments((prev) => {
       const next = prev.filter((c) => c.id !== comment.id && c.parentId !== comment.id);
@@ -977,7 +997,7 @@ function CommentsTab({
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-semibold text-gray-800">{comment.author?.name}</span>
             <span className="text-[10px] text-gray-400">{timeAgo(new Date(comment.createdAt))}</span>
-            {comment.isEdited && <span className="text-[10px] text-gray-400">(redaktə edilib)</span>}
+            {comment.isEdited && <span className="text-[10px] text-gray-400">{t("taskDetailSheet.edited") || "(redaktə edilib)"}</span>}
           </div>
 
           {isEditing ? (
@@ -986,7 +1006,7 @@ function CommentsTab({
                 value={editText}
                 onChange={setEditText}
                 members={members}
-                placeholder="Şərhi redaktə edin..."
+                placeholder={t("taskDetailSheet.editCommentPlaceholder") || "Şərhi redaktə edin..."}
                 rows={2}
                 autoFocus
                 onSubmit={() => saveEdit(comment)}
@@ -996,13 +1016,13 @@ function CommentsTab({
                   onClick={() => saveEdit(comment)}
                   className="text-xs font-medium text-blue-600 hover:underline"
                 >
-                  Yadda saxla
+                  {t("taskDetailSheet.save") || "Yadda saxla"}
                 </button>
                 <button
                   onClick={() => setEditingId(null)}
                   className="text-xs font-medium text-gray-400 hover:underline"
                 >
-                  Ləğv et
+                  {t("taskDetailSheet.cancel") || "Ləğv et"}
                 </button>
               </div>
             </div>
@@ -1019,7 +1039,7 @@ function CommentsTab({
                   onClick={() => { setReplyingTo(isReplying ? null : comment.id); setReplyText(""); }}
                   className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-blue-600 transition-colors"
                 >
-                  <Reply className="w-3 h-3" /> Cavab yaz
+                  <Reply className="w-3 h-3" /> {t("taskDetailSheet.reply") || "Cavab yaz"}
                 </button>
               )}
               {isOwn && (
@@ -1027,7 +1047,7 @@ function CommentsTab({
                   onClick={() => { setEditingId(comment.id); setEditText(comment.content); }}
                   className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-blue-600 transition-colors"
                 >
-                  <Pencil className="w-3 h-3" /> Redaktə et
+                  <Pencil className="w-3 h-3" /> {t("taskDetailSheet.edit") || "Redaktə et"}
                 </button>
               )}
               {canDelete && (
@@ -1035,7 +1055,7 @@ function CommentsTab({
                   onClick={() => deleteComment(comment)}
                   className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-red-500 transition-colors"
                 >
-                  <Trash2 className="w-3 h-3" /> Sil
+                  <Trash2 className="w-3 h-3" /> {t("taskDetailSheet.deleteBtn") || "Sil"}
                 </button>
               )}
             </div>
@@ -1047,7 +1067,7 @@ function CommentsTab({
                 value={replyText}
                 onChange={setReplyText}
                 members={members}
-                placeholder="Cavab yazın..."
+                placeholder={t("taskDetailSheet.replyPlaceholder") || "Cavab yazın..."}
                 rows={1}
                 autoFocus
                 onSubmit={() =>
@@ -1086,7 +1106,7 @@ function CommentsTab({
         {topLevel.length === 0 ? (
           <div className="text-center py-12 text-gray-400">
             <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">Hələ heç bir şərh yoxdur</p>
+            <p className="text-sm">{t("taskDetailSheet.noComments") || "Hələ heç bir şərh yoxdur"}</p>
           </div>
         ) : (
           topLevel.map((comment) => renderComment(comment, 0))
@@ -1100,7 +1120,7 @@ function CommentsTab({
             value={newComment}
             onChange={setNewComment}
             members={members}
-            placeholder="Şərh yazın... (@ ilə kimisə qeyd edin)"
+            placeholder={t("taskDetailSheet.commentPlaceholder") || "Şərh yazın... (@ ilə kimisə qeyd edin)"}
             rows={2}
             onSubmit={() => submitComment(newComment, null, () => setNewComment(""))}
           />
@@ -1134,9 +1154,11 @@ interface AttachmentItem {
 function FilesTab({
   taskId,
   onCountChange,
+  t,
 }: {
   taskId: string;
   onCountChange: (count: number) => void;
+  t: any;
 }) {
   const { data: session } = useSession();
   const currentUser = session?.user as any;
@@ -1198,7 +1220,7 @@ function FilesTab({
   };
 
   const deleteAttachment = async (att: AttachmentItem) => {
-    if (!confirm("Bu faylı silmək istədiyinizə əminsiniz?")) return;
+    if (!confirm(t("taskDetailSheet.confirmDeleteFile") || "Bu faylı silmək istədiyinizə əminsiniz?")) return;
     const snapshot = attachments;
     setAttachments((prev) => {
       const next = prev.filter((a) => a.id !== att.id);
@@ -1219,7 +1241,7 @@ function FilesTab({
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-          Fayllar ({attachments.length})
+          {(t("taskDetailSheet.filesTitle") || "Fayllar ({count})").replace("{count}", String(attachments.length))}
         </h3>
         <UploadButton
           endpoint="taskAttachment"
@@ -1230,7 +1252,7 @@ function FilesTab({
               "text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 focus-within:ring-0 after:bg-transparent text-white font-medium",
             allowedContent: "hidden",
           }}
-          content={{ button: "Fayl əlavə et" }}
+          content={{ button: t("taskDetailSheet.addFileBtn") || "Fayl əlavə et" }}
         />
       </div>
 
@@ -1245,7 +1267,7 @@ function FilesTab({
       ) : attachments.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
           <Paperclip className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          <p className="text-sm">Hələ heç bir fayl əlavə olunmayıb</p>
+          <p className="text-sm">{t("taskDetailSheet.noFiles") || "Hələ heç bir fayl əlavə olunmayıb"}</p>
         </div>
       ) : (
         <div className="space-y-1.5">
@@ -1276,7 +1298,7 @@ function FilesTab({
                   rel="noopener noreferrer"
                   download
                   className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors flex-shrink-0"
-                  title="Yüklə"
+                  title={t("taskDetailSheet.download") || "Yüklə"}
                 >
                   <Download className="w-3.5 h-3.5" />
                 </a>
@@ -1284,7 +1306,7 @@ function FilesTab({
                   <button
                     onClick={() => deleteAttachment(att)}
                     className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
-                    title="Sil"
+                    title={t("taskDetailSheet.deleteBtn") || "Sil"}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1301,23 +1323,23 @@ function FilesTab({
 // ═══════════════════════════════════════════════════════════════════════════
 // TAB: Time Logs
 // ═══════════════════════════════════════════════════════════════════════════
-function TimeTab({ estimatedHours }: { estimatedHours: number | null }) {
+function TimeTab({ estimatedHours, t }: { estimatedHours: number | null; t: any }) {
   return (
     <div className="p-6 space-y-6">
       <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Vaxt Xülasəsi</h3>
+        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("taskDetailSheet.timeSummary") || "Vaxt Xülasəsi"}</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-white rounded-lg p-4 border border-gray-100">
             <p className="text-2xl font-bold text-gray-900">{estimatedHours ?? "—"}</p>
-            <p className="text-xs text-gray-400 mt-1">Təxmini saat</p>
+            <p className="text-xs text-gray-400 mt-1">{t("taskDetailSheet.estHours") || "Təxmini saat"}</p>
           </div>
           <div className="bg-white rounded-lg p-4 border border-gray-100">
             <p className="text-2xl font-bold text-gray-900">—</p>
-            <p className="text-xs text-gray-400 mt-1">Sərf olunan saat</p>
+            <p className="text-xs text-gray-400 mt-1">{t("taskDetailSheet.spentHours") || "Sərf olunan saat"}</p>
           </div>
         </div>
       </div>
-      <p className="text-xs text-center text-gray-400">Vaxt qeydiyyatı modulu tezliklə əlavə olunacaq</p>
+      <p className="text-xs text-center text-gray-400">{t("taskDetailSheet.timeModuleSoon") || "Vaxt qeydiyyatı modulu tezliklə əlavə olunacaq"}</p>
     </div>
   );
 }

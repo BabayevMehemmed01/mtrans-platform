@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { X, Loader2 } from "lucide-react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import type { KanbanTask, TaskMember, KanbanLabel } from "./types";
 
 interface CreateTaskModalProps {
@@ -21,6 +23,11 @@ export function CreateTaskModal({
   onCreated,
   onClose,
 }: CreateTaskModalProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({
@@ -48,7 +55,10 @@ export function CreateTaskModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim()) { setError("Tapşırıq adı tələb olunur"); return; }
+    if (!form.title.trim()) { 
+      setError(t("createTaskModal.errorTitleRequired") || "Tapşırıq adı tələb olunur"); 
+      return; 
+    }
     setLoading(true);
     setError("");
 
@@ -64,10 +74,10 @@ export function CreateTaskModal({
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error ?? "Xəta baş verdi"); return; }
+      if (!res.ok) { setError(data.error ?? (t("createTaskModal.errorGeneric") || "Xəta baş verdi")); return; }
       onCreated(data);
     } catch {
-      setError("Şəbəkə xətası");
+      setError(t("createTaskModal.errorNetwork") || "Şəbəkə xətası");
     } finally {
       setLoading(false);
     }
@@ -85,7 +95,7 @@ export function CreateTaskModal({
         <div className="w-full max-w-lg rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-2xl animate-scale-in overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))]">
-            <h2 className="text-base font-semibold">Yeni Tapşırıq</h2>
+            <h2 className="text-base font-semibold">{t("createTaskModal.title") || "Yeni Tapşırıq"}</h2>
             <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors">
               <X className="w-4 h-4" />
             </button>
@@ -101,27 +111,27 @@ export function CreateTaskModal({
             {/* Title */}
             <div>
               <label className="block text-sm font-medium mb-1.5">
-                Tapşırıq Adı <span className="text-[hsl(var(--destructive))]">*</span>
+                {t("createTaskModal.taskName") || "Tapşırıq Adı"} <span className="text-[hsl(var(--destructive))]">*</span>
               </label>
               <input
                 name="title"
                 value={form.title}
                 onChange={handleChange}
                 autoFocus
-                placeholder="Məsələn: Login formu dizaynı"
+                placeholder={t("createTaskModal.taskNamePlaceholder") || "Məsələn: Login formu dizaynı"}
                 className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">Təsvir</label>
+              <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.description") || "Təsvir"}</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 rows={2}
-                placeholder="Tapşırıq haqqında əlavə məlumat..."
+                placeholder={t("createTaskModal.descriptionPlaceholder") || "Tapşırıq haqqında əlavə məlumat..."}
                 className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all resize-none"
               />
             </div>
@@ -129,28 +139,28 @@ export function CreateTaskModal({
             {/* Priority + Assignee */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1.5">Prioritet</label>
+                <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.priority") || "Prioritet"}</label>
                 <select
                   name="priority"
                   value={form.priority}
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
                 >
-                  <option value="LOW">Aşağı</option>
-                  <option value="MEDIUM">Orta</option>
-                  <option value="HIGH">Yüksək</option>
-                  <option value="URGENT">Təcili</option>
+                  <option value="LOW">{t("createTaskModal.priorityLow") || "Aşağı"}</option>
+                  <option value="MEDIUM">{t("createTaskModal.priorityMedium") || "Orta"}</option>
+                  <option value="HIGH">{t("createTaskModal.priorityHigh") || "Yüksək"}</option>
+                  <option value="URGENT">{t("createTaskModal.priorityUrgent") || "Təcili"}</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5">İcraçı</label>
+                <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.assignee") || "İcraçı"}</label>
                 <select
                   name="assigneeId"
                   value={form.assigneeId}
                   onChange={handleChange}
                   className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
                 >
-                  <option value="">Seçilməyib</option>
+                  <option value="">{t("createTaskModal.notSelected") || "Seçilməyib"}</option>
                   {members.map((m) => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
@@ -160,7 +170,7 @@ export function CreateTaskModal({
 
             {/* Due date */}
             <div>
-              <label className="block text-sm font-medium mb-1.5">Son Tarix</label>
+              <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.dueDate") || "Son Tarix"}</label>
               <input
                 name="dueDate"
                 type="date"
@@ -173,7 +183,7 @@ export function CreateTaskModal({
             {/* Labels */}
             {labels.length > 0 && (
               <div>
-                <label className="block text-sm font-medium mb-2">Etiketlər</label>
+                <label className="block text-sm font-medium mb-2">{t("createTaskModal.labels") || "Etiketlər"}</label>
                 <div className="flex flex-wrap gap-1.5">
                   {labels.map((label) => {
                     const selected = form.labelIds.includes(label.id);
@@ -205,14 +215,14 @@ export function CreateTaskModal({
                 onClick={onClose}
                 className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--accent))] transition-colors"
               >
-                Ləğv Et
+                {t("createTaskModal.cancel") || "Ləğv Et"}
               </button>
               <button
                 type="submit"
                 disabled={loading}
                 className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 text-white text-sm font-semibold transition-colors"
               >
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin" />Yaradılır...</> : "Yarat"}
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin" />{t("createTaskModal.creating") || "Yaradılır..."}</> : (t("createTaskModal.create") || "Yarat")}
               </button>
             </div>
           </form>

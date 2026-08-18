@@ -6,6 +6,8 @@ import { Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { TaskCard } from "./TaskCard";
 import type { KanbanColumn as ColType, KanbanTask } from "./types";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 
 interface KanbanColumnProps {
   column: ColType;
@@ -15,6 +17,11 @@ interface KanbanColumnProps {
 }
 
 export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanColumnProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { setNodeRef, isOver } = useDroppable({ id: column.id });
 
   return (
@@ -35,7 +42,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
           <button
             onClick={onAddTask}
             className="p-1 rounded-md hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-            title="Tapşırıq əlavə et"
+            title={t("kanbanColumn.addTaskTitle") || "Tapşırıq əlavə et"}
           >
             <Plus className="w-4 h-4" />
           </button>
@@ -74,7 +81,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
             )}
             onClick={onAddTask}
           >
-            {onAddTask ? "+ Tapşırıq əlavə et" : "Tapşırıq yoxdur"}
+            {onAddTask ? (t("kanbanColumn.addTaskEmpty") || "+ Tapşırıq əlavə et") : (t("kanbanColumn.noTasks") || "Tapşırıq yoxdur")}
           </div>
         )}
       </div>
@@ -86,7 +93,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
           className="mt-2 flex items-center gap-1.5 px-3 py-2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] rounded-lg transition-colors w-full"
         >
           <Plus className="w-3.5 h-3.5" />
-          Tapşırıq əlavə et
+          {t("kanbanColumn.addTaskBtn") || "Tapşırıq əlavə et"}
         </button>
       )}
     </div>

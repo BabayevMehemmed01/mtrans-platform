@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Calendar, GripVertical } from "lucide-react";
 import type { CrmDeal } from "./types";
+import { useSession } from "next-auth/react"; // YENİ: Tarix formatı üçün dil
 
 interface CrmDealCardProps {
   deal: CrmDeal;
@@ -12,12 +13,10 @@ interface CrmDealCardProps {
   onClick: () => void;
 }
 
-// =============================================================================
-// CrmDealCard — Kanban-da sürüklənən əqd kartı.
-// Mirrors src/components/kanban/TaskCard.tsx: drag handle ayrıca tutacaqdadır,
-// beləliklə kartın özünə klik "redaktə" açır, sürükləmə yalnız tutacaqdan başlayır.
-// =============================================================================
 export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+
   const {
     attributes,
     listeners,
@@ -77,7 +76,7 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
           {deal.expectedCloseDate && (
             <>
               <Calendar className="w-3 h-3" />
-              {new Date(deal.expectedCloseDate).toLocaleDateString()}
+              {new Intl.DateTimeFormat(lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : "az-AZ").format(new Date(deal.expectedCloseDate))}
             </>
           )}
         </div>

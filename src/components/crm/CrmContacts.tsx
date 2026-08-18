@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Plus, Search, MoreHorizontal, Mail, Phone, Pencil, Trash2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +16,12 @@ interface CrmContactsProps {
   board: CrmBoard;
 }
 
-// =============================================================================
-// CrmContacts — Əlaqələr cədvəli. Yaratma/redaktə/silmə tam funksionaldır
-// (əvvəllər dropdown-dakı "Redaktə et"/"Sil" düymələri heç nə etmirdi).
-// =============================================================================
 export default function CrmContacts({ board }: CrmContactsProps) {
+  // YENİ: Tərcüməni qoşuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { contacts, setContacts, companies, setCompanies, loading } = board;
   const [search, setSearch] = useState("");
   const [dialogState, setDialogState] = useState<{ open: boolean; mode: "create" | "edit"; contact: CrmContact | null }>({
@@ -37,7 +40,8 @@ export default function CrmContacts({ board }: CrmContactsProps) {
   const openEdit = (contact: CrmContact) => setDialogState({ open: true, mode: "edit", contact });
 
   const handleDelete = async (contact: CrmContact) => {
-    if (!confirm(`${contact.firstName} ${contact.lastName || ""} əlaqəsini silmək istədiyinizə əminsiniz?`)) return;
+    const confirmMsg = (t("crmContacts.confirmDelete") || `"{name}" əlaqəsini silmək istədiyinizə əminsiniz?`).replace("{name}", `${contact.firstName} ${contact.lastName || ""}`.trim());
+    if (!confirm(confirmMsg)) return;
     try {
       const res = await fetch(`/api/crm/contacts/${contact.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
@@ -54,37 +58,41 @@ export default function CrmContacts({ board }: CrmContactsProps) {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Müştəri axtar..."
+            placeholder={t("crmContacts.searchPlaceholder") || "Müştəri axtar..."}
             className="pl-8"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
-        <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" /> Yeni Əlaqə</Button>
+        <Button onClick={openCreate}>
+          <Plus className="mr-2 h-4 w-4" /> {t("crmContacts.newContactBtn") || "Yeni Əlaqə"}
+        </Button>
       </div>
 
       <div className="border rounded-md">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Ad & Soyad</TableHead>
-              <TableHead>Əlaqə Məlumatları</TableHead>
-              <TableHead>Vəzifə</TableHead>
-              <TableHead>Şirkət</TableHead>
-              <TableHead>Yaradılma Tarixi</TableHead>
+              <TableHead>{t("crmContacts.thName") || "Ad & Soyad"}</TableHead>
+              <TableHead>{t("crmContacts.thContactInfo") || "Əlaqə Məlumatları"}</TableHead>
+              <TableHead>{t("crmContacts.thPosition") || "Vəzifə"}</TableHead>
+              <TableHead>{t("crmContacts.thCompany") || "Şirkət"}</TableHead>
+              <TableHead>{t("crmContacts.thCreatedAt") || "Yaradılma Tarixi"}</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center h-24">Yüklənir...</TableCell>
+                <TableCell colSpan={6} className="text-center h-24">
+                  {t("crmContacts.loading") || "Yüklənir..."}
+                </TableCell>
               </TableRow>
             ) : filteredContacts.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
-                  Müştəri tapılmadı.
+                  {t("crmContacts.noMatch") || "Müştəri tapılmadı."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -112,7 +120,7 @@ export default function CrmContacts({ board }: CrmContactsProps) {
                       </span>
                     ) : "-"}
                   </TableCell>
-                  <TableCell>{new Date(contact.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Intl.DateTimeFormat(lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : "az-AZ").format(new Date(contact.createdAt))}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -122,10 +130,10 @@ export default function CrmContacts({ board }: CrmContactsProps) {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => openEdit(contact)}>
-                          <Pencil className="mr-2 h-4 w-4" /> Redaktə et
+                          <Pencil className="mr-2 h-4 w-4" /> {t("crmContacts.editBtn") || "Redaktə et"}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(contact)}>
-                          <Trash2 className="mr-2 h-4 w-4" /> Sil
+                          <Trash2 className="mr-2 h-4 w-4" /> {t("crmContacts.deleteBtn") || "Sil"}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

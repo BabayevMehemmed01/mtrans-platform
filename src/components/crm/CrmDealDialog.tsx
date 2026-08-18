@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { Trash2 } from "lucide-react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,11 +13,6 @@ import { CrmCompanySelect } from "./CrmCompanySelect";
 import type { CrmStage, CrmDeal, CrmContact, CrmCompanyLite, CrmMember } from "./types";
 
 const CURRENCIES = ["AZN", "USD", "EUR"];
-const STATUS_OPTIONS = [
-  { value: "OPEN", label: "Açıq" },
-  { value: "WON", label: "Qazanıldı" },
-  { value: "LOST", label: "İtirildi" },
-];
 
 interface CrmDealDialogProps {
   open: boolean;
@@ -69,6 +66,17 @@ export function CrmDealDialog({
   onDeleted,
   onCompanyCreated,
 }: CrmDealDialogProps) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
+  const STATUS_OPTIONS = [
+    { value: "OPEN", label: t("crmDealDialog.statusOpen") || "Açıq" },
+    { value: "WON", label: t("crmDealDialog.statusWon") || "Qazanıldı" },
+    { value: "LOST", label: t("crmDealDialog.statusLost") || "İtirildi" },
+  ];
+
   const [form, setForm] = useState(emptyForm(defaultStageId));
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -96,11 +104,11 @@ export function CrmDealDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.title.trim()) {
-      toast.error("Əqdin adı mütləqdir");
+      toast.error(t("crmDealDialog.errorTitleRequired") || "Əqdin adı mütləqdir");
       return;
     }
     if (!form.stageId) {
-      toast.error("Mərhələ seçilməlidir");
+      toast.error(t("crmDealDialog.errorStageRequired") || "Mərhələ seçilməlidir");
       return;
     }
 
@@ -126,18 +134,18 @@ export function CrmDealDialog({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Xəta baş verdi");
+      if (!res.ok) throw new Error((await res.json()).error || (t("crmDealDialog.errorGeneric") || "Xəta baş verdi"));
       const data = await res.json();
       if (mode === "create") {
         onCreated(data);
-        toast.success("Əqd yaradıldı");
+        toast.success(t("crmDealDialog.successCreated") || "Əqd yaradıldı");
       } else {
         onUpdated(data);
-        toast.success("Əqd yeniləndi");
+        toast.success(t("crmDealDialog.successUpdated") || "Əqd yeniləndi");
       }
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Xəta baş verdi");
+      toast.error(err.message || (t("crmDealDialog.errorGeneric") || "Xəta baş verdi"));
     } finally {
       setLoading(false);
     }
@@ -145,16 +153,17 @@ export function CrmDealDialog({
 
   const handleDelete = async () => {
     if (!deal) return;
-    if (!confirm(`"${deal.title}" əqdini silmək istədiyinizə əminsiniz?`)) return;
+    const confirmMessage = (t("crmDealDialog.confirmDelete") || `"${deal.title}" əqdini silmək istədiyinizə əminsiniz?`).replace("{name}", deal.title);
+    if (!confirm(confirmMessage)) return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/crm/deals/${deal.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Xəta baş verdi");
+      if (!res.ok) throw new Error(t("crmDealDialog.errorGeneric") || "Xəta baş verdi");
       onDeleted(deal.id);
-      toast.success("Əqd silindi");
+      toast.success(t("crmDealDialog.successDeleted") || "Əqd silindi");
       onOpenChange(false);
     } catch (err: any) {
-      toast.error(err.message || "Əqd silinərkən xəta baş verdi");
+      toast.error(err.message || (t("crmDealDialog.errorDelete") || "Əqd silinərkən xəta baş verdi"));
     } finally {
       setDeleting(false);
     }
@@ -164,15 +173,19 @@ export function CrmDealDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Yeni Əqd Yarat" : "Əqdi Redaktə Et"}</DialogTitle>
+          <DialogTitle>
+            {mode === "create" 
+              ? (t("crmDealDialog.titleCreate") || "Yeni Əqd Yarat") 
+              : (t("crmDealDialog.titleEdit") || "Əqdi Redaktə Et")}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Əqdin adı</Label>
+            <Label>{t("crmDealDialog.dealTitle") || "Əqdin adı"}</Label>
             <Input
               value={form.title}
               onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
-              placeholder="Məs: Saytın yığılması..."
+              placeholder={t("crmDealDialog.dealTitlePlaceholder") || "Məs: Saytın yığılması..."}
               required
               autoFocus
             />
@@ -180,7 +193,7 @@ export function CrmDealDialog({
 
           <div className="grid grid-cols-3 gap-3">
             <div className="space-y-2 col-span-2">
-              <Label>Məbləğ</Label>
+              <Label>{t("crmDealDialog.value") || "Məbləğ"}</Label>
               <Input
                 type="number"
                 min="0"
@@ -191,7 +204,7 @@ export function CrmDealDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Valyuta</Label>
+              <Label>{t("crmDealDialog.currency") || "Valyuta"}</Label>
               <select
                 value={form.currency}
                 onChange={(e) => setForm((p) => ({ ...p, currency: e.target.value }))}
@@ -206,7 +219,7 @@ export function CrmDealDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Mərhələ</Label>
+              <Label>{t("crmDealDialog.stage") || "Mərhələ"}</Label>
               <select
                 value={form.stageId}
                 onChange={(e) => setForm((p) => ({ ...p, stageId: e.target.value }))}
@@ -218,7 +231,7 @@ export function CrmDealDialog({
               </select>
             </div>
             <div className="space-y-2">
-              <Label>Ehtimal (%)</Label>
+              <Label>{t("crmDealDialog.probability") || "Ehtimal (%)"}</Label>
               <Input
                 type="number"
                 min="0"
@@ -231,7 +244,7 @@ export function CrmDealDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label>Bağlanma Tarixi</Label>
+              <Label>{t("crmDealDialog.closeDate") || "Bağlanma Tarixi"}</Label>
               <Input
                 type="date"
                 value={form.expectedCloseDate}
@@ -239,13 +252,13 @@ export function CrmDealDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>İcraçı</Label>
+              <Label>{t("crmDealDialog.assignee") || "İcraçı"}</Label>
               <select
                 value={form.assigneeId}
                 onChange={(e) => setForm((p) => ({ ...p, assigneeId: e.target.value }))}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
-                <option value="">Seçilməyib</option>
+                <option value="">{t("crmDealDialog.notSelected") || "Seçilməyib"}</option>
                 {members.map((m) => (
                   <option key={m.id} value={m.id}>{m.name}</option>
                 ))}
@@ -254,13 +267,13 @@ export function CrmDealDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Əlaqədar Şəxs</Label>
+            <Label>{t("crmDealDialog.contactPerson") || "Əlaqədar Şəxs"}</Label>
             <select
               value={form.crmContactId}
               onChange={(e) => setForm((p) => ({ ...p, crmContactId: e.target.value }))}
               className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
-              <option value="">Seçilməyib</option>
+              <option value="">{t("crmDealDialog.notSelected") || "Seçilməyib"}</option>
               {contacts.map((c) => (
                 <option key={c.id} value={c.id}>{c.firstName} {c.lastName || ""}</option>
               ))}
@@ -268,7 +281,7 @@ export function CrmDealDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Əlaqədar Şirkət</Label>
+            <Label>{t("crmDealDialog.relatedCompany") || "Əlaqədar Şirkət"}</Label>
             <CrmCompanySelect
               value={form.crmCompanyId}
               onChange={(id) => setForm((p) => ({ ...p, crmCompanyId: id }))}
@@ -279,7 +292,7 @@ export function CrmDealDialog({
 
           {mode === "edit" && (
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t("crmDealDialog.status") || "Status"}</Label>
               <select
                 value={form.status}
                 onChange={(e) => setForm((p) => ({ ...p, status: e.target.value }))}
@@ -295,11 +308,15 @@ export function CrmDealDialog({
           <div className="flex items-center justify-between gap-2 pt-2">
             {mode === "edit" ? (
               <Button type="button" variant="destructive" onClick={handleDelete} disabled={deleting}>
-                <Trash2 className="mr-2 h-4 w-4" /> {deleting ? "Silinir..." : "Sil"}
+                <Trash2 className="mr-2 h-4 w-4" /> {deleting ? (t("crmDealDialog.deleting") || "Silinir...") : (t("crmDealDialog.delete") || "Sil")}
               </Button>
             ) : <span />}
             <Button type="submit" disabled={loading}>
-              {loading ? "Yadda saxlanılır..." : mode === "create" ? "Yarat" : "Yadda saxla"}
+              {loading 
+                ? (t("crmDealDialog.saving") || "Yadda saxlanılır...") 
+                : mode === "create" 
+                  ? (t("crmDealDialog.create") || "Yarat") 
+                  : (t("crmDealDialog.save") || "Yadda saxla")}
             </Button>
           </div>
         </form>

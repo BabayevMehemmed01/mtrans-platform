@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import {
   DndContext,
   DragOverlay,
@@ -40,6 +42,11 @@ interface CrmKanbanProps {
 // nümunəsini təkrarlayır (əvvəllər @hello-pangea/dnd istifadə olunurdu).
 // =============================================================================
 export default function CrmKanban({ board }: CrmKanbanProps) {
+  // YENİ: Tərcümə mühərrikini qoşuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { stages, setStages, deals, setDeals, contacts, companies, setCompanies, members, loading, refetch } = board;
 
   const [activeDeal, setActiveDeal] = useState<CrmDeal | null>(null);
@@ -112,10 +119,10 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
       if (!res.ok) throw new Error();
     } catch (err) {
       console.error("Deal stage update failed:", err);
-      toast.error("Əqdin mərhələsi yenilənmədi");
+      toast.error(t("crmKanban.errorStageUpdate") || "Əqdin mərhələsi yenilənmədi");
       refetch();
     }
-  }, [deals, refetch]);
+  }, [deals, refetch, t]);
 
   // ---- Dialog helpers ----
   const openCreate = (stageId?: string) =>
@@ -127,19 +134,19 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
   const handleDeleted = (dealId: string) => setDeals((prev) => prev.filter((d) => d.id !== dealId));
 
   if (loading) {
-    return <div className="flex h-64 items-center justify-center text-sm text-[hsl(var(--muted-foreground))]">Yüklənir...</div>;
+    return <div className="flex h-64 items-center justify-center text-sm text-[hsl(var(--muted-foreground))]">{t("crmKanban.loading") || "Yüklənir..."}</div>;
   }
 
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Satış Qıfı</h3>
+        <h3 className="text-lg font-medium">{t("crmKanban.salesFunnel") || "Satış Qıfı"}</h3>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setIsStageDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Yeni Mərhələ
+            <Plus className="mr-2 h-4 w-4" /> {t("crmKanban.newStageBtn") || "Yeni Mərhələ"}
           </Button>
           <Button size="sm" onClick={() => openCreate()}>
-            <Plus className="mr-2 h-4 w-4" /> Yeni Əqd
+            <Plus className="mr-2 h-4 w-4" /> {t("crmKanban.newDealBtn") || "Yeni Əqd"}
           </Button>
         </div>
       </div>

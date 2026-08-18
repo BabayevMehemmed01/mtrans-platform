@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Plus, MoreHorizontal, Pencil, Trash2, Search } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { useSession } from "next-auth/react"; // YENİ
+import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +25,11 @@ interface CrmDealsListProps {
 // dəyişikliklər dərhal sinxronlaşır.
 // =============================================================================
 export default function CrmDealsList({ board }: CrmDealsListProps) {
+  // YENİ: Tərcümə mühərrikini qoşuruq
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const { stages, setStages, deals, setDeals, contacts, companies, setCompanies, members, loading } = board;
   const [search, setSearch] = useState("");
   const [dialogState, setDialogState] = useState<{ open: boolean; mode: "create" | "edit"; deal: CrmDeal | null }>({
@@ -38,14 +45,15 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
   const openEdit = (deal: CrmDeal) => setDialogState({ open: true, mode: "edit", deal });
 
   const handleDelete = async (deal: CrmDeal) => {
-    if (!confirm(`"${deal.title}" əqdini silmək istədiyinizə əminsiniz?`)) return;
+    const confirmMessage = (t("crmDealsList.confirmDelete") || `"${deal.title}" əqdini silmək istədiyinizə əminsiniz?`).replace("{name}", deal.title);
+    if (!confirm(confirmMessage)) return;
     try {
       const res = await fetch(`/api/crm/deals/${deal.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       setDeals((prev) => prev.filter((d) => d.id !== deal.id));
-      toast.success("Əqd silindi");
+      toast.success(t("crmDealsList.successDeleted") || "Əqd silindi");
     } catch {
-      toast.error("Əqd silinərkən xəta baş verdi");
+      toast.error(t("crmDealsList.errorDelete") || "Əqd silinərkən xəta baş verdi");
     }
   };
 
@@ -56,7 +64,7 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             type="search"
-            placeholder="Əqd axtar..."
+            placeholder={t("crmDealsList.searchPlaceholder") || "Əqd axtar..."}
             className="pl-8"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -64,10 +72,10 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setIsStageDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Yeni Mərhələ
+            <Plus className="mr-2 h-4 w-4" /> {t("crmDealsList.newStageBtn") || "Yeni Mərhələ"}
           </Button>
           <Button size="sm" onClick={openCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Yeni Əqd
+            <Plus className="mr-2 h-4 w-4" /> {t("crmDealsList.newDealBtn") || "Yeni Əqd"}
           </Button>
         </div>
       </div>
@@ -76,25 +84,27 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Əqd</TableHead>
-              <TableHead>Mərhələ</TableHead>
-              <TableHead>Məbləğ</TableHead>
-              <TableHead>Ehtimal</TableHead>
-              <TableHead>Bağlanma Tarixi</TableHead>
-              <TableHead>İcraçı</TableHead>
-              <TableHead>Əlaqə/Şirkət</TableHead>
+              <TableHead>{t("crmDealsList.thDeal") || "Əqd"}</TableHead>
+              <TableHead>{t("crmDealsList.thStage") || "Mərhələ"}</TableHead>
+              <TableHead>{t("crmDealsList.thValue") || "Məbləğ"}</TableHead>
+              <TableHead>{t("crmDealsList.thProbability") || "Ehtimal"}</TableHead>
+              <TableHead>{t("crmDealsList.thCloseDate") || "Bağlanma Tarixi"}</TableHead>
+              <TableHead>{t("crmDealsList.thAssignee") || "İcraçı"}</TableHead>
+              <TableHead>{t("crmDealsList.thContact") || "Əlaqə/Şirkət"}</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center h-24">Yüklənir...</TableCell>
+                <TableCell colSpan={8} className="text-center h-24">
+                  {t("crmDealsList.loading") || "Yüklənir..."}
+                </TableCell>
               </TableRow>
             ) : filteredDeals.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
-                  Əqd tapılmadı.
+                  {t("crmDealsList.noMatch") || "Əqd tapılmadı."}
                 </TableCell>
               </TableRow>
             ) : (
@@ -116,7 +126,7 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
                     <TableCell>{deal.value?.toLocaleString?.() ?? deal.value} {deal.currency}</TableCell>
                     <TableCell>{deal.probability}%</TableCell>
                     <TableCell>
-                      {deal.expectedCloseDate ? new Date(deal.expectedCloseDate).toLocaleDateString() : "-"}
+                      {deal.expectedCloseDate ? new Intl.DateTimeFormat(lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : "az-AZ").format(new Date(deal.expectedCloseDate)) : "-"}
                     </TableCell>
                     <TableCell>{deal.assignee?.name || "-"}</TableCell>
                     <TableCell>
@@ -133,10 +143,10 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => openEdit(deal)}>
-                            <Pencil className="mr-2 h-4 w-4" /> Redaktə et
+                            <Pencil className="mr-2 h-4 w-4" /> {t("crmDealsList.editBtn") || "Redaktə et"}
                           </DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(deal)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Sil
+                            <Trash2 className="mr-2 h-4 w-4" /> {t("crmDealsList.deleteBtn") || "Sil"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
