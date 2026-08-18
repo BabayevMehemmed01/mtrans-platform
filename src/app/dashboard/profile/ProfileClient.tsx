@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { useSession } from "next-auth/react"; // YENİ: Dil üçün sessiya
+import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 
 type ProfileUser = {
   id: string;
@@ -24,6 +26,11 @@ type ProfileUser = {
 };
 
 export function ProfileClient({ user }: { user: ProfileUser }) {
+  // YENİ: Tərcümə
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+
   const [name, setName] = useState(user.name);
   const [jobTitle, setJobTitle] = useState(user.jobTitle ?? "");
   const [phone, setPhone] = useState(user.phone ?? "");
@@ -35,7 +42,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
   const [savingPassword, setSavingPassword] = useState(false);
 
   const saveProfile = async () => {
-    if (!name.trim()) return toast.error("Ad tələb olunur");
+    if (!name.trim()) return toast.error(t("profileClient.errorNameRequired") || "Ad tələb olunur");
     setSavingProfile(true);
     try {
       const res = await fetch("/api/profile", {
@@ -43,8 +50,8 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, jobTitle: jobTitle || null, phone: phone || null, timezone }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Xəta baş verdi");
-      toast.success("Profil yeniləndi");
+      if (!res.ok) throw new Error((await res.json()).error ?? (t("profileClient.errorGeneric") || "Xəta baş verdi"));
+      toast.success(t("profileClient.successProfile") || "Profil yeniləndi");
     } catch (err: any) {
       toast.error(err.message);
     } finally {
@@ -53,7 +60,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
   };
 
   const savePassword = async () => {
-    if (!currentPassword || !newPassword) return toast.error("Bütün sahələri doldurun");
+    if (!currentPassword || !newPassword) return toast.error(t("profileClient.errorFieldsRequired") || "Bütün sahələri doldurun");
     setSavingPassword(true);
     try {
       const res = await fetch("/api/profile/password", {
@@ -61,8 +68,8 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword, newPassword }),
       });
-      if (!res.ok) throw new Error((await res.json()).error ?? "Xəta baş verdi");
-      toast.success("Şifrə uğurla dəyişdirildi");
+      if (!res.ok) throw new Error((await res.json()).error ?? (t("profileClient.errorGeneric") || "Xəta baş verdi"));
+      toast.success(t("profileClient.successPassword") || "Şifrə uğurla dəyişdirildi");
       setCurrentPassword("");
       setNewPassword("");
     } catch (err: any) {
@@ -82,7 +89,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
             <AvatarFallback className="text-lg">{getInitials(user.name)}</AvatarFallback>
           </Avatar>
           <h3 className="font-semibold text-lg">{user.name}</h3>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">{user.jobTitle || "Vəzifə təyin edilməyib"}</p>
+          <p className="text-sm text-[hsl(var(--muted-foreground))]">{user.jobTitle || (t("profileClient.noJobTitle") || "Vəzifə təyin edilməyib")}</p>
           {user.role && (
             <span
               className="mt-2 text-xs px-2.5 py-1 rounded-full font-medium"
@@ -103,7 +110,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
           )}
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4" />
-            Qoşulma: {new Intl.DateTimeFormat("az-AZ", { day: "numeric", month: "long", year: "numeric" }).format(new Date(user.createdAt))}
+            {t("profileClient.joinedDate") || "Qoşulma"}: {new Intl.DateTimeFormat(lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : "az-AZ", { day: "numeric", month: "long", year: "numeric" }).format(new Date(user.createdAt))}
           </div>
         </div>
       </div>
@@ -113,23 +120,23 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
         <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-6 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <User className="w-5 h-5 text-[hsl(var(--primary))]" />
-            Şəxsi Məlumatlar
+            {t("profileClient.personalInfo") || "Şəxsi Məlumatlar"}
           </h3>
           <div className="space-y-4 max-w-lg">
             <div className="space-y-2">
-              <Label>Ad Soyad</Label>
+              <Label>{t("profileClient.nameLabel") || "Ad Soyad"}</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Vəzifə</Label>
-              <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder="Məs: Frontend Developer" />
+              <Label>{t("profileClient.jobTitleLabel") || "Vəzifə"}</Label>
+              <Input value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} placeholder={t("profileClient.jobTitlePlaceholder") || "Məs: Frontend Developer"} />
             </div>
             <div className="space-y-2">
-              <Label>Telefon</Label>
+              <Label>{t("profileClient.phoneLabel") || "Telefon"}</Label>
               <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+994 XX XXX XX XX" />
             </div>
             <div className="space-y-2">
-              <Label>Saat Qurşağı</Label>
+              <Label>{t("profileClient.timezoneLabel") || "Saat Qurşağı"}</Label>
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
@@ -143,7 +150,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
             </div>
             <div className="pt-2 flex justify-end">
               <Button onClick={saveProfile} disabled={savingProfile}>
-                {savingProfile ? "Yadda saxlanılır..." : "Yadda Saxla"}
+                {savingProfile ? (t("profileClient.saving") || "Yadda saxlanılır...") : (t("profileClient.save") || "Yadda Saxla")}
               </Button>
             </div>
           </div>
@@ -152,21 +159,21 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
         <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-6 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
             <Shield className="w-5 h-5 text-[hsl(var(--primary))]" />
-            Şifrəni Dəyiş
+            {t("profileClient.changePassword") || "Şifrəni Dəyiş"}
           </h3>
           <div className="space-y-4 max-w-lg">
             <div className="space-y-2">
-              <Label>Hazırkı Şifrə</Label>
+              <Label>{t("profileClient.currentPassword") || "Hazırkı Şifrə"}</Label>
               <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Yeni Şifrə</Label>
+              <Label>{t("profileClient.newPassword") || "Yeni Şifrə"}</Label>
               <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">Ən az 8 simvol, böyük/kiçik hərf və rəqəm daxil olmalıdır.</p>
+              <p className="text-xs text-[hsl(var(--muted-foreground))]">{t("profileClient.passwordHint") || "Ən az 8 simvol, böyük/kiçik hərf və rəqəm daxil olmalıdır."}</p>
             </div>
             <div className="pt-2 flex justify-end">
               <Button onClick={savePassword} disabled={savingPassword}>
-                {savingPassword ? "Yenilənir..." : "Şifrəni Yenilə"}
+                {savingPassword ? (t("profileClient.updating") || "Yenilənir...") : (t("profileClient.updatePassword") || "Şifrəni Yenilə")}
               </Button>
             </div>
           </div>

@@ -2,6 +2,8 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react" // YENİ: Dil üçün sessiya
+import { getTranslation } from "@/lib/i18n" // YENİ: Tərcümə mühərriki
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,26 +40,32 @@ function groupByCategory(permissions: any[]) {
   }, {})
 }
 
-const CATEGORY_LABELS: Record<string, string> = {
-  COMPANY: "🏢 Şirkət İdarəetməsi",
-  ROLE: "🔐 Rol & İcazə",
-  DEPARTMENT: "🏬 Şöbə",
-  PROJECT: "📁 Layihə",
-  TASK: "✅ Tapşırıq",
-  SUBTASK: "📋 Alt Tapşırıq",
-  COMMENT: "💬 Şərhlər",
-  FILE: "📎 Fayllar",
-  REPORTING: "📊 Hesabatlar",
+// Kateqoriya adlarını tərcümədən çəkən helper
+const getCategoryLabel = (cat: string, t: any) => {
+  const map: Record<string, string> = {
+    COMPANY: t("rolesClient.catCompany") || "🏢 Şirkət İdarəetməsi",
+    ROLE: t("rolesClient.catRole") || "🔐 Rol & İcazə",
+    DEPARTMENT: t("rolesClient.catDepartment") || "🏬 Şöbə",
+    PROJECT: t("rolesClient.catProject") || "📁 Layihə",
+    TASK: t("rolesClient.catTask") || "✅ Tapşırıq",
+    SUBTASK: t("rolesClient.catSubtask") || "📋 Alt Tapşırıq",
+    COMMENT: t("rolesClient.catComment") || "💬 Şərhlər",
+    FILE: t("rolesClient.catFile") || "📎 Fayllar",
+    REPORTING: t("rolesClient.catReporting") || "📊 Hesabatlar",
+  }
+  return map[cat] || cat
 }
 
 function PermissionCheckboxGroup({
   permissions,
   selected,
   onChange,
+  t, // YENİ
 }: {
   permissions: any[]
   selected: string[]
   onChange: (ids: string[]) => void
+  t: any
 }) {
   const grouped = groupByCategory(permissions)
 
@@ -107,7 +115,7 @@ function PermissionCheckboxGroup({
                 )}
               </div>
               <span className="text-sm font-semibold text-gray-700">
-                {CATEGORY_LABELS[cat] || cat}
+                {getCategoryLabel(cat, t)}
               </span>
               <span className="text-xs text-gray-400 ml-auto">
                 {catIds.filter((id) => selected.includes(id)).length}/{catIds.length}
@@ -149,6 +157,11 @@ export function RolesClient({
   initialRoles: any[]
   permissions: any[]
 }) {
+  // YENİ: Dili tapıb tərcümə obyektini formalaşdırırıq
+  const { data: session } = useSession()
+  const lang = (session?.user as any)?.language || "az"
+  const t = getTranslation(lang)
+
   const [roles, setRoles] = useState(initialRoles)
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -189,7 +202,7 @@ export function RolesClient({
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error || "Xəta baş verdi")
+        alert(data.error || (t("rolesClient.errorGeneric") || "Xəta baş verdi"))
       }
     } finally {
       setLoading(false)
@@ -226,10 +239,10 @@ export function RolesClient({
 
   const handleDelete = async (id: string, isSystem: boolean) => {
     if (isSystem) {
-      alert("Sistem rolları silinə bilməz.")
+      alert(t("rolesClient.systemRoleError") || "Sistem rolları silinə bilməz.")
       return
     }
-    if (!confirm("Bu rolu silmək istədiyinizə əminsiniz?")) return
+    if (!confirm(t("rolesClient.deleteConfirm") || "Bu rolu silmək istədiyinizə əminsiniz?")) return
     try {
       const res = await fetch(`/api/roles/${id}`, { method: "DELETE" })
       if (res.ok) {
@@ -244,12 +257,12 @@ export function RolesClient({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Rollar</h2>
+        <h2 className="text-xl font-semibold">{t("rolesClient.rolesTitle") || "Rollar"}</h2>
         <Button
           className="bg-blue-600 hover:bg-blue-700 text-white"
           onClick={() => setIsCreateOpen(true)}
         >
-          + Yeni Rol
+          {t("rolesClient.newRoleBtn") || "+ Yeni Rol"}
         </Button>
       </div>
 
@@ -257,22 +270,22 @@ export function RolesClient({
       <Dialog open={isCreateOpen} onOpenChange={(open) => { setIsCreateOpen(open); if (!open) resetCreate() }}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Yeni Rol Yarat</DialogTitle>
+            <DialogTitle>{t("rolesClient.newRoleTitle") || "Yeni Rol Yarat"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4 mt-2">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="roleName">Rol adı</Label>
+                <Label htmlFor="roleName">{t("rolesClient.roleNameLabel") || "Rol adı"}</Label>
                 <Input
                   id="roleName"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Məsələn: Project Manager"
+                  placeholder={t("rolesClient.roleNamePlaceholder") || "Məsələn: Project Manager"}
                   required
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="roleColor">Rəng</Label>
+                <Label htmlFor="roleColor">{t("rolesClient.colorLabel") || "Rəng"}</Label>
                 <Input
                   id="roleColor"
                   type="color"
@@ -284,22 +297,23 @@ export function RolesClient({
             </div>
 
             <div className="space-y-2">
-              <Label>İcazələr</Label>
+              <Label>{t("rolesClient.permsLabel") || "İcazələr"}</Label>
               <div className="border border-[hsl(var(--border))] rounded-xl p-4">
                 <PermissionCheckboxGroup
                   permissions={permissions}
                   selected={selectedPerms}
                   onChange={setSelectedPerms}
+                  t={t} // YENİ: Tərcümə
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                {selectedPerms.length} icazə seçildi
+                {(t("rolesClient.selectedPerms") || "{count} icazə seçildi").replace("{count}", String(selectedPerms.length))}
               </p>
             </div>
 
             <DialogFooter>
               <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                {loading ? "Yaradılır..." : "Rolu Yarat"}
+                {loading ? (t("rolesClient.creatingBtn") || "Yaradılır...") : (t("rolesClient.createBtn") || "Rolu Yarat")}
               </Button>
             </DialogFooter>
           </form>
@@ -310,12 +324,12 @@ export function RolesClient({
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Rolu Redaktə Et</DialogTitle>
+            <DialogTitle>{t("rolesClient.editRoleTitle") || "Rolu Redaktə Et"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4 mt-2">
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="editRoleName">Rol adı</Label>
+                <Label htmlFor="editRoleName">{t("rolesClient.roleNameLabel") || "Rol adı"}</Label>
                 <Input
                   id="editRoleName"
                   value={editName}
@@ -324,7 +338,7 @@ export function RolesClient({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editRoleColor">Rəng</Label>
+                <Label htmlFor="editRoleColor">{t("rolesClient.colorLabel") || "Rəng"}</Label>
                 <Input
                   id="editRoleColor"
                   type="color"
@@ -336,22 +350,23 @@ export function RolesClient({
             </div>
 
             <div className="space-y-2">
-              <Label>İcazələr</Label>
+              <Label>{t("rolesClient.permsLabel") || "İcazələr"}</Label>
               <div className="border border-[hsl(var(--border))] rounded-xl p-4">
                 <PermissionCheckboxGroup
                   permissions={permissions}
                   selected={editPerms}
                   onChange={setEditPerms}
+                  t={t} // YENİ: Tərcümə
                 />
               </div>
               <p className="text-xs text-muted-foreground">
-                {editPerms.length} icazə seçildi
+                {(t("rolesClient.selectedPerms") || "{count} icazə seçildi").replace("{count}", String(editPerms.length))}
               </p>
             </div>
 
             <DialogFooter>
               <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                {loading ? "Yadda saxlanılır..." : "Yadda saxla"}
+                {loading ? (t("rolesClient.savingBtn") || "Yadda saxlanılır...") : (t("rolesClient.saveBtn") || "Yadda saxla")}
               </Button>
             </DialogFooter>
           </form>
@@ -362,10 +377,10 @@ export function RolesClient({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Rol</TableHead>
-            <TableHead>İcazə sayı</TableHead>
-            <TableHead>İstifadəçi sayı</TableHead>
-            <TableHead>Növ</TableHead>
+            <TableHead>{t("rolesClient.thRole") || "Rol"}</TableHead>
+            <TableHead>{t("rolesClient.thPermCount") || "İcazə sayı"}</TableHead>
+            <TableHead>{t("rolesClient.thUserCount") || "İstifadəçi sayı"}</TableHead>
+            <TableHead>{t("rolesClient.thType") || "Növ"}</TableHead>
             <TableHead className="w-[80px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -389,7 +404,9 @@ export function RolesClient({
                 </div>
               </TableCell>
               <TableCell>
-                <span className="text-sm">{role.permissions?.length ?? 0} icazə</span>
+                <span className="text-sm">
+                  {(t("rolesClient.permCountBadge") || "{count} icazə").replace("{count}", String(role.permissions?.length ?? 0))}
+                </span>
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1.5">
@@ -400,11 +417,11 @@ export function RolesClient({
               <TableCell>
                 {role.isSystem ? (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
-                    Sistem
+                    {t("rolesClient.typeSystem") || "Sistem"}
                   </span>
                 ) : (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                    Xüsusi
+                    {t("rolesClient.typeCustom") || "Xüsusi"}
                   </span>
                 )}
               </TableCell>
@@ -418,7 +435,7 @@ export function RolesClient({
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onSelect={() => openEdit(role)}>
                       <Pencil className="mr-2 h-4 w-4" />
-                      <span>İcazələri redaktə et</span>
+                      <span>{t("rolesClient.editPermsMenu") || "İcazələri redaktə et"}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-red-600 focus:text-red-600"
@@ -428,7 +445,7 @@ export function RolesClient({
                       }}
                     >
                       <Trash className="mr-2 h-4 w-4" />
-                      <span>Sil</span>
+                      <span>{t("rolesClient.deleteMenu") || "Sil"}</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

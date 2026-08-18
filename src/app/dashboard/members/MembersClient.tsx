@@ -1,7 +1,10 @@
 "use client"
 
 import { useState, useMemo } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useSession } from "next-auth/react" // YENİ
+import { getTranslation } from "@/lib/i18n" // YENİ
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -43,7 +46,7 @@ function getInitials(name: string) {
   return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2)
 }
 
-function InviteStatusBadge({ status }: { status: string }) {
+function InviteStatusBadge({ status, t }: { status: string; t: any }) {
   const styles: Record<string, string> = {
     PENDING: "bg-amber-100 text-amber-700",
     ACCEPTED: "bg-green-100 text-green-700",
@@ -51,10 +54,10 @@ function InviteStatusBadge({ status }: { status: string }) {
     REVOKED: "bg-red-100 text-red-700",
   }
   const labels: Record<string, string> = {
-    PENDING: "Gözləyir",
-    ACCEPTED: "Qəbul edilib",
-    EXPIRED: "Vaxtı bitib",
-    REVOKED: "Ləğv edilib",
+    PENDING: t("membersClient.statusPending") || "Gözləyir",
+    ACCEPTED: t("membersClient.statusAccepted") || "Qəbul edilib",
+    EXPIRED: t("membersClient.statusExpired") || "Vaxtı bitib",
+    REVOKED: t("membersClient.statusRevoked") || "Ləğv edilib",
   }
   return (
     <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${styles[status] ?? "bg-slate-100 text-slate-600"}`}>
@@ -76,6 +79,12 @@ export function MembersClient({
   projects: any[]
   initialInvites: any[]
 }) {
+  // YENİ: Dili tapıb tərcümə obyektini formalaşdırırıq
+  const { data: session } = useSession()
+  const lang = (session?.user as any)?.language || "az"
+  const t = getTranslation(lang)
+  const currentUserId = (session?.user as any)?.id
+
   const [members, setMembers] = useState(initialData)
   const [invites, setInvites] = useState(initialInvites)
   const [searchTerm, setSearchTerm] = useState("")
@@ -93,7 +102,7 @@ export function MembersClient({
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteDepartmentId, setInviteDepartmentId] = useState("")
   const [inviteRoleId, setInviteRoleId] = useState("")
-  const [inviteMessage, setInviteMessage] = useState("Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
+  const [inviteMessage, setInviteMessage] = useState(t("membersClient.inviteMessageDefault") || "Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
   const [inviteProjectIds, setInviteProjectIds] = useState<string[]>([])
 
   // Edit Form
@@ -133,7 +142,7 @@ export function MembersClient({
     setInviteEmail("")
     setInviteDepartmentId("")
     setInviteRoleId("")
-    setInviteMessage("Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
+    setInviteMessage(t("membersClient.inviteMessageDefault") || "Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
     setInviteProjectIds([])
     setInviteError("")
   }
@@ -169,10 +178,10 @@ export function MembersClient({
         resetInviteForm()
         router.refresh()
       } else {
-        setInviteError(data.error || "Xəta baş verdi")
+        setInviteError(data.error || (t("membersClient.errorGeneric") || "Xəta baş verdi"))
       }
     } catch (e) {
-      setInviteError("Şəbəkə xətası. Yenidən cəhd edin.")
+      setInviteError(t("membersClient.networkError") || "Şəbəkə xətası. Yenidən cəhd edin.")
     } finally {
       setLoading(false)
     }
@@ -211,7 +220,7 @@ export function MembersClient({
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Bu istifadəçini silmək istədiyinizə əminsiniz?")) return
+    if (!confirm(t("membersClient.deleteConfirm") || "Bu istifadəçini silmək istədiyinizə əminsiniz?")) return
     try {
       const res = await fetch(`/api/members/${id}`, { method: "DELETE" })
       if (res.ok) {
@@ -219,7 +228,7 @@ export function MembersClient({
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error || "Məlumatı silmək mümkün olmadı")
+        alert(data.error || (t("membersClient.deleteFail") || "Məlumatı silmək mümkün olmadı"))
       }
     } catch (e) {
       console.error(e)
@@ -235,7 +244,7 @@ export function MembersClient({
         setInvites(invites.map(i => i.id === id ? data : i))
         router.refresh()
       } else {
-        alert(data.error || "Dəvəti yenidən göndərmək mümkün olmadı")
+        alert(data.error || (t("membersClient.resendFail") || "Dəvəti yenidən göndərmək mümkün olmadı"))
       }
     } finally {
       setLoading(false)
@@ -243,7 +252,7 @@ export function MembersClient({
   }
 
   const handleRevokeInvite = async (id: string) => {
-    if (!confirm("Bu dəvəti ləğv etmək istədiyinizə əminsiniz?")) return
+    if (!confirm(t("membersClient.revokeConfirm") || "Bu dəvəti ləğv etmək istədiyinizə əminsiniz?")) return
     try {
       const res = await fetch(`/api/invites/${id}`, { method: "DELETE" })
       if (res.ok) {
@@ -251,7 +260,7 @@ export function MembersClient({
         router.refresh()
       } else {
         const data = await res.json()
-        alert(data.error || "Dəvəti ləğv etmək mümkün olmadı")
+        alert(data.error || (t("membersClient.revokeFail") || "Dəvəti ləğv etmək mümkün olmadı"))
       }
     } catch (e) {
       console.error(e)
@@ -268,7 +277,7 @@ export function MembersClient({
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Ada, vəzifəyə və ya şöbəyə görə axtar..."
+            placeholder={t("membersClient.searchPlaceholder") || "Ada, vəzifəyə və ya şöbəyə görə axtar..."}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-9 w-full"
@@ -279,14 +288,14 @@ export function MembersClient({
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
               <Mail className="w-4 h-4 mr-2" />
-              Dəvət Göndər
+              {t("membersClient.inviteBtn") || "Dəvət Göndər"}
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Yeni Dəvət Göndər</DialogTitle>
+              <DialogTitle>{t("membersClient.inviteTitle") || "Yeni Dəvət Göndər"}</DialogTitle>
               <DialogDescription>
-                İstifadəçinin məlumatlarını dolduraraq ona e-poçt vasitəsilə dəvət göndərin.
+                {t("membersClient.inviteDesc") || "İstifadəçinin məlumatlarını dolduraraq ona e-poçt vasitəsilə dəvət göndərin."}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleInvite} className="space-y-4 mt-2">
@@ -297,7 +306,7 @@ export function MembersClient({
               )}
 
               <div className="space-y-2">
-                <Label>Dəvət Növü</Label>
+                <Label>{t("membersClient.inviteType") || "Dəvət Növü"}</Label>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -308,7 +317,7 @@ export function MembersClient({
                         : "border-[hsl(var(--input))] text-[hsl(var(--muted-foreground))]"
                     }`}
                   >
-                    Üzv (Member)
+                    {t("membersClient.typeMember") || "Üzv (Member)"}
                   </button>
                   <button
                     type="button"
@@ -319,19 +328,19 @@ export function MembersClient({
                         : "border-[hsl(var(--input))] text-[hsl(var(--muted-foreground))]"
                     }`}
                   >
-                    Qonaq (Guest)
+                    {t("membersClient.typeGuest") || "Qonaq (Guest)"}
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
                   {inviteType === "GUEST"
-                    ? "Qonaqlar yalnız seçilmiş layihələrə baxa bilər (VIEWER)."
-                    : "Üzvlər şirkətin adi işçisi kimi qoşulur və icazələri tənzimlənə bilir."}
+                    ? (t("membersClient.guestNote") || "Qonaqlar yalnız seçilmiş layihələrə baxa bilər (VIEWER).")
+                    : (t("membersClient.memberNote") || "Üzvlər şirkətin adi işçisi kimi qoşulur və icazələri tənzimlənə bilir.")}
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="inviteName">Ad</Label>
+                  <Label htmlFor="inviteName">{t("membersClient.firstName") || "Ad"}</Label>
                   <Input
                     id="inviteName"
                     value={inviteName}
@@ -341,7 +350,7 @@ export function MembersClient({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="inviteSurname">Soyad</Label>
+                  <Label htmlFor="inviteSurname">{t("membersClient.lastName") || "Soyad"}</Label>
                   <Input
                     id="inviteSurname"
                     value={inviteSurname}
@@ -353,7 +362,7 @@ export function MembersClient({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="inviteEmail">Email</Label>
+                <Label htmlFor="inviteEmail">{t("membersClient.email") || "Email"}</Label>
                 <Input
                   id="inviteEmail"
                   type="email"
@@ -366,28 +375,28 @@ export function MembersClient({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="dept">Şöbə</Label>
+                  <Label htmlFor="dept">{t("membersClient.dept") || "Şöbə"}</Label>
                   <select
                     id="dept"
                     className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                     value={inviteDepartmentId}
                     onChange={(e) => setInviteDepartmentId(e.target.value)}
                   >
-                    <option value="">Seçin</option>
+                    <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
                     {departments.map(d => (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
                   </select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Rol</Label>
+                  <Label htmlFor="role">{t("membersClient.role") || "Rol"}</Label>
                   <select
                     id="role"
                     className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                     value={inviteRoleId}
                     onChange={(e) => setInviteRoleId(e.target.value)}
                   >
-                    <option value="">Standart rol</option>
+                    <option value="">{t("membersClient.standardRole") || "Standart rol"}</option>
                     {roles.map(r => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
@@ -397,10 +406,10 @@ export function MembersClient({
 
               {inviteType === "GUEST" && (
                 <div className="space-y-2">
-                  <Label>Layihələr</Label>
+                  <Label>{t("membersClient.projects") || "Layihələr"}</Label>
                   <div className="max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--input))] p-2 space-y-1">
                     {projects.length === 0 && (
-                      <p className="text-xs text-muted-foreground px-1 py-1">Heç bir layihə tapılmadı</p>
+                      <p className="text-xs text-muted-foreground px-1 py-1">{t("membersClient.noProjects") || "Heç bir layihə tapılmadı"}</p>
                     )}
                     {projects.map(p => (
                       <label key={p.id} className="flex items-center gap-2 px-1 py-1 text-sm rounded hover:bg-[hsl(var(--muted))] cursor-pointer">
@@ -422,22 +431,22 @@ export function MembersClient({
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="inviteMessage">Dəvət Mesajı</Label>
+                <Label htmlFor="inviteMessage">{t("membersClient.inviteMessage") || "Dəvət Mesajı"}</Label>
                 <Textarea
                   id="inviteMessage"
                   rows={3}
                   value={inviteMessage}
                   onChange={(e) => setInviteMessage(e.target.value)}
-                  placeholder="E-poçtda gedəcək xüsusi mesaj..."
+                  placeholder={t("membersClient.inviteMessagePlaceholder") || "E-poçtda gedəcək xüsusi mesaj..."}
                 />
               </div>
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
-                  Ləğv et
+                  {t("membersClient.cancel") || "Ləğv et"}
                 </Button>
                 <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                  {loading ? "Göndərilir..." : "Dəvət Göndər"}
+                  {loading ? (t("membersClient.sending") || "Göndərilir...") : (t("membersClient.inviteBtn") || "Dəvət Göndər")}
                 </Button>
               </DialogFooter>
             </form>
@@ -448,37 +457,37 @@ export function MembersClient({
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Məlumatları Redaktə Et</DialogTitle>
+            <DialogTitle>{t("membersClient.editTitle") || "Məlumatları Redaktə Et"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="editName">Ad və Soyad</Label>
+              <Label htmlFor="editName">{t("membersClient.fullName") || "Ad və Soyad"}</Label>
               <Input id="editName" value={editName} onChange={(e) => setEditName(e.target.value)} required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="editDept">Şöbə</Label>
+                <Label htmlFor="editDept">{t("membersClient.dept") || "Şöbə"}</Label>
                 <select
                   id="editDept"
                   className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                   value={editDepartmentId}
                   onChange={(e) => setEditDepartmentId(e.target.value)}
                 >
-                  <option value="">Seçin</option>
+                  <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
                   {departments.map(d => (
                     <option key={d.id} value={d.id}>{d.name}</option>
                   ))}
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="editRole">Rol</Label>
+                <Label htmlFor="editRole">{t("membersClient.role") || "Rol"}</Label>
                 <select
                   id="editRole"
                   className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
                   value={editRoleId}
                   onChange={(e) => setEditRoleId(e.target.value)}
                 >
-                  <option value="">Seçin</option>
+                  <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
                   {roles.map(r => (
                     <option key={r.id} value={r.id}>{r.name}</option>
                   ))}
@@ -487,7 +496,7 @@ export function MembersClient({
             </div>
             <DialogFooter>
               <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                {loading ? "Yadda saxlanılır..." : "Yadda saxla"}
+                {loading ? (t("membersClient.saving") || "Yadda saxlanılır...") : (t("membersClient.save") || "Yadda saxla")}
               </Button>
             </DialogFooter>
           </form>
@@ -498,11 +507,11 @@ export function MembersClient({
         <TabsList>
           <TabsTrigger value="members" className="gap-1.5">
             <Users className="w-4 h-4" />
-            Aktiv Üzvlər ({filteredAndSortedMembers.length})
+            {(t("membersClient.tabMembers") || "Aktiv Üzvlər ({count})").replace("{count}", String(filteredAndSortedMembers.length))}
           </TabsTrigger>
           <TabsTrigger value="invites" className="gap-1.5">
             <Clock className="w-4 h-4" />
-            Dəvətlər ({pendingInvites.length})
+            {(t("membersClient.tabInvites") || "Dəvətlər ({count})").replace("{count}", String(pendingInvites.length))}
           </TabsTrigger>
         </TabsList>
 
@@ -511,11 +520,11 @@ export function MembersClient({
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
-                  <TableHead>Ad və Soyad</TableHead>
-                  <TableHead>Şöbə / Vəzifə</TableHead>
-                  <TableHead>Email ünvanı</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[80px] text-center">Çat</TableHead>
+                  <TableHead>{t("membersClient.thName") || "Ad və Soyad"}</TableHead>
+                  <TableHead>{t("membersClient.thDeptRole") || "Şöbə / Vəzifə"}</TableHead>
+                  <TableHead>{t("membersClient.thEmail") || "Email ünvanı"}</TableHead>
+                  <TableHead>{t("membersClient.thStatus") || "Status"}</TableHead>
+                  <TableHead className="w-[80px] text-center">{t("membersClient.thChat") || "Çat"}</TableHead>
                   <TableHead className="w-[60px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -531,14 +540,16 @@ export function MembersClient({
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col">
-                          <span className="font-semibold text-sm">{member.name}</span>
+                          <span className="font-semibold text-sm">
+                            {member.name} {member.id === currentUserId && <span className="text-xs text-muted-foreground ml-1">{t("membersClient.you") || "(Siz)"}</span>}
+                          </span>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
                         <span className="text-sm font-medium">
-                          {member.jobTitle || (member.role ? member.role.name : "Vəzifə yoxdur")}
+                          {member.jobTitle || (member.role ? member.role.name : (t("membersClient.noVezife") || "Vəzifə yoxdur"))}
                         </span>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
                           <ShieldCheck className="w-3 h-3" /> 
@@ -572,11 +583,11 @@ export function MembersClient({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>İdarəetmə</DropdownMenuLabel>
+                          <DropdownMenuLabel>{t("membersClient.management") || "İdarəetmə"}</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onSelect={() => openEditModal(member)}>
                             <Pencil className="mr-2 h-4 w-4" />
-                            <span>Redaktə et</span>
+                            <span>{t("membersClient.editBtn") || "Redaktə et"}</span>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600 focus:bg-red-50 focus:text-red-700"
@@ -586,7 +597,7 @@ export function MembersClient({
                             }}
                           >
                             <Trash className="mr-2 h-4 w-4" />
-                            <span>Sil</span>
+                            <span>{t("membersClient.deleteBtn") || "Sil"}</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -596,7 +607,7 @@ export function MembersClient({
                 {filteredAndSortedMembers.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
-                      {searchTerm ? "Axtarışınıza uyğun heç bir üzv tapılmadı." : "Hələ heç bir üzv yoxdur"}
+                      {searchTerm ? (t("membersClient.noMatch") || "Axtarışınıza uyğun heç bir üzv tapılmadı.") : (t("membersClient.noMembers") || "Hələ heç bir üzv yoxdur")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -611,10 +622,10 @@ export function MembersClient({
               <TableHeader className="bg-muted/50">
                 <TableRow>
                   <TableHead>Email</TableHead>
-                  <TableHead>Növ</TableHead>
-                  <TableHead>Şöbə / Rol</TableHead>
-                  <TableHead>Dəvət edən</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t("membersClient.thType") || "Növ"}</TableHead>
+                  <TableHead>{t("membersClient.thDeptRole") || "Şöbə / Rol"}</TableHead>
+                  <TableHead>{t("membersClient.thInviter") || "Dəvət edən"}</TableHead>
+                  <TableHead>{t("membersClient.thStatus") || "Status"}</TableHead>
                   <TableHead className="w-[100px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -624,7 +635,7 @@ export function MembersClient({
                     <TableCell className="font-medium text-sm">{invite.email}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
-                        {invite.type === "GUEST" ? "Qonaq" : "Üzv"}
+                        {invite.type === "GUEST" ? (t("membersClient.typeGuest") || "Qonaq") : (t("membersClient.typeMember") || "Üzv")}
                       </span>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
@@ -632,7 +643,7 @@ export function MembersClient({
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{invite.invitedBy?.name || "-"}</TableCell>
                     <TableCell>
-                      <InviteStatusBadge status={invite.status} />
+                      <InviteStatusBadge status={invite.status} t={t} />
                     </TableCell>
                     <TableCell>
                       {(invite.status === "PENDING" || invite.status === "EXPIRED") && (
@@ -640,7 +651,7 @@ export function MembersClient({
                           <Button
                             variant="ghost"
                             className="h-8 w-8 p-0"
-                            title="Yenidən göndər"
+                            title={t("membersClient.resend") || "Yenidən göndər"}
                             onClick={() => handleResendInvite(invite.id)}
                           >
                             <RefreshCw className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
@@ -649,7 +660,7 @@ export function MembersClient({
                             <Button
                               variant="ghost"
                               className="h-8 w-8 p-0"
-                              title="Ləğv et"
+                              title={t("membersClient.revoke") || "Ləğv et"}
                               onClick={() => handleRevokeInvite(invite.id)}
                             >
                               <XCircle className="h-4 w-4 text-red-500" />
@@ -663,7 +674,7 @@ export function MembersClient({
                 {invites.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
-                      Hələ heç bir dəvət göndərilməyib
+                      {t("membersClient.noInvites") || "Hələ heç bir dəvət göndərilməyib"}
                     </TableCell>
                   </TableRow>
                 )}
