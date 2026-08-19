@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SessionProvider } from "next-auth/react";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { CommandPalette } from "@/components/layout/CommandPalette";
@@ -56,6 +57,7 @@ export default async function DashboardLayout({
 
   return (
     <SessionProvider session={session}>
+      <QueryProvider>
       <div 
         className={`flex h-screen overflow-hidden ${isDefault ? 'bg-[hsl(var(--background))]' : ''}`}
         style={wallpaperStyle}
@@ -73,6 +75,7 @@ export default async function DashboardLayout({
           </main>
         </div>
       </div>
+      </QueryProvider>
     </SessionProvider>
   );
 }

@@ -52,7 +52,8 @@ export async function GET() {
       where: { assigneeId: userId, project: { companyId } },
       include: {
         project: { select: { id: true, name: true, color: true } },
-        labels: { include: { label: true } }
+        labels: { include: { label: true } },
+        assignee: { select: { id: true, name: true, avatar: true } },
       },
       orderBy: { dueDate: "asc" }
     });

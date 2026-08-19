@@ -2,6 +2,9 @@
   "menu": {
     "dashboard": "Главная",
     "myWork": "Мои дела",
+    "myWorkActive": "Активные задачи",
+    "myWorkApprovals": "Ожидают подтверждения",
+    "myWorkArchive": "Архив",
     "projects": "Проекты",
     "collab": "Сотрудничество",
     "team": "Команда",

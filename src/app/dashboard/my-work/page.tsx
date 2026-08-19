@@ -16,16 +16,14 @@ export default async function MyWorkPage() {
   const t = getTranslation(lang);
 
   return (
-    <div className="p-6">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
-            {t("myWork.title") || "Mənim İşlərim"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {t("myWork.desc") || "Gündəlik iş qrafikiniz, tapşırıqlar və xatırlatmalar."}
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          {t("myWork.title") || "Mənim İşlərim"}
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {t("myWork.desc") || "Gündəlik iş qrafikiniz, tapşırıqlar və xatırlatmalar."}
+        </p>
       </div>
       <MyWorkClient currentUser={session.user} />
     </div>

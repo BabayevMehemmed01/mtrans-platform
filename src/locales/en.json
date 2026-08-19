@@ -2,6 +2,9 @@
   "menu": {
     "dashboard": "Dashboard",
     "myWork": "My Work",
+    "myWorkActive": "Active Tasks",
+    "myWorkApprovals": "Pending Approvals",
+    "myWorkArchive": "Archive",
     "projects": "Projects",
     "collab": "Collab",
     "team": "Team",

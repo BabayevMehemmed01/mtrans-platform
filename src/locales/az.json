@@ -2,6 +2,9 @@
   "menu": {
     "dashboard": "Ana Səhifə",
     "myWork": "Mənim İşlərim",
+    "myWorkActive": "Aktiv Tapşırıqlar",
+    "myWorkApprovals": "Təsdiq Gözləyənlər",
+    "myWorkArchive": "Arxiv",
     "projects": "Layihələr",
     "collab": "Collab (Ortaq)",
     "team": "Komanda",

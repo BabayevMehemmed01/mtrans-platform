@@ -1,11 +1,23 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { getTranslation } from "@/lib/i18n";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   LayoutDashboard,
   FolderKanban,
@@ -15,19 +27,40 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Briefcase,
   BarChart3,
   Tag,
   CircleUser,
   Contact,
   MessageSquare,
-  Network, // Collab üçün ikon
+  Network,
+  ListTodo,
+  Clock,
+  Archive,
+  type LucideIcon,
 } from "lucide-react";
 
 // =============================================================================
 // Navigasiya Linkləri (tKey əlavə olundu)
 // =============================================================================
-const navItems = [
+type NavChild = {
+  title: string;
+  tKey: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+type NavItem = {
+  title: string;
+  tKey: string;
+  href: string;
+  icon: LucideIcon;
+  exact?: boolean;
+  children?: NavChild[];
+};
+
+const navItems: NavItem[] = [
   {
     title: "Ana Səhifə",
     tKey: "menu.dashboard",
@@ -40,6 +73,26 @@ const navItems = [
     tKey: "menu.myWork",
     href: "/dashboard/my-work",
     icon: CircleUser,
+    children: [
+      {
+        title: "Aktiv Tapşırıqlar",
+        tKey: "menu.myWorkActive",
+        href: "/dashboard/my-work?view=active",
+        icon: ListTodo,
+      },
+      {
+        title: "Təsdiq Gözləyənlər",
+        tKey: "menu.myWorkApprovals",
+        href: "/dashboard/my-work?view=approvals",
+        icon: Clock,
+      },
+      {
+        title: "Arxiv",
+        tKey: "menu.myWorkArchive",
+        href: "/dashboard/my-work?view=archive",
+        icon: Archive,
+      },
+    ],
   },
   {
     title: "Layihələr",
@@ -85,7 +138,7 @@ const navItems = [
   },
 ];
 
-const adminItems = [
+const adminItems: NavItem[] = [
   {
     title: "Rollar & İcazələr",
     tKey: "menu.roles",
@@ -106,55 +159,84 @@ const adminItems = [
   },
 ];
 
+function parseHref(href: string) {
+  const [path, query] = href.split("?");
+  const view = query ? new URLSearchParams(query).get("view") : null;
+  return { path, view };
+}
+
+function itemClassName(active: boolean, collapsed: boolean) {
+  return cn(
+    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
+    collapsed && "justify-center px-0",
+    active
+      ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
+      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+  );
+}
+
 // =============================================================================
 // Sidebar Component
 // =============================================================================
 export function Sidebar() {
+  return (
+    <Suspense fallback={<aside className="h-screen w-64 flex-shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-zinc-950" />}>
+      <SidebarInner />
+    </Suspense>
+  );
+}
+
+function SidebarInner() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { isCollapsed, collapse, expand } = useSidebarStore();
 
-  // Sessiyadan dili oxuyuruq və tərcümə funksiyasını çağırırıq
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
 
+  const currentView = searchParams.get("view");
+
   const isActive = (href: string, exact = false) => {
-    if (exact) return pathname === href;
-    return pathname.startsWith(href);
+    const { path, view } = parseHref(href);
+    if (view) {
+      return pathname === path && currentView === view;
+    }
+    if (exact) return pathname === path;
+    return pathname.startsWith(path);
   };
 
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen bg-[hsl(var(--sidebar))] text-[hsl(var(--sidebar-foreground))]",
-        "border-r border-[hsl(var(--sidebar-border))]",
-        "transition-all duration-300 ease-in-out flex-shrink-0",
+        "flex h-screen flex-shrink-0 flex-col bg-white text-gray-900 dark:bg-zinc-950 dark:text-gray-100",
+        "border-r border-gray-200 dark:border-gray-800",
+        "transition-all duration-300 ease-in-out",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      {/* Logo & Brand */}
       <div
         className={cn(
-          "flex items-center gap-3 px-4 py-5 border-b border-[hsl(var(--sidebar-border))]",
+          "flex items-center gap-3 border-b border-gray-200 px-4 py-5 transition-all dark:border-gray-800",
           isCollapsed && "justify-center px-0"
         )}
       >
-        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[hsl(var(--sidebar-primary))] shadow-lg flex-shrink-0">
-          <Briefcase className="w-5 h-5 text-white" />
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900 shadow-sm dark:bg-white">
+          <Briefcase className="h-4 w-4 text-white dark:text-gray-900" />
         </div>
         {!isCollapsed && (
           <div className="min-w-0">
-            <p className="text-sm font-bold text-white truncate">{t("menu.workspace") || "WorkSpace"}</p>
-            <p className="text-xs text-[hsl(var(--sidebar-foreground)/0.5)] truncate">
+            <p className="truncate text-sm font-semibold tracking-tight">
+              {t("menu.workspace") || "WorkSpace"}
+            </p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
               {t("menu.platform") || "ERP Platform"}
             </p>
           </div>
         )}
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 space-y-1 px-2">
-        {/* Main Nav */}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
         <NavGroup
           items={navItems}
           isCollapsed={isCollapsed}
@@ -163,10 +245,8 @@ export function Sidebar() {
           t={t}
         />
 
-        {/* Divider */}
-        <div className="my-3 mx-2 border-t border-[hsl(var(--sidebar-border))]" />
+        <div className="mx-2 my-3 border-t border-gray-200 dark:border-gray-800" />
 
-        {/* Admin Nav */}
         <NavGroup
           items={adminItems}
           isCollapsed={isCollapsed}
@@ -176,23 +256,22 @@ export function Sidebar() {
         />
       </nav>
 
-      {/* Collapse Toggle */}
-      <div className="p-2 pb-16 border-t border-[hsl(var(--sidebar-border))]">
+      <div className="border-t border-gray-200 p-2 pb-16 dark:border-gray-800">
         <button
           onClick={() => (isCollapsed ? expand() : collapse())}
           className={cn(
-            "w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs",
-            "text-[hsl(var(--sidebar-foreground)/0.5)] hover:text-[hsl(var(--sidebar-foreground))]",
-            "hover:bg-[hsl(var(--sidebar-accent))] transition-colors",
+            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
+            "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
+            "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100",
             isCollapsed && "justify-center"
           )}
-          title={isCollapsed ? (t("menu.expand") || "Genişlət") : (t("menu.collapse") || "Daralt")}
+          title={isCollapsed ? t("menu.expand") || "Genişlət" : t("menu.collapse") || "Daralt"}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="h-4 w-4" />
           ) : (
             <>
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="h-4 w-4" />
               <span>{t("menu.collapse") || "Daralt"}</span>
             </>
           )}
@@ -212,7 +291,7 @@ function NavGroup({
   label,
   t,
 }: {
-  items: typeof navItems;
+  items: NavItem[];
   isCollapsed: boolean;
   isActive: (href: string, exact?: boolean) => boolean;
   label: string;
@@ -221,48 +300,146 @@ function NavGroup({
   return (
     <div>
       {!isCollapsed && (
-        <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-[hsl(var(--sidebar-foreground)/0.35)]">
+        <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
           {label}
         </p>
       )}
       <ul className="space-y-0.5">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.href, (item as any).exact);
-          // Tərcümə açarı varsa lüğətdən oxuyur, yoxdursa orijinal title-ı saxlayır
-          const displayTitle = item.tKey ? t(item.tKey) : item.title;
-
-          return (
-            <li key={item.href}>
-              <Link
-                href={item.href}
-                title={isCollapsed ? displayTitle : undefined}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150",
-                  isCollapsed && "justify-center px-0 py-2.5",
-                  active
-                    ? "bg-[hsl(var(--sidebar-primary)/0.15)] text-[hsl(var(--sidebar-primary))]"
-                    : "text-[hsl(var(--sidebar-foreground)/0.7)] hover:bg-[hsl(var(--sidebar-accent))] hover:text-[hsl(var(--sidebar-foreground))]"
-                )}
-              >
-                <Icon
-                  className={cn(
-                    "flex-shrink-0 transition-colors",
-                    isCollapsed ? "w-5 h-5" : "w-4 h-4",
-                    active && "text-[hsl(var(--sidebar-primary))]"
-                  )}
-                />
-                {!isCollapsed && (
-                  <span className="truncate">{displayTitle}</span>
-                )}
-                {active && !isCollapsed && (
-                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-[hsl(var(--sidebar-primary))]" />
-                )}
-              </Link>
-            </li>
-          );
-        })}
+        {items.map((item) => (
+          <li key={item.href}>
+            {item.children?.length ? (
+              <CollapsibleNavItem
+                item={item}
+                isCollapsed={isCollapsed}
+                isActive={isActive}
+                t={t}
+              />
+            ) : (
+              <NavLink item={item} isCollapsed={isCollapsed} isActive={isActive} t={t} />
+            )}
+          </li>
+        ))}
       </ul>
     </div>
+  );
+}
+
+function NavLink({
+  item,
+  isCollapsed,
+  isActive,
+  t,
+}: {
+  item: NavItem | NavChild;
+  isCollapsed: boolean;
+  isActive: (href: string, exact?: boolean) => boolean;
+  t: (key: string) => string;
+}) {
+  const Icon = item.icon;
+  const active = isActive(item.href, "exact" in item ? item.exact : false);
+  const displayTitle = item.tKey ? t(item.tKey) : item.title;
+
+  return (
+    <Link
+      href={item.href}
+      title={isCollapsed ? displayTitle : undefined}
+      className={itemClassName(active, isCollapsed)}
+    >
+      <Icon className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
+      {!isCollapsed && <span className="truncate">{displayTitle}</span>}
+    </Link>
+  );
+}
+
+function CollapsibleNavItem({
+  item,
+  isCollapsed,
+  isActive,
+  t,
+}: {
+  item: NavItem;
+  isCollapsed: boolean;
+  isActive: (href: string, exact?: boolean) => boolean;
+  t: (key: string) => string;
+}) {
+  const Icon = item.icon;
+  const displayTitle = item.tKey ? t(item.tKey) : item.title;
+  const childActive = item.children?.some((child) => isActive(child.href)) ?? false;
+  const groupActive = isActive(item.href) || childActive;
+  const [open, setOpen] = useState(groupActive);
+
+  useEffect(() => {
+    if (groupActive) setOpen(true);
+  }, [groupActive]);
+
+  if (isCollapsed) {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            title={displayTitle}
+            className={cn(itemClassName(groupActive, true), "w-full")}
+          >
+            <Icon className="h-5 w-5" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" className="w-52">
+          {item.children?.map((child) => {
+            const ChildIcon = child.icon;
+            const childTitle = child.tKey ? t(child.tKey) : child.title;
+            return (
+              <DropdownMenuItem key={child.href} asChild>
+                <Link href={child.href} className="flex cursor-pointer items-center gap-2">
+                  <ChildIcon className="h-4 w-4 text-gray-500" />
+                  {childTitle}
+                </Link>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger
+        className={cn(itemClassName(groupActive && !childActive, false), "w-full")}
+      >
+        <Icon className="h-4 w-4 flex-shrink-0" />
+        <span className="truncate">{displayTitle}</span>
+        <ChevronDown
+          className={cn(
+            "ml-auto h-4 w-4 flex-shrink-0 text-gray-400 transition-all",
+            open && "rotate-180"
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent className="overflow-hidden">
+        <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
+          {item.children?.map((child) => {
+            const ChildIcon = child.icon;
+            const childTitle = child.tKey ? t(child.tKey) : child.title;
+            const active = isActive(child.href);
+            return (
+              <li key={child.href}>
+                <Link
+                  href={child.href}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all",
+                    active
+                      ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
+                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                  )}
+                >
+                  <ChildIcon className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">{childTitle}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
