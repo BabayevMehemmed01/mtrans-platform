@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getTranslation } from "@/lib/i18n";
-import { cn, getInitials, getPriorityColor } from "@/lib/utils";
+import { cn, getPriorityColor } from "@/lib/utils";
 import {
   CheckCircle2,
   Clock,
@@ -14,7 +14,8 @@ import {
   Building2,
   FolderKanban,
   Users,
-  Flag,
+  List,
+  LayoutGrid,
 } from "lucide-react";
 import {
   Card,
@@ -24,8 +25,6 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -42,7 +41,7 @@ import { WorkCalendar, type CalendarTaskItem } from "@/components/dashboard/Work
 const MY_WORK_QUERY_KEY = ["my-work"] as const;
 
 const cardSurface =
-  "bg-white ring-0 border border-border shadow-none hover:shadow-md transition-all duration-200 dark:bg-card";
+  "bg-white ring-0 border border-border shadow-sm hover:shadow-md transition-all duration-200 dark:bg-card";
 
 const statusBadgeClass: Record<string, string> = {
   BACKLOG: "border-transparent bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
@@ -111,16 +110,14 @@ function priorityLabel(priority: string, t: Translate) {
   return map[priority] ?? priority;
 }
 
-function TaskCard({
+function TaskRow({
   task,
   onStatusChange,
   t,
-  fallbackAssignee,
 }: {
   task: MyWorkTask;
   onStatusChange: (taskId: string, status: string) => void;
   t: Translate;
-  fallbackAssignee?: Assignee | null;
 }) {
   const isOverdue =
     Boolean(task.dueDate) &&
@@ -128,34 +125,23 @@ function TaskCard({
     task.status !== "DONE" &&
     task.status !== "CANCELLED";
   const labels = statusLabels(t);
-  const assignee = task.assignee ?? fallbackAssignee ?? null;
 
   return (
-    <Card className={cn(cardSurface, "h-full")}>
-      <CardHeader className="gap-3 p-6 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-              {task.project.name}
-            </p>
-            <Link
-              href={`/dashboard/projects/${task.project.id}?task=${task.id}`}
-              className="mt-1 block truncate text-sm font-medium hover:underline"
-            >
-              {task.title}
-            </Link>
-          </div>
-          <Badge className={cn("shrink-0", statusBadgeClass[task.status])}>
-            {labels[task.status] ?? task.status}
-          </Badge>
-        </div>
+    <div className="group grid grid-cols-1 items-center gap-3 rounded-lg border border-transparent px-3 py-2.5 transition-all duration-200 hover:border-border hover:bg-gray-100 dark:hover:bg-gray-800/60 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_8.5rem_7.5rem]">
+      <div className="min-w-0">
+        <Link
+          href={`/dashboard/projects/${task.project.id}?task=${task.id}`}
+          className="block truncate text-sm font-medium text-foreground transition-colors hover:text-blue-600"
+        >
+          {task.title}
+        </Link>
         {task.labels && task.labels.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {task.labels.map((tl) => (
+          <div className="mt-1 flex flex-wrap gap-1">
+            {task.labels.slice(0, 3).map((tl) => (
               <Badge
                 key={tl.label.id}
                 variant="outline"
-                className="h-5 text-[10px]"
+                className="h-4 text-[10px]"
                 style={{ borderColor: tl.label.color, color: tl.label.color }}
               >
                 {tl.label.name}
@@ -163,95 +149,85 @@ function TaskCard({
             ))}
           </div>
         )}
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4 p-6 pt-0">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className={cn("gap-1 border", getPriorityColor(task.priority))}>
-            <Flag className="size-3" />
-            {priorityLabel(task.priority, t)}
-          </Badge>
-          {task.dueDate ? (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 text-xs font-medium",
-                isOverdue ? "text-red-600 dark:text-red-400" : "text-muted-foreground"
-              )}
-            >
-              <Calendar className="size-3.5" />
-              {format(new Date(task.dueDate), "dd MMM yyyy")}
-              {isOverdue && (
-                <Badge variant="destructive" className="h-5">
-                  {t("myWork.overdueBadge") || "Gecikir"}
-                </Badge>
-              )}
-            </span>
-          ) : null}
-        </div>
+      </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-border pt-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <Avatar className="size-7">
-              <AvatarImage src={assignee?.avatar ?? undefined} alt={assignee?.name ?? ""} />
-              <AvatarFallback className="text-[10px]">
-                {getInitials(assignee?.name || "US")}
-              </AvatarFallback>
-            </Avatar>
-            <span className="truncate text-xs text-muted-foreground">
-              {assignee?.name ?? "—"}
-            </span>
-          </div>
-          <Select value={task.status} onValueChange={(val) => onStatusChange(task.id, String(val))}>
-            <SelectTrigger
-              size="sm"
-              className={cn("h-8 w-[8.5rem] border-0 text-xs font-medium", statusBadgeClass[task.status])}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(labels).map(([key, label]) => (
-                <SelectItem key={key} value={key}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </CardContent>
-    </Card>
+      <Badge className={cn("w-fit shrink-0", statusBadgeClass[task.status])}>
+        {labels[task.status] ?? task.status}
+      </Badge>
+
+      <Badge variant="outline" className={cn("w-fit shrink-0 border", getPriorityColor(task.priority))}>
+        {priorityLabel(task.priority, t)}
+      </Badge>
+
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 text-xs tabular-nums",
+          isOverdue ? "font-medium text-red-600 dark:text-red-400" : "text-muted-foreground"
+        )}
+      >
+        <Calendar className="size-3.5" />
+        {task.dueDate ? format(new Date(task.dueDate), "dd MMM yyyy") : "—"}
+        {isOverdue && (
+          <span className="text-[10px] font-medium">
+            {t("myWork.overdueBadge") || "Gecikir"}
+          </span>
+        )}
+      </span>
+
+      <Link
+        href={`/dashboard/projects/${task.project.id}`}
+        className="flex min-w-0 items-center justify-end gap-2 text-right text-xs text-muted-foreground transition-colors hover:text-foreground"
+        title={task.project.name}
+      >
+        <span
+          className="size-2 shrink-0 rounded-full"
+          style={{ backgroundColor: task.project.color }}
+        />
+        <span className="truncate">{task.project.name}</span>
+      </Link>
+
+      <Select value={task.status} onValueChange={(val) => onStatusChange(task.id, String(val))}>
+        <SelectTrigger
+          size="sm"
+          className={cn("h-8 w-full border-0 text-xs font-medium", statusBadgeClass[task.status])}
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {Object.entries(labels).map(([key, label]) => (
+            <SelectItem key={key} value={key}>
+              {label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
-function TaskGrid({
+function TaskList({
   tasks,
   empty,
   onStatusChange,
   t,
-  fallbackAssignee,
 }: {
   tasks: MyWorkTask[];
   empty: string;
   onStatusChange: (taskId: string, status: string) => void;
   t: Translate;
-  fallbackAssignee?: Assignee | null;
 }) {
   if (tasks.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
+      <div className="flex items-center justify-center rounded-lg border border-dashed border-border py-12 text-sm text-muted-foreground">
         {empty}
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="divide-y divide-border rounded-lg border border-border bg-white dark:bg-card">
       {tasks.map((task) => (
-        <TaskCard
-          key={task.id}
-          task={task}
-          onStatusChange={onStatusChange}
-          t={t}
-          fallbackAssignee={fallbackAssignee}
-        />
+        <TaskRow key={task.id} task={task} onStatusChange={onStatusChange} t={t} />
       ))}
     </div>
   );
@@ -260,51 +236,13 @@ function TaskGrid({
 function MyWorkSkeleton() {
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Card key={i} className={cn(cardSurface, "hover:shadow-none")}>
-            <CardContent className="flex items-center justify-between p-6">
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-12" />
-              </div>
-              <Skeleton className="size-10 rounded-full" />
-            </CardContent>
-          </Card>
+          <Skeleton key={i} className="h-[72px] w-full rounded-xl" />
         ))}
       </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className={cn(cardSurface, "lg:col-span-2 hover:shadow-none")}>
-          <CardHeader className="p-6">
-            <Skeleton className="h-5 w-32" />
-            <Skeleton className="h-4 w-64" />
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <Skeleton className="h-64 w-full" />
-          </CardContent>
-        </Card>
-        <Card className={cn(cardSurface, "hover:shadow-none")}>
-          <CardHeader className="p-6">
-            <Skeleton className="h-5 w-28" />
-          </CardHeader>
-          <CardContent className="space-y-3 p-6 pt-0">
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-            <Skeleton className="h-16 w-full" />
-          </CardContent>
-        </Card>
-      </div>
-      <Card className={cn(cardSurface, "hover:shadow-none")}>
-        <CardHeader className="p-6">
-          <Skeleton className="h-5 w-48" />
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <Skeleton className="h-40 w-full" />
-            <Skeleton className="h-40 w-full" />
-          </div>
-        </CardContent>
-      </Card>
+      <Skeleton className="h-10 w-72 rounded-md" />
+      <Skeleton className="h-80 w-full rounded-xl" />
     </div>
   );
 }
@@ -316,16 +254,10 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
   const view = searchParams.get("view");
-  const tabValue =
+  const filterValue =
     view === "archive" ? "completed" : view === "approvals" ? "approvals" : "active";
 
-  const fallbackAssignee: Assignee | null = currentUser
-    ? {
-        id: currentUser.id,
-        name: currentUser.name ?? "",
-        avatar: currentUser.image ?? currentUser.avatar ?? null,
-      }
-    : null;
+  void currentUser;
 
   const { data, isPending, isError } = useQuery({
     queryKey: MY_WORK_QUERY_KEY,
@@ -383,7 +315,7 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
     return <MyWorkSkeleton />;
   }
 
-  const { tasks, recentComments, stats, weeklyCompleted, department, projects } = data;
+  const { tasks, stats, weeklyCompleted, department, projects } = data;
 
   const activeTasks = tasks.filter((task) => task.status !== "DONE" && task.status !== "CANCELLED");
   const approvalTasks = tasks.filter((task) => task.status === "IN_REVIEW");
@@ -402,268 +334,229 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card className={cardSurface}>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm text-muted-foreground">{t("myWork.totalTasks") || "Cəmi Tapşırıq"}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums">{stats.total}</p>
+          <CardContent className="flex items-center gap-3 px-4 py-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-blue-50 dark:bg-blue-950/40">
+              <LayoutGrid className="size-4 text-blue-600 dark:text-blue-400" />
             </div>
-            <div className="flex size-10 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/40">
-              <CheckCircle2 className="size-5 text-blue-600 dark:text-blue-400" />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("myWork.totalTasks") || "Cəmi Tapşırıq"}
+              </p>
+              <p className="text-lg font-semibold tabular-nums leading-tight">{stats.total}</p>
             </div>
           </CardContent>
         </Card>
         <Card className={cardSurface}>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm text-muted-foreground">{t("myWork.completed") || "Tamamlanan"}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-emerald-600">{stats.completed}</p>
+          <CardContent className="flex items-center gap-3 px-4 py-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-emerald-50 dark:bg-emerald-950/40">
+              <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-950/40">
-              <CheckCircle2 className="size-5 text-emerald-600 dark:text-emerald-400" />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("myWork.completed") || "Tamamlanan"}
+              </p>
+              <p className="text-lg font-semibold tabular-nums leading-tight text-emerald-600">
+                {stats.completed}
+              </p>
             </div>
           </CardContent>
         </Card>
         <Card className={cardSurface}>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm text-muted-foreground">{t("myWork.upcoming") || "Yaxınlaşan (3 gün)"}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-amber-600">{stats.upcoming}</p>
+          <CardContent className="flex items-center gap-3 px-4 py-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-amber-50 dark:bg-amber-950/40">
+              <Clock className="size-4 text-amber-600 dark:text-amber-400" />
             </div>
-            <div className="flex size-10 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-950/40">
-              <Clock className="size-5 text-amber-600 dark:text-amber-400" />
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("myWork.upcoming") || "Yaxınlaşan (3 gün)"}
+              </p>
+              <p className="text-lg font-semibold tabular-nums leading-tight text-amber-600">
+                {stats.upcoming}
+              </p>
             </div>
           </CardContent>
         </Card>
         <Card className={cn(cardSurface, stats.overdue > 0 && "border-red-200 dark:border-red-900/50")}>
-          <CardContent className="flex items-center justify-between p-6">
-            <div>
-              <p className="text-sm text-muted-foreground">{t("myWork.overdue") || "Gecikən"}</p>
-              <p className="mt-1 text-2xl font-semibold tabular-nums text-red-600">{stats.overdue}</p>
+          <CardContent className="flex items-center gap-3 px-4 py-3">
+            <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-red-50 dark:bg-red-950/40">
+              <AlertCircle className="size-4 text-red-600 dark:text-red-400" />
             </div>
-            <div className="flex size-10 items-center justify-center rounded-full bg-red-50 dark:bg-red-950/40">
-              <AlertCircle className="size-5 text-red-600 dark:text-red-400" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className={cn(cardSurface, "lg:col-span-2")}>
-          <CardHeader className="p-6 pb-3">
-            <CardTitle>{t("myWork.calendar") || "Təqvim"}</CardTitle>
-            <CardDescription>
-              {t("myWork.calendarDesc") || "Tamamlanmış (yaşıl) və gözləyən (narıncı) tapşırıqlarınızın tarixləri."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <WorkCalendar tasks={calendarTasks} />
-          </CardContent>
-        </Card>
-
-        <Card className={cardSurface}>
-          <CardHeader className="p-6 pb-3">
-            <CardTitle>{t("myWork.activity") || "Aktivlik"}</CardTitle>
-            <CardDescription>
-              {t("myWork.activityDesc") || "Daxil olduğunuz şöbə və layihələr."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3 p-6 pt-0">
-            {department && (
-              <Link
-                href={`/dashboard/departments/${department.id}`}
-                className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-muted/60"
-              >
-                <div
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: `${department.color}20`, color: department.color }}
-                >
-                  <Building2 className="size-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{department.name}</p>
-                  <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Users className="size-3" />
-                    {(t("myWork.workers") || "{count} işçi").replace(
-                      "{count}",
-                      String(department._count?.users ?? 0)
-                    )}{" "}
-                    ·{" "}
-                    {(t("myWork.projects") || "{count} layihə").replace(
-                      "{count}",
-                      String(department._count?.projects ?? 0)
-                    )}
-                  </p>
-                </div>
-              </Link>
-            )}
-
-            {projects.length === 0 && !department && (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                {t("myWork.noDepartment") || "Hələ heç bir şöbə və ya layihəyə daxil deyilsiniz."}
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground">
+                {t("myWork.overdue") || "Gecikən"}
               </p>
-            )}
-
-            {projects.map((project: any) => (
-              <Link
-                key={project.id}
-                href={`/dashboard/projects/${project.id}`}
-                className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-muted/60"
-              >
-                <div
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg"
-                  style={{ backgroundColor: `${project.color}20`, color: project.color }}
-                >
-                  <FolderKanban className="size-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{project.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {t(`projectStatus.${project.status}`) || project.status} ·{" "}
-                    {(t("myWork.tasksCount") || "{count} tapşırıq").replace(
-                      "{count}",
-                      String(project._count?.tasks ?? 0)
-                    )}
-                  </p>
-                </div>
-              </Link>
-            ))}
+              <p className="text-lg font-semibold tabular-nums leading-tight text-red-600">
+                {stats.overdue}
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card className={cardSurface}>
-        <CardHeader className="p-6 pb-3">
-          <CardTitle>{t("myWork.weeklyTrend") || "Son 7 Gün — Tamamladığım Tapşırıqlar"}</CardTitle>
-          <CardDescription>
-            {t("myWork.weeklyTrendDesc") || "Gün üzrə tamamladığınız tapşırıqların sayı."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6 pt-0">
-          <MyWorkTrendChart data={weeklyCompleted ?? []} />
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="list" className="gap-4">
+        <TabsList>
+          <TabsTrigger value="list" className="gap-1.5">
+            <List className="size-3.5" />
+            {t("myWork.tasks")}
+          </TabsTrigger>
+          <TabsTrigger value="calendar" className="gap-1.5">
+            <Calendar className="size-3.5" />
+            {t("myWork.calendar")}
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <Card className={cn(cardSurface, "lg:col-span-2")}>
-          <CardHeader className="p-6 pb-3">
-            <CardTitle>{t("myWork.tasks") || "Tapşırıqlar"}</CardTitle>
-            <CardDescription>
-              {t("myWork.tasksDesc") || "Sizə təyin edilmiş bütün tapşırıqlar — statusa görə."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <Tabs key={tabValue} defaultValue={tabValue} className="gap-4">
-              <TabsList>
-                <TabsTrigger value="active">
-                  {t("myWork.tabActive") || "Aktiv"} ({activeTasks.length})
-                </TabsTrigger>
-                <TabsTrigger value="approvals">
-                  {t("menu.myWorkApprovals") || "Təsdiq Gözləyənlər"} ({approvalTasks.length})
-                </TabsTrigger>
-                <TabsTrigger value="completed">
-                  {t("menu.myWorkArchive") || t("myWork.tabCompleted") || "Arxiv"} ({completedTasks.length})
-                </TabsTrigger>
-                <TabsTrigger value="all">
-                  {t("myWork.tabAll") || "Hamısı"} ({tasks.length})
-                </TabsTrigger>
-              </TabsList>
+        <TabsContent value="list" className="mt-0">
+          <Card className={cn(cardSurface, "hover:shadow-sm")}>
+            <CardHeader className="px-4 py-3">
+              <CardTitle className="text-sm">{t("myWork.tasks") || "Tapşırıqlar"}</CardTitle>
+              <CardDescription>
+                {t("myWork.tasksDesc") || "Sizə təyin edilmiş bütün tapşırıqlar — statusa görə."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <Tabs key={filterValue} defaultValue={filterValue} className="gap-3">
+                <TabsList>
+                  <TabsTrigger value="active">
+                    {t("myWork.tabActive") || "Aktiv"} ({activeTasks.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="approvals">
+                    {t("menu.myWorkApprovals") || "Təsdiq Gözləyənlər"} ({approvalTasks.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="completed">
+                    {t("menu.myWorkArchive") || t("myWork.tabCompleted") || "Arxiv"} ({completedTasks.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="all">
+                    {t("myWork.tabAll") || "Hamısı"} ({tasks.length})
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="active">
+                  <TaskList
+                    tasks={activeTasks}
+                    empty={t("myWork.allDone") || "Bütün işləri bitirmisiniz! 🎉"}
+                    onStatusChange={handleStatusChange}
+                    t={t}
+                  />
+                </TabsContent>
+                <TabsContent value="approvals">
+                  <TaskList
+                    tasks={approvalTasks}
+                    empty={t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."}
+                    onStatusChange={handleStatusChange}
+                    t={t}
+                  />
+                </TabsContent>
+                <TabsContent value="completed">
+                  <TaskList
+                    tasks={completedTasks}
+                    empty={t("myWork.noCompleted") || "Hələ tamamlanmış tapşırıq yoxdur."}
+                    onStatusChange={handleStatusChange}
+                    t={t}
+                  />
+                </TabsContent>
+                <TabsContent value="all">
+                  <TaskList
+                    tasks={tasks}
+                    empty={t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."}
+                    onStatusChange={handleStatusChange}
+                    t={t}
+                  />
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-              <TabsContent value="active">
-                <TaskGrid
-                  tasks={activeTasks}
-                  empty={t("myWork.allDone") || "Bütün işləri bitirmisiniz! 🎉"}
-                  onStatusChange={handleStatusChange}
-                  t={t}
-                  fallbackAssignee={fallbackAssignee}
-                />
-              </TabsContent>
-              <TabsContent value="approvals">
-                <TaskGrid
-                  tasks={approvalTasks}
-                  empty={t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."}
-                  onStatusChange={handleStatusChange}
-                  t={t}
-                  fallbackAssignee={fallbackAssignee}
-                />
-              </TabsContent>
-              <TabsContent value="completed">
-                <TaskGrid
-                  tasks={completedTasks}
-                  empty={t("myWork.noCompleted") || "Hələ tamamlanmış tapşırıq yoxdur."}
-                  onStatusChange={handleStatusChange}
-                  t={t}
-                  fallbackAssignee={fallbackAssignee}
-                />
-              </TabsContent>
-              <TabsContent value="all">
-                <TaskGrid
-                  tasks={tasks}
-                  empty={t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."}
-                  onStatusChange={handleStatusChange}
-                  t={t}
-                  fallbackAssignee={fallbackAssignee}
-                />
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
+        <TabsContent value="calendar" className="mt-0">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <Card className={cn(cardSurface, "lg:col-span-2 hover:shadow-sm")}>
+              <CardHeader className="px-4 py-3">
+                <CardTitle className="text-sm">{t("myWork.calendar") || "Təqvim"}</CardTitle>
+                <CardDescription>
+                  {t("myWork.calendarDesc") ||
+                    "Tamamlanmış (yaşıl) və gözləyən (narıncı) tapşırıqlarınızın tarixləri."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="px-4 pb-4">
+                <WorkCalendar tasks={calendarTasks} />
+              </CardContent>
+            </Card>
 
-        <Card className={cardSurface}>
-          <CardHeader className="p-6 pb-3">
-            <CardTitle>{t("myWork.recentComments") || "Son Rəylər"}</CardTitle>
-            <CardDescription>
-              {t("myWork.commentsDesc") || "Sizin tapşırıqlara yazılan şərhlər."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <ScrollArea className="h-[500px]">
-              {recentComments.length === 0 ? (
-                <p className="p-6 text-center text-sm text-muted-foreground">
-                  {t("myWork.noComments") || "Yaxın zamanda rəy yoxdur."}
-                </p>
-              ) : (
-                <div className="flex flex-col gap-3 pr-3">
-                  {recentComments.map((comment: any) => (
+            <div className="flex flex-col gap-4">
+              <Card className={cn(cardSurface, "hover:shadow-sm")}>
+                <CardHeader className="px-4 py-3">
+                  <CardTitle className="text-sm">{t("myWork.activity") || "Aktivlik"}</CardTitle>
+                  <CardDescription>
+                    {t("myWork.activityDesc") || "Daxil olduğunuz şöbə və layihələr."}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2 px-4 pb-4">
+                  {department && (
                     <Link
-                      key={comment.id}
-                      href={`/dashboard/projects/${comment.task.projectId ?? ""}?task=${comment.task.id}`}
-                      className="block rounded-lg border border-border p-4 transition-all hover:bg-muted/60"
+                      href={`/dashboard/departments/${department.id}`}
+                      className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-gray-100 dark:hover:bg-gray-800/60"
                     >
-                      <div className="flex gap-3">
-                        <Avatar className="mt-0.5 size-8">
-                          <AvatarImage src={comment.author.avatar} />
-                          <AvatarFallback className="text-xs">
-                            {getInitials(comment.author.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-0.5 flex items-center justify-between gap-2">
-                            <span className="truncate text-sm font-medium">{comment.author.name}</span>
-                            <span className="shrink-0 text-[10px] text-muted-foreground">
-                              {format(new Date(comment.createdAt), "dd MMM, HH:mm")}
-                            </span>
-                          </div>
-                          <p className="mb-1 truncate text-xs text-muted-foreground">
-                            {(t("myWork.taskLabel") || "Tapşırıq: {title}").replace(
-                              "{title}",
-                              comment.task.title
-                            )}
-                          </p>
-                          <div className="rounded-md border border-border bg-muted/40 p-2 text-sm">
-                            {comment.content}
-                          </div>
-                        </div>
+                      <div
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md"
+                        style={{ backgroundColor: `${department.color}20`, color: department.color }}
+                      >
+                        <Building2 className="size-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{department.name}</p>
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Users className="size-3" />
+                          {(t("myWork.workers") || "{count} işçi").replace(
+                            "{count}",
+                            String(department._count?.users ?? 0)
+                          )}
+                        </p>
+                      </div>
+                    </Link>
+                  )}
+                  {projects.length === 0 && !department && (
+                    <p className="py-4 text-center text-sm text-muted-foreground">
+                      {t("myWork.noDepartment") || "Hələ heç bir şöbə və ya layihəyə daxil deyilsiniz."}
+                    </p>
+                  )}
+                  {projects.map((project: any) => (
+                    <Link
+                      key={project.id}
+                      href={`/dashboard/projects/${project.id}`}
+                      className="flex items-center gap-3 rounded-lg border border-border p-3 transition-all hover:bg-gray-100 dark:hover:bg-gray-800/60"
+                    >
+                      <div
+                        className="flex size-8 shrink-0 items-center justify-center rounded-md"
+                        style={{ backgroundColor: `${project.color}20`, color: project.color }}
+                      >
+                        <FolderKanban className="size-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium">{project.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t(`projectStatus.${project.status}`) || project.status}
+                        </p>
                       </div>
                     </Link>
                   ))}
-                </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
-      </div>
+                </CardContent>
+              </Card>
+
+              <Card className={cn(cardSurface, "hover:shadow-sm")}>
+                <CardHeader className="px-4 py-3">
+                  <CardTitle className="text-sm">
+                    {t("myWork.weeklyTrend") || "Son 7 Gün — Tamamladığım Tapşırıqlar"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <MyWorkTrendChart data={weeklyCompleted ?? []} />
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

@@ -1,17 +1,13 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import * as Collapsible from "@radix-ui/react-collapsible";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { getTranslation } from "@/lib/i18n";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -167,7 +163,7 @@ function parseHref(href: string) {
 
 function itemClassName(active: boolean, collapsed: boolean) {
   return cn(
-    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all",
+    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
     collapsed && "justify-center px-0",
     active
       ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
@@ -365,12 +361,8 @@ function CollapsibleNavItem({
   const Icon = item.icon;
   const displayTitle = item.tKey ? t(item.tKey) : item.title;
   const childActive = item.children?.some((child) => isActive(child.href)) ?? false;
-  const groupActive = isActive(item.href) || childActive;
-  const [open, setOpen] = useState(groupActive);
-
-  useEffect(() => {
-    if (groupActive) setOpen(true);
-  }, [groupActive]);
+  const groupActive = childActive || isActive(item.href);
+  const [open, setOpen] = useState(true);
 
   if (isCollapsed) {
     return (
@@ -402,21 +394,22 @@ function CollapsibleNavItem({
   }
 
   return (
-    <Collapsible open={open} onOpenChange={setOpen}>
-      <CollapsibleTrigger
-        className={cn(itemClassName(groupActive && !childActive, false), "w-full")}
+    <Collapsible.Root open={open} onOpenChange={setOpen}>
+      <Collapsible.Trigger
+        type="button"
+        className={cn(itemClassName(groupActive, false), "w-full cursor-pointer")}
       >
         <Icon className="h-4 w-4 flex-shrink-0" />
         <span className="truncate">{displayTitle}</span>
         <ChevronDown
           className={cn(
-            "ml-auto h-4 w-4 flex-shrink-0 text-gray-400 transition-all",
+            "ml-auto h-4 w-4 flex-shrink-0 text-gray-400 transition-all duration-200",
             open && "rotate-180"
           )}
         />
-      </CollapsibleTrigger>
-      <CollapsibleContent className="overflow-hidden">
-        <ul className="ml-4 mt-0.5 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
+      </Collapsible.Trigger>
+      <Collapsible.Content className="overflow-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
+        <ul className="ml-4 mt-1 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
           {item.children?.map((child) => {
             const ChildIcon = child.icon;
             const childTitle = child.tKey ? t(child.tKey) : child.title;
@@ -426,7 +419,7 @@ function CollapsibleNavItem({
                 <Link
                   href={child.href}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all",
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
                     active
                       ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
                       : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
@@ -439,7 +432,7 @@ function CollapsibleNavItem({
             );
           })}
         </ul>
-      </CollapsibleContent>
-    </Collapsible>
+      </Collapsible.Content>
+    </Collapsible.Root>
   );
 }
