@@ -376,18 +376,15 @@ function CollapsibleNavItem({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="w-52">
-          {item.children?.map((child) => {
-            const ChildIcon = child.icon;
-            const childTitle = child.tKey ? t(child.tKey) : child.title;
-            return (
-              <DropdownMenuItem key={child.href} asChild>
-                <Link href={child.href} className="flex cursor-pointer items-center gap-2">
-                  <ChildIcon className="h-4 w-4 text-gray-500" />
-                  {childTitle}
-                </Link>
-              </DropdownMenuItem>
-            );
-          })}
+          {item.children?.map((child) => (
+            <SubNavLink
+              key={child.href}
+              child={child}
+              isActive={isActive}
+              t={t}
+              collapsed
+            />
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
     );
@@ -410,29 +407,55 @@ function CollapsibleNavItem({
       </Collapsible.Trigger>
       <Collapsible.Content className="overflow-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
         <ul className="ml-4 mt-1 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
-          {item.children?.map((child) => {
-            const ChildIcon = child.icon;
-            const childTitle = child.tKey ? t(child.tKey) : child.title;
-            const active = isActive(child.href);
-            return (
-              <li key={child.href}>
-                <Link
-                  href={child.href}
-                  className={cn(
-                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
-                    active
-                      ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
-                      : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-                  )}
-                >
-                  <ChildIcon className="h-3.5 w-3.5 flex-shrink-0" />
-                  <span className="truncate">{childTitle}</span>
-                </Link>
-              </li>
-            );
-          })}
+          {item.children?.map((child) => (
+            <li key={child.href}>
+              <SubNavLink child={child} isActive={isActive} t={t} />
+            </li>
+          ))}
         </ul>
       </Collapsible.Content>
     </Collapsible.Root>
+  );
+}
+
+function SubNavLink({
+  child,
+  isActive,
+  t,
+  collapsed = false,
+}: {
+  child: NavChild;
+  isActive: (href: string, exact?: boolean) => boolean;
+  t: (key: string) => string;
+  collapsed?: boolean;
+}) {
+  const ChildIcon = child.icon;
+  const childTitle = child.tKey ? t(child.tKey) : child.title;
+  const active = isActive(child.href);
+
+  if (collapsed) {
+    return (
+      <DropdownMenuItem asChild>
+        <Link href={child.href} className="flex cursor-pointer items-center gap-2">
+          <ChildIcon className="h-4 w-4 text-gray-500" />
+          {childTitle}
+        </Link>
+      </DropdownMenuItem>
+    );
+  }
+
+  return (
+    <Link
+      href={child.href}
+      className={cn(
+        "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
+        active
+          ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
+          : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+      )}
+    >
+      <ChildIcon className="h-3.5 w-3.5 flex-shrink-0" />
+      <span className="truncate">{childTitle}</span>
+    </Link>
   );
 }

@@ -247,7 +247,7 @@ function MyWorkSkeleton() {
   );
 }
 
-export function MyWorkClient({ currentUser }: { currentUser: any }) {
+export function MyWorkClient({ currentUser: _currentUser }: { currentUser: any }) {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
@@ -256,8 +256,6 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
   const view = searchParams.get("view");
   const filterValue =
     view === "archive" ? "completed" : view === "approvals" ? "approvals" : "active";
-
-  void currentUser;
 
   const { data, isPending, isError } = useQuery({
     queryKey: MY_WORK_QUERY_KEY,
@@ -322,7 +320,7 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
   const completedTasks = tasks.filter((task) => task.status === "DONE" || task.status === "CANCELLED");
 
   const calendarTasks: CalendarTaskItem[] = tasks
-    .filter((task) => task.dueDate)
+    .filter((task): task is MyWorkTask & { dueDate: string } => Boolean(task.dueDate))
     .map((task) => ({
       id: task.id,
       title: task.title,
@@ -331,6 +329,20 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
       href: `/dashboard/projects/${task.project.id}?task=${task.id}`,
       meta: task.project.name,
     }));
+
+  const listTasks =
+    filterValue === "approvals"
+      ? approvalTasks
+      : filterValue === "completed"
+        ? completedTasks
+        : activeTasks;
+
+  const emptyMessage =
+    filterValue === "approvals"
+      ? t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."
+      : filterValue === "completed"
+        ? t("myWork.noCompleted") || "Hələ tamamlanmış tapşırıq yoxdur."
+        : t("myWork.allDone") || "Bütün işləri bitirmisiniz! 🎉";
 
   return (
     <div className="flex flex-col gap-4">
@@ -416,54 +428,12 @@ export function MyWorkClient({ currentUser }: { currentUser: any }) {
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <Tabs key={filterValue} defaultValue={filterValue} className="gap-3">
-                <TabsList>
-                  <TabsTrigger value="active">
-                    {t("myWork.tabActive") || "Aktiv"} ({activeTasks.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="approvals">
-                    {t("menu.myWorkApprovals") || "Təsdiq Gözləyənlər"} ({approvalTasks.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="completed">
-                    {t("menu.myWorkArchive") || t("myWork.tabCompleted") || "Arxiv"} ({completedTasks.length})
-                  </TabsTrigger>
-                  <TabsTrigger value="all">
-                    {t("myWork.tabAll") || "Hamısı"} ({tasks.length})
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="active">
-                  <TaskList
-                    tasks={activeTasks}
-                    empty={t("myWork.allDone") || "Bütün işləri bitirmisiniz! 🎉"}
-                    onStatusChange={handleStatusChange}
-                    t={t}
-                  />
-                </TabsContent>
-                <TabsContent value="approvals">
-                  <TaskList
-                    tasks={approvalTasks}
-                    empty={t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."}
-                    onStatusChange={handleStatusChange}
-                    t={t}
-                  />
-                </TabsContent>
-                <TabsContent value="completed">
-                  <TaskList
-                    tasks={completedTasks}
-                    empty={t("myWork.noCompleted") || "Hələ tamamlanmış tapşırıq yoxdur."}
-                    onStatusChange={handleStatusChange}
-                    t={t}
-                  />
-                </TabsContent>
-                <TabsContent value="all">
-                  <TaskList
-                    tasks={tasks}
-                    empty={t("myWork.noTasks") || "Sizə hələ tapşırıq təyin edilməyib."}
-                    onStatusChange={handleStatusChange}
-                    t={t}
-                  />
-                </TabsContent>
-              </Tabs>
+              <TaskList
+                tasks={listTasks}
+                empty={emptyMessage}
+                onStatusChange={handleStatusChange}
+                t={t}
+              />
             </CardContent>
           </Card>
         </TabsContent>
