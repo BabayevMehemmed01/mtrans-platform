@@ -12,7 +12,8 @@ import {
   Activity,
 } from "lucide-react";
 import { getTranslation } from "@/lib/i18n";
-import { getStatusColor, getPriorityColor } from "@/lib/utils";
+import { describeAuditLog } from "@/lib/audit-labels";
+import { getStatusColor, getPriorityColor, getInitials, timeAgo } from "@/lib/utils";
 import {
   Card,
   CardAction,
@@ -21,15 +22,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TasksTrendChart } from "@/components/dashboard/TasksTrendChart";
 import { TasksByStatusChart } from "@/components/dashboard/TasksByStatusChart";
-import {
-  RecentActivityFeed,
-  type ActivityLogItem,
-} from "@/components/dashboard/RecentActivityFeed";
+import type { ActivityLogItem } from "@/components/dashboard/RecentActivityFeed";
 
 const cardSurface =
-  "bg-white ring-0 border border-border shadow-none hover:shadow-md transition-all duration-200 dark:bg-card";
+  "bg-white ring-0 border border-border shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:bg-card dark:hover:border-gray-700";
 
 export type DashboardClientProps = {
   lang: string;
@@ -106,7 +105,7 @@ export function DashboardClient({
             String(stats.totalProjects)
           )}
           icon={FolderKanban}
-          iconClass="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+          iconClass="bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
           trend={stats.activeProjectsTrend}
           href="/dashboard/projects"
         />
@@ -118,7 +117,7 @@ export function DashboardClient({
             String(stats.totalTasks)
           )}
           icon={CheckCircle2}
-          iconClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+          iconClass="bg-green-100 text-green-600 dark:bg-green-950/50 dark:text-green-400"
           trend={(t("dashboard.percentCompleted") || "{percentage}% tamamlanıb").replace(
             "{percentage}",
             String(stats.overallProgress)
@@ -130,7 +129,7 @@ export function DashboardClient({
           value={stats.inProgressTasks}
           subtext={t("dashboard.taskActive") || "tapşırıq aktivdir"}
           icon={Clock}
-          iconClass="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+          iconClass="bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
           href="/dashboard/my-work"
         />
         <StatCard
@@ -138,7 +137,7 @@ export function DashboardClient({
           value={stats.memberCount}
           subtext={t("dashboard.activeMembers") || "sistemdəki aktiv üzv"}
           icon={Users}
-          iconClass="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+          iconClass="bg-violet-100 text-violet-600 dark:bg-violet-950/50 dark:text-violet-400"
           href="/dashboard/members"
         />
       </div>
@@ -214,8 +213,42 @@ export function DashboardClient({
             {t("dashboard.recentActivity") || "Sistemdəki Son Fəaliyyətlər"}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <RecentActivityFeed logs={recentActivity} />
+        <CardContent className="-mx-2">
+          {recentActivity.length === 0 ? (
+            <EmptyState icon={Activity} message="Hələ heç bir fəaliyyət qeydə alınmayıb" />
+          ) : (
+            <ul>
+              {recentActivity.map((log) => {
+                const userName = log.user?.name ?? "Naməlum istifadəçi";
+                return (
+                  <li
+                    key={log.id}
+                    className="flex items-start gap-3 border-b border-border px-3 py-3 last:border-b-0 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                  >
+                    <Avatar size="sm" className="mt-0.5">
+                      {log.user?.avatar ? (
+                        <AvatarImage src={log.user.avatar} alt={userName} />
+                      ) : null}
+                      <AvatarFallback className="text-[10px] font-semibold">
+                        {getInitials(userName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm leading-snug text-gray-900 dark:text-white">
+                        <span className="font-medium">{userName}</span>{" "}
+                        <span className="font-normal text-muted-foreground">
+                          {describeAuditLog(log)}
+                        </span>
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {timeAgo(log.createdAt)}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </CardContent>
       </Card>
 
@@ -237,36 +270,38 @@ export function DashboardClient({
             {recentTasks.length === 0 ? (
               <EmptyState icon={AlertCircle} message={t("dashboard.noTasks") || "Hələ tapşırıq yoxdur"} />
             ) : (
-              <ul className="space-y-4">
+              <ul className="flex flex-col gap-1">
                 {recentTasks.map((task) => (
                   <li key={task.id}>
-                    <div className="flex items-start gap-3">
+                    <Link
+                      href={`/dashboard/projects/${task.project.id}`}
+                      className="flex items-start gap-3 rounded-lg px-2 py-2.5 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                    >
                       <div
                         className="mt-1.5 size-2 shrink-0 rounded-full"
                         style={{ backgroundColor: task.project.color }}
                       />
                       <div className="min-w-0 flex-1">
-                        <Link
-                          href={`/dashboard/projects/${task.project.id}`}
-                          className="block truncate text-[11px] font-medium uppercase tracking-wider text-muted-foreground transition-all hover:text-foreground"
-                        >
+                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                          {task.title}
+                        </p>
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {task.project.name}
-                        </Link>
-                        <p className="mt-0.5 truncate text-sm font-medium">{task.title}</p>
-                        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                        </p>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           <span
-                            className={`rounded-md px-2 py-0.5 text-[10px] font-medium uppercase ${getStatusColor(task.status)}`}
+                            className={`inline-flex h-5 items-center rounded-md px-1.5 text-[10px] font-medium uppercase ${getStatusColor(task.status)}`}
                           >
                             {statusLabel(task.status, t)}
                           </span>
                           <span
-                            className={`rounded-md px-2 py-0.5 text-[10px] font-medium uppercase ${getPriorityColor(task.priority)}`}
+                            className={`inline-flex h-5 items-center rounded-md px-1.5 text-[10px] font-medium uppercase ${getPriorityColor(task.priority)}`}
                           >
                             {priorityLabel(task.priority, t)}
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -291,12 +326,12 @@ export function DashboardClient({
             {recentProjects.length === 0 ? (
               <EmptyState icon={AlertCircle} message={t("dashboard.noProjects") || "Hələ layihə yoxdur"} />
             ) : (
-              <ul className="space-y-1">
+              <ul className="flex flex-col gap-1">
                 {recentProjects.map((proj) => (
                   <li key={proj.id}>
                     <Link
                       href={`/dashboard/projects/${proj.id}`}
-                      className="flex items-center gap-3 rounded-lg p-2 transition-all hover:bg-muted/60"
+                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
                     >
                       <div
                         className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white"
@@ -305,7 +340,9 @@ export function DashboardClient({
                         {proj.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{proj.name}</p>
+                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                          {proj.name}
+                        </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
                           {(t("dashboard.taskCount") || "{count} tapşırıq").replace(
                             "{count}",
@@ -334,20 +371,22 @@ export function DashboardClient({
             {topLabels.length === 0 ? (
               <EmptyState icon={Tag} message={t("dashboard.noLabels") || "Hələ etiket yoxdur"} />
             ) : (
-              <ul className="space-y-2">
+              <ul className="flex flex-col gap-2">
                 {topLabels.map((label) => (
                   <li
                     key={label.id}
-                    className="flex items-center justify-between rounded-lg border border-border px-3 py-2"
+                    className="flex items-center justify-between rounded-lg border border-transparent px-2 py-2 transition-all duration-300 hover:border-gray-300 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-800/40"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
                       <div
-                        className="flex size-7 shrink-0 items-center justify-center rounded-md text-white"
+                        className="flex size-7 shrink-0 items-center justify-center rounded-full text-white"
                         style={{ backgroundColor: label.color }}
                       >
                         <Tag className="size-3.5" />
                       </div>
-                      <span className="truncate text-sm font-medium">{label.name}</span>
+                      <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        {label.name}
+                      </span>
                     </div>
                     <span className="ml-2 shrink-0 text-xs text-muted-foreground">
                       {(t("dashboard.taskCount") || "{count} tapşırıq").replace(
@@ -390,14 +429,14 @@ function StatCard({
           <CardTitle className="text-sm font-medium text-muted-foreground">
             {title}
           </CardTitle>
-          <div
-            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${iconClass}`}
-          >
+          <div className={`shrink-0 rounded-full p-2 ${iconClass}`}>
             <Icon className="size-4" />
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-semibold tracking-tight tabular-nums">{value}</p>
+          <p className="text-3xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white">
+            {value}
+          </p>
           <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>
           {trend && (
             <p className="mt-3 inline-flex items-center gap-1.5 border-t border-border pt-3 text-xs font-medium text-emerald-600 dark:text-emerald-400">
