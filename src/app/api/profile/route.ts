@@ -8,6 +8,8 @@ const updateProfileSchema = z.object({
   jobTitle: z.string().max(100).optional().or(z.null()),
   phone: z.string().max(30).optional().or(z.null()),
   timezone: z.string().max(50).optional(),
+  bio: z.string().max(500).optional().or(z.null()),
+  avatar: z.string().max(2000).optional().or(z.null()),
 });
 
 export async function PATCH(req: Request) {
@@ -27,7 +29,7 @@ export async function PATCH(req: Request) {
     const user = await prisma.user.update({
       where: { id: session.user.id },
       data: parsed.data,
-      select: { id: true, name: true, jobTitle: true, phone: true, timezone: true, email: true, avatar: true },
+      select: { id: true, name: true, jobTitle: true, phone: true, timezone: true, email: true, avatar: true, bio: true },
     });
 
     return NextResponse.json(user);

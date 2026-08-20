@@ -126,12 +126,25 @@ export async function GET() {
         members: { some: { userId } }
       },
       include: {
-        members: { include: { user: { select: { id: true, name: true, avatar: true } } } },
-        project: { select: { id: true, departmentId: true } },
+        members: {
+          include: {
+            user: { select: { id: true, name: true, avatar: true, bio: true, jobTitle: true } },
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            departmentId: true,
+            ownerId: true,
+            description: true,
+            members: { select: { userId: true, role: true } },
+          },
+        },
+        department: { select: { id: true, headUserId: true, description: true } },
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
-          select: { content: true, fileName: true, createdAt: true, senderId: true },
+          select: { content: true, fileName: true, fileType: true, createdAt: true, senderId: true },
         },
       },
       orderBy: { updatedAt: "desc" }

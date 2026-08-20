@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { canSendInChannel } from "@/lib/chat-admin";
 
 export async function GET(req: Request) {
   try {
@@ -22,6 +23,15 @@ export async function GET(req: Request) {
     if (!membership) {
       return new NextResponse("Forbidden", { status: 403 });
     }
+
+    await prisma.message.updateMany({
+      where: {
+        channelId,
+        isPinned: true,
+        pinExpiry: { lt: new Date() },
+      },
+      data: { isPinned: false, pinExpiry: null },
+    });
 
     const messages = await prisma.message.findMany({
       where: { channelId },
@@ -60,6 +70,14 @@ export async function POST(req: Request) {
     });
 
     if (!membership) return new NextResponse("Forbidden", { status: 403 });
+
+    const sendCheck = await canSendInChannel(session.user.id, channelId);
+    if (!sendCheck.ok) {
+      return new NextResponse(
+        sendCheck.status === 404 ? "Channel not found" : "Only group admins can send messages",
+        { status: sendCheck.status }
+      );
+    }
 
     const message = await prisma.message.create({
       data: {

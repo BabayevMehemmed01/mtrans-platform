@@ -734,11 +734,14 @@ enum CallType {
 }
 
 model ChatChannel {
-  id        String          @id @default(cuid())
-  name      String?
-  type      ChatChannelType
-  createdAt DateTime        @default(now())
-  updatedAt DateTime        @updatedAt
+  id          String          @id @default(cuid())
+  name        String?
+  type        ChatChannelType
+  description String? // Qrup "Haqqında / Bio"
+  avatar      String? // Qrup şəkli (URL)
+  adminsOnly  Boolean         @default(false) // true: yalnız inzibatçılar mesaj göndərə bilər
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -772,13 +775,15 @@ model ChannelMember {
 }
 
 model Message {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   content   String?
   fileUrl   String?
   fileName  String?
   fileType  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isPinned  Boolean   @default(false)
+  pinExpiry DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   channelId String
   channel   ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
@@ -787,6 +792,7 @@ model Message {
   sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([channelId])
+  @@index([channelId, isPinned])
   @@map("messages")
 }
 

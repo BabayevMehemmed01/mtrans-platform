@@ -28,6 +28,9 @@ import {
   SquarePen,
   Users,
   Trash2,
+  Pin,
+  Settings,
+  Pencil,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -38,7 +41,18 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Dialog,
   DialogContent,
@@ -105,6 +119,15 @@ const channelModule = (c: any): Exclude<ChatTab, "all"> => {
   return "projects";
 };
 
+const isChannelAdmin = (c: any, userId: string, superAdmin = false) => {
+  if (!c || c.type === "DIRECT") return false;
+  if (superAdmin) return true;
+  if (c.type === "DEPARTMENT") return c.department?.headUserId === userId;
+  if (c.project?.ownerId === userId) return true;
+  const role = c.project?.members?.find((m: any) => m.userId === userId)?.role;
+  return role === "OWNER" || role === "MANAGER";
+};
+
 export function ChatClient({ currentUser }: { currentUser: any }) {
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
@@ -130,6 +153,11 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const [isRecording, setIsRecording] = useState(false);
   const [recordSeconds, setRecordSeconds] = useState(0);
   const [voiceSending, setVoiceSending] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [groupSettingsOpen, setGroupSettingsOpen] = useState(false);
+  const [bioDraft, setBioDraft] = useState("");
+  const [editingProfile, setEditingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -218,6 +246,9 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     setReplyingToMessage(null);
     setHeaderQuery("");
     setHeaderSearchOpen(false);
+    setProfileOpen(false);
+    setGroupSettingsOpen(false);
+    setEditingProfile(false);
     cancelRecording();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset composer when switching chats
   }, [activeChannelId]);
@@ -426,6 +457,88 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
 
   sendVoiceBlobRef.current = sendVoiceBlob;
 
+  const handleDeleteMessage = async (msg: any) => {
+    if (!msg?.id) return;
+    mutateMessages(
+      (prev: any) => (Array.isArray(prev) ? prev.filter((m: any) => m.id !== msg.id) : prev),
+      false
+    );
+    if (replyingToMessage?.id === msg.id) setReplyingToMessage(null);
+    if (String(msg.id).startsWith("temp-")) return;
+    const res = await fetch(`/api/chat/messages/${msg.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert(t("chatClient.deleteFailed") || "Mesaj silinə bilmədi");
+      mutateMessages();
+      return;
+    }
+    mutateChannels();
+  };
+
+  const handlePinMessage = async (msg: any, pinDuration: "24h" | "7d" | "forever") => {
+    if (!msg?.id || String(msg.id).startsWith("temp-")) return;
+    mutateMessages(
+      (prev: any) =>
+        Array.isArray(prev)
+          ? prev.map((m: any) => ({
+              ...m,
+              isPinned: m.id === msg.id,
+            }))
+          : prev,
+      false
+    );
+    const res = await fetch(`/api/chat/messages/${msg.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPinned: true, pinDuration }),
+    });
+    if (!res.ok) {
+      alert(t("chatClient.pinFailed") || "Mesaj sancıla bilmədi");
+    }
+    mutateMessages();
+  };
+
+  const handleUnpinMessage = async (msg: any) => {
+    if (!msg?.id || String(msg.id).startsWith("temp-")) return;
+    mutateMessages(
+      (prev: any) =>
+        Array.isArray(prev)
+          ? prev.map((m: any) => (m.id === msg.id ? { ...m, isPinned: false, pinExpiry: null } : m))
+          : prev,
+      false
+    );
+    const res = await fetch(`/api/chat/messages/${msg.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isPinned: false }),
+    });
+    if (!res.ok) mutateMessages();
+  };
+
+  const handleSaveAdminsOnly = async (value: boolean) => {
+    if (!activeChannelId) return;
+    mutateChannels(
+      (prev: any) =>
+        prev
+          ? {
+              ...prev,
+              channels: (prev.channels || []).map((c: any) =>
+                c.id === activeChannelId ? { ...c, adminsOnly: value } : c
+              ),
+            }
+          : prev,
+      false
+    );
+    const res = await fetch(`/api/chat/channels/${activeChannelId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminsOnly: value }),
+    });
+    if (!res.ok) {
+      alert(t("chatClient.settingsFailed") || "Ayarlar yadda saxlanılmadı");
+    }
+    mutateChannels();
+  };
+
   const insertEmoji = (emoji: string) => {
     setMessageText((prev) => prev + emoji);
     textareaRef.current?.focus();
@@ -448,6 +561,31 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const channels = channelsData?.channels || [];
   const companyUsers = channelsData?.companyUsers || [];
   const activeChannel = channels.find((c: any) => c.id === activeChannelId);
+  const isAdmin = isChannelAdmin(
+    activeChannel,
+    currentUser.id,
+    Boolean((currentUser as any).isSuperAdmin)
+  );
+  const canSendMessages =
+    !activeChannel ||
+    activeChannel.type === "DIRECT" ||
+    !activeChannel.adminsOnly ||
+    isAdmin;
+  const otherDirectUser =
+    activeChannel?.type === "DIRECT"
+      ? activeChannel.members?.find((m: any) => m.user.id !== currentUser.id)?.user
+      : null;
+  const canEditProfile =
+    activeChannel?.type === "DIRECT"
+      ? otherDirectUser?.id === currentUser.id
+      : isAdmin;
+  const profileBio =
+    activeChannel?.type === "DIRECT"
+      ? otherDirectUser?.bio || ""
+      : activeChannel?.description ||
+        activeChannel?.project?.description ||
+        activeChannel?.department?.description ||
+        "";
 
   const filteredChannels = useMemo(() => {
     const q = listQuery.trim().toLowerCase();
@@ -490,6 +628,15 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     if (!q) return withReplies;
     return withReplies.filter((m: any) => (m.content || m.fileName || "").toLowerCase().includes(q));
   }, [messages, headerQuery, replyPreviews]);
+
+  const pinnedMessage = useMemo(() => {
+    if (!Array.isArray(messages)) return null;
+    const now = Date.now();
+    const pinned = messages.filter(
+      (m: any) => m.isPinned && (!m.pinExpiry || new Date(m.pinExpiry).getTime() > now)
+    );
+    return pinned.length ? pinned[pinned.length - 1] : null;
+  }, [messages]);
 
   const startCall = async (type: "AUDIO" | "VIDEO") => {
     if (!activeChannel || callStarting) return;
@@ -546,8 +693,72 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   };
 
   const getChannelAvatar = (c: any) => {
-    if (c.type !== "DIRECT") return null;
+    if (!c) return null;
+    if (c.type !== "DIRECT") return c.avatar ?? null;
     return c.members?.find((m: any) => m.user.id !== currentUser.id)?.user?.avatar ?? null;
+  };
+
+  const openProfileSheet = () => {
+    if (!activeChannel || headerSearchOpen) return;
+    setBioDraft(
+      activeChannel.type === "DIRECT"
+        ? otherDirectUser?.bio || ""
+        : activeChannel.description ||
+            activeChannel.project?.description ||
+            activeChannel.department?.description ||
+            ""
+    );
+    setEditingProfile(false);
+    setProfileOpen(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!activeChannel || !canEditProfile) return;
+    setSavingProfile(true);
+    try {
+      const res =
+        activeChannel.type === "DIRECT"
+          ? await fetch("/api/profile", {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ bio: bioDraft }),
+            })
+          : await fetch(`/api/chat/channels/${activeChannel.id}`, {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ description: bioDraft }),
+            });
+      if (!res.ok) {
+        alert(t("chatClient.profileFailed") || "Profil yadda saxlanılmadı");
+        return;
+      }
+      setEditingProfile(false);
+      mutateChannels();
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleProfileAvatar = async (file: { url?: string; ufsUrl?: string }) => {
+    const url = file.ufsUrl || file.url;
+    if (!url || !activeChannel || !canEditProfile) return;
+    const res =
+      activeChannel.type === "DIRECT"
+        ? await fetch("/api/profile", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ avatar: url }),
+          })
+        : await fetch(`/api/chat/channels/${activeChannel.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ avatar: url }),
+          });
+    if (!res.ok) {
+      alert(t("chatClient.profileFailed") || "Profil yadda saxlanılmadı");
+      return;
+    }
+    mutateChannels();
   };
 
   const GroupIcon = ({ channel, className = "size-5" }: { channel: any; className?: string }) => {
@@ -662,7 +873,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                   active && "bg-[#f0f2f5]"
                 )}
               >
-                {c.type === "DIRECT" ? (
+                {c.type === "DIRECT" || getChannelAvatar(c) ? (
                   <Avatar className="size-12">
                     <AvatarImage src={getChannelAvatar(c) ?? undefined} />
                     <AvatarFallback className="bg-[#dfe5e7] text-sm text-[#54656f]">
@@ -701,41 +912,48 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
         {activeChannel ? (
           <>
             <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-[#d1d7db] bg-[#f0f2f5] px-4">
-              {activeChannel.type === "DIRECT" ? (
-                <Avatar className="size-10">
-                  <AvatarImage src={getChannelAvatar(activeChannel) ?? undefined} />
-                  <AvatarFallback>{getInitials(getChannelName(activeChannel))}</AvatarFallback>
-                </Avatar>
-              ) : (
-                <div className="flex size-10 items-center justify-center rounded-full bg-[#dfe5e7] text-[#54656f]">
-                  <GroupIcon channel={activeChannel} />
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                {headerSearchOpen ? (
-                  <Input
-                    autoFocus
-                    value={headerQuery}
-                    onChange={(e) => setHeaderQuery(e.target.value)}
-                    placeholder={t("header.search") || "Axtar..."}
-                    className="h-8 border-0 bg-white text-sm"
-                  />
+              <button
+                type="button"
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                onClick={openProfileSheet}
+              >
+                {activeChannel.type === "DIRECT" || getChannelAvatar(activeChannel) ? (
+                  <Avatar className="size-10">
+                    <AvatarImage src={getChannelAvatar(activeChannel) ?? undefined} />
+                    <AvatarFallback>{getInitials(getChannelName(activeChannel))}</AvatarFallback>
+                  </Avatar>
                 ) : (
-                  <>
-                    <h3 className="truncate text-sm font-semibold text-[#111b21]">
-                      {getChannelName(activeChannel)}
-                    </h3>
-                    <p className="text-xs text-[#667781]">
-                      {activeChannel.type === "DIRECT"
-                        ? t("chatClient.online") || "Online"
-                        : (t("chatClient.membersCount") || "{count} üzv").replace(
-                            "{count}",
-                            String(activeChannel.members?.length || 0)
-                          )}
-                    </p>
-                  </>
+                  <div className="flex size-10 items-center justify-center rounded-full bg-[#dfe5e7] text-[#54656f]">
+                    <GroupIcon channel={activeChannel} />
+                  </div>
                 )}
-              </div>
+                <div className="min-w-0 flex-1">
+                  {headerSearchOpen ? (
+                    <Input
+                      autoFocus
+                      value={headerQuery}
+                      onChange={(e) => setHeaderQuery(e.target.value)}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder={t("header.search") || "Axtar..."}
+                      className="h-8 border-0 bg-white text-sm"
+                    />
+                  ) : (
+                    <>
+                      <h3 className="truncate text-sm font-semibold text-[#111b21]">
+                        {getChannelName(activeChannel)}
+                      </h3>
+                      <p className="text-xs text-[#667781]">
+                        {activeChannel.type === "DIRECT"
+                          ? t("chatClient.online") || "Online"
+                          : (t("chatClient.membersCount") || "{count} üzv").replace(
+                              "{count}",
+                              String(activeChannel.members?.length || 0)
+                            )}
+                      </p>
+                    </>
+                  )}
+                </div>
+              </button>
               <div className="flex items-center gap-1 text-[#54656f]">
                 {activeChannel.members?.length === 2 && (
                   <>
@@ -761,6 +979,17 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                     </Button>
                   </>
                 )}
+                {activeChannel.type !== "DIRECT" && isAdmin && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="rounded-full"
+                    title={t("chatClient.groupSettings") || "Qrup Ayarları"}
+                    onClick={() => setGroupSettingsOpen(true)}
+                  >
+                    <Settings className="size-5" />
+                  </Button>
+                )}
                 <Button
                   size="icon"
                   variant="ghost"
@@ -771,6 +1000,26 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                 </Button>
               </div>
             </header>
+
+            {pinnedMessage && (
+              <div className="flex shrink-0 items-center gap-3 border-b border-[#d1d7db] bg-[#f0f2f5] px-4 py-2">
+                <Pin className="size-4 shrink-0 text-[#00a884]" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-medium text-[#00a884]">
+                    {t("chatClient.pinnedMessage") || "Sancılmış mesaj"}
+                  </p>
+                  <p className="truncate text-xs text-[#667781]">{replySnippet(pinnedMessage)}</p>
+                </div>
+                <button
+                  type="button"
+                  className="shrink-0 rounded-full p-1 text-[#54656f] hover:bg-white hover:text-[#111b21]"
+                  title={t("chatClient.unpin") || "Sancmanı ləğv et"}
+                  onClick={() => handleUnpinMessage(pinnedMessage)}
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            )}
 
             <div className="relative min-h-0 flex-1 overflow-y-auto px-6 py-4 [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-black/20">
               <div
@@ -830,6 +1079,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                               </a>
                             ) : null}
                             <div className="mt-0.5 flex items-center justify-end gap-1">
+                              {msg.isPinned && <Pin className="size-3 text-[#667781]" />}
                               {reactions[msg.id] && <span className="text-xs">{reactions[msg.id]}</span>}
                               <span className="text-[11px] text-[#667781]">
                                 {format(new Date(msg.createdAt), "HH:mm")}
@@ -884,6 +1134,44 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                                   <Reply className="mr-2 size-4" />
                                   {t("chatClient.reply") || "Cavab ver"}
                                 </DropdownMenuItem>
+                                {!String(msg.id).startsWith("temp-") && (
+                                  msg.isPinned ? (
+                                    <DropdownMenuItem onSelect={() => handleUnpinMessage(msg)}>
+                                      <Pin className="mr-2 size-4" />
+                                      {t("chatClient.unpin") || "Sancmanı ləğv et"}
+                                    </DropdownMenuItem>
+                                  ) : (
+                                    <DropdownMenuSub>
+                                      <DropdownMenuSubTrigger>
+                                        <Pin className="mr-2 size-4" />
+                                        {t("chatClient.pin") || "Sanc"}
+                                      </DropdownMenuSubTrigger>
+                                      <DropdownMenuSubContent>
+                                        <DropdownMenuItem onSelect={() => handlePinMessage(msg, "24h")}>
+                                          {t("chatClient.pin24h") || "24 saat"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => handlePinMessage(msg, "7d")}>
+                                          {t("chatClient.pin1week") || "1 həftə"}
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => handlePinMessage(msg, "forever")}>
+                                          {t("chatClient.pinForever") || "Həmişəlik"}
+                                        </DropdownMenuItem>
+                                      </DropdownMenuSubContent>
+                                    </DropdownMenuSub>
+                                  )
+                                )}
+                                {(isMe || isAdmin) && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      className="text-red-600 focus:text-red-600"
+                                      onSelect={() => handleDeleteMessage(msg)}
+                                    >
+                                      <Trash2 className="mr-2 size-4" />
+                                      {t("chatClient.delete") || "Sil"}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
                               </DropdownMenuContent>
                             </DropdownMenu>
                           </div>
@@ -897,6 +1185,11 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
             </div>
 
             <div className="shrink-0 bg-[#f0f2f5] px-3 py-2">
+              {!canSendMessages ? (
+                <p className="py-3 text-center text-sm text-[#667781]">
+                  {t("chatClient.adminsOnlyNotice") || "Yalnız qrup inzibatçıları mesaj göndərə bilər"}
+                </p>
+              ) : (
               <form onSubmit={handleSendMessage} className="flex items-end gap-1.5">
                 {isRecording ? (
                   <Button
@@ -1056,6 +1349,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                   </Button>
                 )}
               </form>
+              )}
             </div>
           </>
         ) : (
@@ -1073,6 +1367,149 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
           </div>
         )}
       </section>
+
+      <Sheet open={profileOpen} onOpenChange={setProfileOpen}>
+        <SheetContent side="right" className="flex w-full flex-col overflow-y-auto bg-[#f0f2f5] p-0 sm:max-w-md">
+          <div className="bg-[#00a884] px-6 pb-8 pt-14 text-white">
+            <SheetHeader className="space-y-1">
+              <SheetTitle className="text-white">
+                {activeChannel?.type === "DIRECT"
+                  ? t("chatClient.contactInfo") || "Əlaqə məlumatı"
+                  : t("chatClient.groupInfo") || "Qrup məlumatları"}
+              </SheetTitle>
+              <SheetDescription className="text-white/80">
+                {getChannelName(activeChannel)}
+              </SheetDescription>
+            </SheetHeader>
+          </div>
+          <div className="flex flex-col items-center bg-[#00a884] px-6 pb-8">
+            {activeChannel?.type === "DIRECT" || getChannelAvatar(activeChannel) ? (
+              <Avatar className="size-40 border-4 border-white/20">
+                <AvatarImage src={getChannelAvatar(activeChannel) ?? undefined} />
+                <AvatarFallback className="text-3xl">
+                  {getInitials(getChannelName(activeChannel))}
+                </AvatarFallback>
+              </Avatar>
+            ) : (
+              <div className="flex size-40 items-center justify-center rounded-full bg-white/20 text-white">
+                <GroupIcon channel={activeChannel} className="size-16" />
+              </div>
+            )}
+            <h2 className="mt-4 text-xl font-medium text-white">{getChannelName(activeChannel)}</h2>
+            {canEditProfile && (
+              <div className="mt-3">
+                <UploadButton
+                  endpoint="chatAttachment"
+                  onClientUploadComplete={(res: any[]) => {
+                    if (!res?.[0]) return;
+                    void handleProfileAvatar(res[0]);
+                  }}
+                  appearance={{
+                    button:
+                      "h-8 ut-ready:bg-white/20 ut-uploading:bg-white/20 after:bg-transparent text-sm text-white border-0 shadow-none rounded-full px-3",
+                    allowedContent: "hidden",
+                  }}
+                  content={{
+                    button: t("chatClient.changePhoto") || "Şəkli dəyiş",
+                  }}
+                />
+              </div>
+            )}
+          </div>
+          <div className="m-4 rounded-lg bg-white p-4 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-medium text-[#00a884]">
+                {t("chatClient.about") || "Haqqında"}
+              </p>
+              {canEditProfile && !editingProfile && (
+                <button
+                  type="button"
+                  className="rounded-full p-1 text-[#54656f] hover:bg-[#f0f2f5]"
+                  title={t("chatClient.edit") || "Redaktə et"}
+                  onClick={() => {
+                    setBioDraft(profileBio);
+                    setEditingProfile(true);
+                  }}
+                >
+                  <Pencil className="size-4" />
+                </button>
+              )}
+            </div>
+            {editingProfile ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={bioDraft}
+                  onChange={(e) => setBioDraft(e.target.value)}
+                  rows={4}
+                  className="min-h-[80px] text-sm"
+                  placeholder={t("chatClient.bio") || "Bio"}
+                />
+                <div className="flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingProfile(false);
+                      setBioDraft(profileBio);
+                    }}
+                  >
+                    {t("chatClient.cancelEdit") || "Ləğv et"}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="bg-[#00a884] hover:bg-[#008f72]"
+                    disabled={savingProfile}
+                    onClick={() => void handleSaveProfile()}
+                  >
+                    {savingProfile ? <Loader2 className="size-4 animate-spin" /> : t("chatClient.save") || "Yadda saxla"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <p className="whitespace-pre-wrap text-sm text-[#111b21]">
+                {profileBio || t("chatClient.noBio") || "Bio əlavə edilməyib"}
+              </p>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={groupSettingsOpen} onOpenChange={setGroupSettingsOpen}>
+        <DialogContent className="max-w-sm gap-4 p-5 sm:rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("chatClient.groupSettings") || "Qrup Ayarları"}</DialogTitle>
+            <DialogDescription>{t("chatClient.whoCanSend") || "Mesaj göndərə bilər"}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            <button
+              type="button"
+              onClick={() => handleSaveAdminsOnly(false)}
+              className={cn(
+                "rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors",
+                !activeChannel?.adminsOnly
+                  ? "bg-[#d9fdd3] text-[#136c3b]"
+                  : "bg-[#f0f2f5] text-[#111b21] hover:bg-gray-100"
+              )}
+            >
+              {t("chatClient.sendEveryone") || "Hər kəs"}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSaveAdminsOnly(true)}
+              className={cn(
+                "rounded-xl px-4 py-3 text-left text-sm font-medium transition-colors",
+                activeChannel?.adminsOnly
+                  ? "bg-[#d9fdd3] text-[#136c3b]"
+                  : "bg-[#f0f2f5] text-[#111b21] hover:bg-gray-100"
+              )}
+            >
+              {t("chatClient.sendAdminsOnly") || "Yalnız İnzibatçılar"}
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={newChatOpen} onOpenChange={setNewChatOpen}>
         <DialogContent className="max-w-md gap-3 p-5 sm:rounded-2xl">
