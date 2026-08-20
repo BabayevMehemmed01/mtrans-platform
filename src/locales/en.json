@@ -555,7 +555,15 @@
     "errorPrefix": "Error: {message}",
     "placeholder": "Type your message...",
     "selectChatTitle": "Select a chat",
-    "selectChatDesc": "Select a project, department group, or direct message from the left to start chatting."
+    "selectChatDesc": "Select a project, department group, or direct message from the left to start chatting.",
+    "tabAll": "All",
+    "tabDirect": "Personal",
+    "tabGroups": "Groups",
+    "online": "Online",
+    "reply": "Reply",
+    "attachImage": "Photo",
+    "attachFile": "File / photo",
+    "voiceMessage": "Voice message"
   },
   "callOverlay": {
     "incomingVideo": "Incoming video call...",

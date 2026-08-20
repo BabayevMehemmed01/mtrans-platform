@@ -555,7 +555,15 @@
     "errorPrefix": "Xəta: {message}",
     "placeholder": "Mesajınızı yazın...",
     "selectChatTitle": "Söhbət seçin",
-    "selectChatDesc": "Mesajlaşmağa başlamaq üçün sol tərəfdən layihə, şöbə qrupu və ya şəxsi söhbət seçin."
+    "selectChatDesc": "Mesajlaşmağa başlamaq üçün sol tərəfdən layihə, şöbə qrupu və ya şəxsi söhbət seçin.",
+    "tabAll": "Bütün",
+    "tabDirect": "Şəxsi",
+    "tabGroups": "Qruplar",
+    "online": "Online",
+    "reply": "Cavab ver",
+    "attachImage": "Şəkil",
+    "attachFile": "Fayl / şəkil",
+    "voiceMessage": "Səsli mesaj"
   },
   "callOverlay": {
     "incomingVideo": "Video zəng edir...",

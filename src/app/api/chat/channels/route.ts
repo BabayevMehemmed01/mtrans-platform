@@ -80,7 +80,12 @@ export async function GET() {
         members: { some: { userId } }
       },
       include: {
-        members: { include: { user: { select: { id: true, name: true, avatar: true } } } }
+        members: { include: { user: { select: { id: true, name: true, avatar: true } } } },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          select: { content: true, fileName: true, createdAt: true, senderId: true },
+        },
       },
       orderBy: { updatedAt: "desc" }
     });

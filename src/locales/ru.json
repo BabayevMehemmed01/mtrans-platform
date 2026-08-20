@@ -555,7 +555,15 @@
     "errorPrefix": "Ошибка: {message}",
     "placeholder": "Введите ваше сообщение...",
     "selectChatTitle": "Выберите чат",
-    "selectChatDesc": "Выберите проект, группу отдела или личное сообщение слева, чтобы начать общение."
+    "selectChatDesc": "Выберите проект, группу отдела или личное сообщение слева, чтобы начать общение.",
+    "tabAll": "Все",
+    "tabDirect": "Личные",
+    "tabGroups": "Группы",
+    "online": "В сети",
+    "reply": "Ответить",
+    "attachImage": "Фото",
+    "attachFile": "Файл / фото",
+    "voiceMessage": "Голосовое сообщение"
   },
   "callOverlay": {
     "incomingVideo": "Входящий видеозвонок...",
