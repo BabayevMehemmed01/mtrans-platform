@@ -7,7 +7,6 @@ import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n";
 import {
   Send,
-  Paperclip,
   Hash,
   User as UserIcon,
   Loader2,
@@ -23,6 +22,7 @@ import {
   ChevronDown,
   Image as ImageIcon,
   FileText,
+  Download,
   X,
   Reply,
   SquarePen,
@@ -61,7 +61,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadButton } from "@/utils/uploadthing";
+import { UploadButton, uploadFiles } from "@/utils/uploadthing";
 import { useCallStore } from "@/store/useCallStore";
 import { cn, getInitials } from "@/lib/utils";
 
@@ -108,6 +108,10 @@ const blobToDataUrl = (blob: Blob) =>
 const isAudioMessage = (msg: any) =>
   String(msg?.fileType || "").startsWith("audio/") ||
   /\.(webm|ogg|mp3|m4a|wav)$/i.test(String(msg?.fileName || ""));
+
+const isImageMessage = (msg: any) =>
+  String(msg?.fileType || "").startsWith("image/") ||
+  /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(msg?.fileName || ""));
 
 type ChatTab = "all" | "direct" | "departments" | "projects" | "collab";
 type NewChatModule = "direct" | "departments" | "projects" | "collab";
@@ -160,6 +164,8 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const [savingProfile, setSavingProfile] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const documentInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const streamRef = useRef<MediaStream | null>(null);
@@ -324,9 +330,24 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     mutateChannels();
   };
 
-  const handleUploadComplete = async (res: any[]) => {
-    if (!res || res.length === 0) return;
-    await postUploadedFile(res[0]);
+  const handlePickedFile = async (file: File | undefined) => {
+    if (!file || !activeChannelId) return;
+    try {
+      const res = await uploadFiles("chatAttachment", { files: [file] });
+      if (!res?.[0]) return;
+      await postUploadedFile({
+        ...res[0],
+        name: file.name || res[0].name,
+        type: file.type || res[0].type,
+      });
+    } catch (error) {
+      alert(
+        (t("chatClient.errorPrefix") || "Xəta: {message}").replace(
+          "{message}",
+          error instanceof Error ? error.message : String(error)
+        )
+      );
+    }
   };
 
   const sendVoiceBlob = async (blob: Blob, mimeType: string, quotedArg?: any) => {
@@ -1065,17 +1086,32 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                             {msg.content && <p className="whitespace-pre-wrap break-words leading-5">{msg.content}</p>}
                             {isAudioMessage(msg) && msg.fileUrl ? (
                               <audio controls src={msg.fileUrl} className="mt-1 max-w-full" />
-                            ) : msg.fileUrl ? (
+                            ) : isImageMessage(msg) && msg.fileUrl ? (
                               <a
                                 href={msg.fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                className="mt-1 block"
+                              >
+                                <img
+                                  src={msg.fileUrl}
+                                  alt={msg.fileName || ""}
+                                  className="max-h-64 max-w-full rounded-md object-cover"
+                                />
+                              </a>
+                            ) : msg.fileUrl ? (
+                              <a
+                                href={msg.fileUrl}
+                                download={msg.fileName || true}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className="mt-1 flex items-center gap-2 text-[#027eb5] hover:underline"
                               >
-                                <Paperclip className="size-4" />
+                                <FileText className="size-4 shrink-0" />
                                 <span className="max-w-[200px] truncate text-sm">
                                   {msg.fileName || t("chatClient.downloadFile") || "Faylı yüklə"}
                                 </span>
+                                <Download className="size-4 shrink-0" />
                               </a>
                             ) : null}
                             <div className="mt-0.5 flex items-center justify-end gap-1">
@@ -1231,40 +1267,50 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-48">
-                        <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            imageInputRef.current?.click();
+                          }}
+                        >
                           <ImageIcon className="size-4" />
                           {t("chatClient.attachImage") || "Şəkil"}
-                          <span className="sr-only">upload</span>
                         </DropdownMenuItem>
-                        <div className="px-2 pb-2">
-                          <UploadButton
-                            endpoint="chatAttachment"
-                            onClientUploadComplete={handleUploadComplete}
-                            onUploadError={(error: Error) => {
-                              alert(
-                                (t("chatClient.errorPrefix") || "Xəta: {message}").replace(
-                                  "{message}",
-                                  error.message
-                                )
-                              );
-                            }}
-                            appearance={{
-                              button:
-                                "w-full h-8 ut-ready:bg-transparent ut-uploading:bg-transparent after:bg-transparent text-sm text-[#111b21] border-0 shadow-none",
-                              allowedContent: "hidden",
-                            }}
-                            content={{
-                              button: (
-                                <span className="flex items-center gap-2">
-                                  <FileText className="size-4" />
-                                  {t("chatClient.attachFile") || "Fayl / şəkil"}
-                                </span>
-                              ),
-                            }}
-                          />
-                        </div>
+                        <DropdownMenuItem
+                          className="gap-2"
+                          onSelect={(e) => {
+                            e.preventDefault();
+                            documentInputRef.current?.click();
+                          }}
+                        >
+                          <FileText className="size-4" />
+                          {t("chatClient.attachDocument") || "Sənəd"}
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        void handlePickedFile(file);
+                      }}
+                    />
+                    <input
+                      ref={documentInputRef}
+                      type="file"
+                      accept="*/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        void handlePickedFile(file);
+                      }}
+                    />
                   </>
                 )}
 

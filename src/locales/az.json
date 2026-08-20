@@ -573,6 +573,7 @@
     "reply": "Cavab ver",
     "attachImage": "Şəkil",
     "attachFile": "Fayl / şəkil",
+    "attachDocument": "Sənəd",
     "voiceMessage": "Səsli mesaj",
     "micDenied": "Mikrofon icazəsi verilmədi",
     "recordingError": "Səs yazıla bilmədi",

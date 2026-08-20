@@ -573,6 +573,7 @@
     "reply": "Ответить",
     "attachImage": "Фото",
     "attachFile": "Файл / фото",
+    "attachDocument": "Документ",
     "voiceMessage": "Голосовое сообщение",
     "micDenied": "Доступ к микрофону не разрешён",
     "recordingError": "Не удалось записать аудио",
