@@ -7,10 +7,13 @@ import {
   DndContext,
   DragOverlay,
   closestCorners,
+  pointerWithin,
+  useDroppable,
   useSensor,
   useSensors,
   PointerSensor,
   KeyboardSensor,
+  type CollisionDetection,
   type DragStartEvent,
   type DragOverEvent,
   type DragEndEvent,
@@ -21,19 +24,30 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { CrmKanbanColumn } from "./CrmKanbanColumn";
 import { CrmDealCard } from "./CrmDealCard";
 import { CrmDealDialog } from "./CrmDealDialog";
 import { CrmStageDialog } from "./CrmStageDialog";
 import type { CrmBoard } from "./useCrmBoard";
 import type { CrmDeal } from "./types";
+import { CRM_TRASH_ID } from "./crmUtils";
 
 interface CrmKanbanProps {
   board: CrmBoard;
 }
+
+const crmCollisionDetection: CollisionDetection = (args) => {
+  // Trash yalnız kursorun üzərində olanda qalib gəlsin — kartın kölgəsi
+  // aşağıya yaxın olanda səhvən silinmənin qarşısını alır.
+  const pointerHits = pointerWithin(args);
+  const trashFromPointer = pointerHits.find((c) => c.id === CRM_TRASH_ID);
+  if (trashFromPointer) return [trashFromPointer];
+  return closestCorners(args);
+};
 
 // =============================================================================
 // CrmKanban — CRM Satış Qıfı (Deals Kanban)
@@ -71,7 +85,7 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
-    if (!over) return;
+    if (!over || over.id === CRM_TRASH_ID) return;
 
     const activeId = active.id as string;
     const overId = over.id as string;
@@ -92,6 +106,7 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
     setDeals((prev) => {
       const activeIndex = prev.findIndex((d) => d.id === activeId);
       const overIndex = prev.findIndex((d) => d.id === overId);
+      if (activeIndex < 0 || overIndex < 0) return prev;
       const updated = [...prev];
       if (updated[activeIndex].stageId !== overDeal.stageId) {
         updated[activeIndex] = { ...updated[activeIndex], stageId: overDeal.stageId };
@@ -102,14 +117,28 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
+    const dragged = activeDeal;
     setActiveDeal(null);
     if (!over) return;
 
     const activeId = active.id as string;
-    const movedDeal = deals.find((d) => d.id === activeId);
+
+    if (over.id === CRM_TRASH_ID || over.data.current?.type === "trash") {
+      setDeals((prev) => prev.filter((d) => d.id !== activeId));
+      try {
+        const res = await fetch(`/api/crm/deals/${activeId}`, { method: "DELETE" });
+        if (!res.ok) throw new Error();
+        toast.success(t("crmKanban.successDeleted") || t("crmDealDialog.successDeleted") || "Əqd silindi");
+      } catch {
+        toast.error(t("crmKanban.errorDelete") || t("crmDealDialog.errorDelete") || "Əqd silinərkən xəta baş verdi");
+        refetch();
+      }
+      return;
+    }
+
+    const movedDeal = deals.find((d) => d.id === activeId) ?? dragged;
     if (!movedDeal) return;
 
-    // API-ya yeni mərhələni göndər
     try {
       const res = await fetch(`/api/crm/deals/${activeId}`, {
         method: "PATCH",
@@ -122,7 +151,11 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
       toast.error(t("crmKanban.errorStageUpdate") || "Əqdin mərhələsi yenilənmədi");
       refetch();
     }
-  }, [deals, refetch, t]);
+  }, [activeDeal, deals, refetch, setDeals, t]);
+
+  const handleDragCancel = useCallback(() => {
+    setActiveDeal(null);
+  }, []);
 
   // ---- Dialog helpers ----
   const openCreate = (stageId?: string) =>
@@ -152,15 +185,16 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
       </div>
 
       {/* Kanban Board */}
-      <div className="h-[calc(100vh-250px)] overflow-x-auto pb-4">
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
-          modifiers={[restrictToWindowEdges]}
-        >
+      <DndContext
+        sensors={sensors}
+        collisionDetection={crmCollisionDetection}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+        modifiers={[restrictToWindowEdges]}
+      >
+        <div className={cn("h-[calc(100vh-250px)] overflow-x-auto pb-4", activeDeal && "pb-28")}>
           <div className="flex gap-4 h-full">
             {stages.map((stage) => {
               const stageDeals = deals.filter((d) => d.stageId === stage.id);
@@ -181,13 +215,15 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
               );
             })}
           </div>
+        </div>
 
-          {/* Drag Overlay — sürüklənən kartın "kölgəsi" */}
-          <DragOverlay>
-            {activeDeal ? <CrmDealCard deal={activeDeal} isDragging onClick={() => {}} /> : null}
-          </DragOverlay>
-        </DndContext>
-      </div>
+        <CrmTrashDropzone isDragging={!!activeDeal} />
+
+        {/* Drag Overlay — sürüklənən kartın "kölgəsi" */}
+        <DragOverlay>
+          {activeDeal ? <CrmDealCard deal={activeDeal} isDragging onClick={() => {}} /> : null}
+        </DragOverlay>
+      </DndContext>
 
       <CrmDealDialog
         open={dialogState.open}
@@ -210,6 +246,38 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
         onOpenChange={setIsStageDialogOpen}
         onCreated={(stage) => setStages((prev) => [...prev, stage])}
       />
+    </div>
+  );
+}
+
+function CrmTrashDropzone({ isDragging }: { isDragging: boolean }) {
+  const { data: session } = useSession();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+  const { setNodeRef, isOver } = useDroppable({
+    id: CRM_TRASH_ID,
+    data: { type: "trash" },
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        "fixed inset-x-4 bottom-4 z-50",
+        isDragging ? "pointer-events-auto" : "pointer-events-none"
+      )}
+      aria-hidden={!isDragging}
+    >
+      <div
+        className={cn(
+          "flex items-center justify-center gap-3 rounded-2xl border-2 border-dashed py-6 text-base font-semibold text-white shadow-2xl transition-all duration-200",
+          isDragging ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0",
+          isOver ? "scale-[1.02] border-white/80 bg-red-600" : "border-red-200/60 bg-red-500"
+        )}
+      >
+        <Trash2 className="h-7 w-7" />
+        {t("crmKanban.dropToDelete") || "Silmək üçün bura buraxın"}
+      </div>
     </div>
   );
 }

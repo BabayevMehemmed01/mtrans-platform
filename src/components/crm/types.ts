@@ -49,7 +49,7 @@ export type CrmDeal = {
   stageId: string;
   stage?: CrmStage | null;
   crmContactId: string | null;
-  crmContact?: { id: string; firstName: string; lastName: string | null } | null;
+  crmContact?: { id: string; firstName: string; lastName: string | null; email?: string | null; phone?: string | null } | null;
   crmCompanyId: string | null;
   crmCompany?: CrmCompanyLite | null;
   assigneeId: string | null;

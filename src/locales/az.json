@@ -887,7 +887,10 @@
     "loading": "Yüklənir...",
     "salesFunnel": "Əqdlər",
     "newStageBtn": "Yeni Mərhələ",
-    "newDealBtn": "Yeni Əqd"
+    "newDealBtn": "Yeni Əqd",
+    "dropToDelete": "Silmək üçün bura buraxın",
+    "successDeleted": "Əqd silindi",
+    "errorDelete": "Əqd silinərkən xəta baş verdi"
   },
   "crmKanbanColumn": {
     "addDealTitle": "Əqd əlavə et",
@@ -897,7 +900,8 @@
   "crmDealCard": {
     "call": "Telefon",
     "mail": "Mail",
-    "chat": "Chat"
+    "chat": "Chat",
+    "whatsapp": "WhatsApp"
   },
   "crmCalendar": {
     "today": "Bu gün",

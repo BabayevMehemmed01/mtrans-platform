@@ -887,7 +887,10 @@
     "loading": "Loading...",
     "salesFunnel": "Deals",
     "newStageBtn": "New Stage",
-    "newDealBtn": "New Deal"
+    "newDealBtn": "New Deal",
+    "dropToDelete": "Drop here to delete",
+    "successDeleted": "Deal deleted",
+    "errorDelete": "An error occurred while deleting the deal"
   },
   "crmKanbanColumn": {
     "addDealTitle": "Add deal",
@@ -897,7 +900,8 @@
   "crmDealCard": {
     "call": "Phone",
     "mail": "Mail",
-    "chat": "Chat"
+    "chat": "Chat",
+    "whatsapp": "WhatsApp"
   },
   "crmCalendar": {
     "today": "Today",

@@ -887,7 +887,10 @@
     "loading": "Загрузка...",
     "salesFunnel": "Сделки",
     "newStageBtn": "Новый этап",
-    "newDealBtn": "Новая сделка"
+    "newDealBtn": "Новая сделка",
+    "dropToDelete": "Перетащите сюда, чтобы удалить",
+    "successDeleted": "Сделка удалена",
+    "errorDelete": "Произошла ошибка при удалении сделки"
   },
   "crmKanbanColumn": {
     "addDealTitle": "Добавить сделку",
@@ -897,7 +900,8 @@
   "crmDealCard": {
     "call": "Телефон",
     "mail": "Почта",
-    "chat": "Чат"
+    "chat": "Чат",
+    "whatsapp": "WhatsApp"
   },
   "crmCalendar": {
     "today": "Сегодня",

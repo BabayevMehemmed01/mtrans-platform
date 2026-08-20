@@ -36,7 +36,6 @@ function emptyForm(defaultStageId?: string) {
     title: "",
     value: "",
     currency: "AZN",
-    probability: "0",
     expectedCloseDate: "",
     deadline: "",
     clientName: "",
@@ -57,7 +56,7 @@ const selectClass =
 // =============================================================================
 // CrmDealDialog — Əqd yaratma / redaktə forması (Kanban və Cədvəl görünüşləri
 // üçün paylaşılan komponent). PATCH /api/crm/deals/[id] artıq bütün bu sahələri
-// qəbul edir (stageId, title, value, currency, probability, expectedCloseDate,
+// qəbul edir (stageId, title, value, currency, expectedCloseDate,
 // deadline, clientName, clientCompany, clientPhone, clientEmail, status,
 // assigneeId, crmContactId, crmCompanyId).
 // =============================================================================
@@ -97,7 +96,6 @@ export function CrmDealDialog({
         title: deal.title,
         value: deal.value != null ? String(deal.value) : "",
         currency: deal.currency || "AZN",
-        probability: deal.probability != null ? String(deal.probability) : "0",
         expectedCloseDate: toDateInputValue(deal.expectedCloseDate),
         deadline: toDateInputValue(deal.deadline),
         clientName: deal.clientName || "",
@@ -131,7 +129,6 @@ export function CrmDealDialog({
       title: form.title,
       value: form.value,
       currency: form.currency,
-      probability: form.probability,
       expectedCloseDate: form.expectedCloseDate || null,
       deadline: form.deadline || null,
       clientName: form.clientName || null,
@@ -234,7 +231,7 @@ export function CrmDealDialog({
             </select>
           </div>
 
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 sm:col-span-2">
             <Label>{t("crmDealDialog.stage") || "Mərhələ"}</Label>
             <select
               value={form.stageId}
@@ -245,16 +242,6 @@ export function CrmDealDialog({
                 <option key={s.id} value={s.id}>{s.name}</option>
               ))}
             </select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>{t("crmDealDialog.probability") || "Ehtimal (%)"}</Label>
-            <Input
-              type="number"
-              min="0"
-              max="100"
-              value={form.probability}
-              onChange={(e) => setForm((p) => ({ ...p, probability: e.target.value }))}
-            />
           </div>
 
           <div className="space-y-1.5">

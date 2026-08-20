@@ -45,3 +45,52 @@ export function optionalText(value: unknown): string | null | undefined {
   const trimmed = String(value).trim();
   return trimmed.length ? trimmed : null;
 }
+
+const CURRENCY_ORDER = ["AZN", "USD", "EUR"];
+
+/** Sums deal values per currency, e.g. "1,500 AZN • 400 USD". */
+export function formatStageValueTotals(
+  deals: { value?: number | null; currency?: string | null }[]
+): string {
+  const totals = new Map<string, number>();
+  for (const deal of deals) {
+    const currency = deal.currency || "AZN";
+    totals.set(currency, (totals.get(currency) || 0) + (deal.value || 0));
+  }
+  if (totals.size === 0) return `0 AZN`;
+  return [...totals.entries()]
+    .sort(([a], [b]) => {
+      const ia = CURRENCY_ORDER.indexOf(a);
+      const ib = CURRENCY_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    })
+    .map(([currency, sum]) => `${sum.toLocaleString()} ${currency}`)
+    .join(" • ");
+}
+
+export function getDealEmail(deal: {
+  clientEmail?: string | null;
+  crmContact?: { email?: string | null } | null;
+}): string | null {
+  const email = deal.clientEmail?.trim() || deal.crmContact?.email?.trim() || "";
+  return email || null;
+}
+
+export function getDealPhone(deal: {
+  clientPhone?: string | null;
+  crmContact?: { phone?: string | null } | null;
+}): string | null {
+  const phone = deal.clientPhone?.trim() || deal.crmContact?.phone?.trim() || "";
+  return phone || null;
+}
+
+/** wa.me requires digits; strip spaces (and other separators) from the phone. */
+export function toWhatsAppHref(phone: string): string | null {
+  const digits = phone.replace(/\s+/g, "").replace(/[^\d]/g, "");
+  return digits ? `https://wa.me/${digits}` : null;
+}
+
+export const CRM_TRASH_ID = "__crm_trash__";

@@ -8,7 +8,7 @@ import { CrmDealCard } from "./CrmDealCard";
 import type { CrmStage, CrmDeal } from "./types";
 import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n";
-import { getBitrixStageColor } from "./crmUtils";
+import { formatStageValueTotals, getBitrixStageColor } from "./crmUtils";
 
 interface CrmKanbanColumnProps {
   stage: CrmStage;
@@ -23,8 +23,7 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
   const t = getTranslation(lang);
 
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
-  const totalValue = deals.reduce((sum, d) => sum + (d.value || 0), 0);
-  const currency = deals[0]?.currency || "AZN";
+  const totalsLabel = formatStageValueTotals(deals);
   const headerColor = getBitrixStageColor(stage);
 
   return (
@@ -48,8 +47,8 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
           <Plus className="w-4 h-4" />
         </button>
       </div>
-      <p className="px-3 py-1.5 text-[11px] font-medium text-white/90" style={{ backgroundColor: headerColor }}>
-        {totalValue.toLocaleString()} {currency} {t("crmKanbanColumn.total") || "məcmu"}
+      <p className="px-3 py-1.5 text-[11px] font-medium text-white/90 leading-snug" style={{ backgroundColor: headerColor }}>
+        {totalsLabel} {t("crmKanbanColumn.total") || "məcmu"}
       </p>
 
       <div
