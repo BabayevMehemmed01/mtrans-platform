@@ -161,15 +161,20 @@ export async function POST(req: NextRequest) {
     const companyName =
       (session.user as { company?: { name?: string } }).company?.name || "şirkət";
 
-    await sendInviteEmail({
-      to: email,
-      recipientName: invitationFullName(invite.name, invite.surname),
-      inviterName,
-      companyName,
-      token: invite.token,
-      type: invite.type,
-      message: invite.message,
-    });
+    try {
+      await sendInviteEmail({
+        to: email,
+        recipientName: invitationFullName(invite.name, invite.surname),
+        inviterName,
+        companyName,
+        token: invite.token,
+        type: invite.type,
+        message: invite.message,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "E-poçt göndərilmədi";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
 
     await logAudit({
       userId: session.user.id,

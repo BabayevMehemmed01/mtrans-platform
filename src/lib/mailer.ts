@@ -1,8 +1,7 @@
 import nodemailer from "nodemailer";
 
 // =============================================================================
-// Nodemailer — dəvət e-poçtları
-// SMTP konfiqurasiya olunmayıbsa (dev), link konsola yazılır.
+// Nodemailer — dəvət e-poçtları (real SMTP, mock/fallback yoxdur)
 // =============================================================================
 
 export type SendInviteEmailInput = {
@@ -18,12 +17,14 @@ export type SendInviteEmailInput = {
 function getTransporter() {
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASS;
-  if (!user || !pass) return null;
+  if (!user || !pass) {
+    throw new Error("SMTP_USER və ya SMTP_PASS təyin olunmayıb");
+  }
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: process.env.SMTP_SECURE === "true",
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
     auth: { user, pass },
   });
 }
@@ -116,12 +117,10 @@ export async function sendInviteEmail({
   inviterName,
   companyName,
   token,
-  type,
   message,
 }: SendInviteEmailInput): Promise<void> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const inviteLink = `${appUrl}/register?token=${token}`;
-  const roleLabel = type === "GUEST" ? "qonaq (guest)" : "üzv";
   const html = buildInviteHtml({
     recipientName,
     inviterName,
@@ -131,12 +130,6 @@ export async function sendInviteEmail({
   });
 
   const transporter = getTransporter();
-  if (!transporter) {
-    console.log(
-      `[INVITE EMAIL] ${to} ünvanına ${companyName} şirkətinə ${roleLabel} kimi dəvət göndərildi: ${inviteLink}`
-    );
-    return;
-  }
 
   try {
     await transporter.sendMail({
@@ -146,8 +139,6 @@ export async function sendInviteEmail({
       html,
     });
   } catch (error) {
-    // Email göndərilməsə belə, dəvət yaradılması kəsilməməlidir.
-    console.error("[sendInviteEmail] SMTP xətası:", error);
-    console.log(`[INVITE EMAIL FALLBACK] ${inviteLink}`);
+    throw error instanceof Error ? error : new Error(String(error));
   }
 }

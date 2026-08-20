@@ -75,15 +75,20 @@ export async function PATCH(
     const companyName =
       (session.user as { company?: { name?: string } }).company?.name || "şirkət";
 
-    await sendInviteEmail({
-      to: updated.email,
-      recipientName: invitationFullName(updated.name, updated.surname),
-      inviterName,
-      companyName,
-      token: updated.token,
-      type: updated.type,
-      message: updated.message,
-    });
+    try {
+      await sendInviteEmail({
+        to: updated.email,
+        recipientName: invitationFullName(updated.name, updated.surname),
+        inviterName,
+        companyName,
+        token: updated.token,
+        type: updated.type,
+        message: updated.message,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "E-poçt göndərilmədi";
+      return NextResponse.json({ error: message }, { status: 500 });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {
