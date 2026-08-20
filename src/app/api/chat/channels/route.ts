@@ -1,6 +1,49 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isSuperAdmin } from "@/lib/permissions";
+
+const companyUserSelect = { id: true, name: true, avatar: true, email: true } as const;
+
+async function getVisibleCompanyUsers(userId: string, companyId: string, admin: boolean) {
+  if (admin) {
+    return prisma.user.findMany({
+      where: { companyId, id: { not: userId } },
+      select: companyUserSelect,
+      orderBy: { name: "asc" },
+    });
+  }
+
+  const [projectRows, departmentRows] = await Promise.all([
+    prisma.projectMember.findMany({
+      where: { userId, project: { companyId } },
+      select: { projectId: true },
+    }),
+    prisma.department.findMany({
+      where: {
+        companyId,
+        OR: [{ users: { some: { id: userId } } }, { headUserId: userId }],
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  const projectIds = projectRows.map((row) => row.projectId);
+  const departmentIds = departmentRows.map((row) => row.id);
+  const or: Prisma.UserWhereInput[] = [];
+  if (departmentIds.length) or.push({ departmentId: { in: departmentIds } });
+  if (projectIds.length) {
+    or.push({ projectMemberships: { some: { projectId: { in: projectIds } } } });
+  }
+  if (or.length === 0) return [];
+
+  return prisma.user.findMany({
+    where: { companyId, id: { not: userId }, OR: or },
+    select: companyUserSelect,
+    orderBy: { name: "asc" },
+  });
+}
 
 export async function GET() {
   try {
@@ -46,7 +89,10 @@ export async function GET() {
     }
 
     const myDepartments = await prisma.department.findMany({
-      where: { users: { some: { id: userId } } }
+      where: {
+        companyId,
+        OR: [{ users: { some: { id: userId } } }, { headUserId: userId }],
+      },
     });
 
     for (const dept of myDepartments) {
@@ -81,6 +127,7 @@ export async function GET() {
       },
       include: {
         members: { include: { user: { select: { id: true, name: true, avatar: true } } } },
+        project: { select: { id: true, departmentId: true } },
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
@@ -90,11 +137,8 @@ export async function GET() {
       orderBy: { updatedAt: "desc" }
     });
 
-    // Also get all company users for direct message creation support
-    const companyUsers = await prisma.user.findMany({
-      where: { companyId, id: { not: userId } },
-      select: { id: true, name: true, avatar: true, email: true }
-    });
+    const admin = await isSuperAdmin(userId);
+    const companyUsers = await getVisibleCompanyUsers(userId, companyId, admin);
 
     return NextResponse.json({ channels, companyUsers });
   } catch (error) {
@@ -110,11 +154,18 @@ export async function POST(req: Request) {
     
     const userId = session.user.id;
     const companyId = (session.user as any).companyId;
+    if (!companyId) return new NextResponse("Company Required", { status: 400 });
 
     const { targetUserId } = await req.json();
 
     if (!targetUserId) {
       return new NextResponse("targetUserId required", { status: 400 });
+    }
+
+    const admin = await isSuperAdmin(userId);
+    const visiblePeers = await getVisibleCompanyUsers(userId, companyId, admin);
+    if (!visiblePeers.some((user) => user.id === targetUserId)) {
+      return new NextResponse("Forbidden", { status: 403 });
     }
 
     // Check if direct channel already exists

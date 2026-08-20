@@ -25,6 +25,8 @@ import {
   FileText,
   X,
   Reply,
+  SquarePen,
+  Users,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -36,6 +38,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadButton } from "@/utils/uploadthing";
 import { useCallStore } from "@/store/useCallStore";
 import { cn, getInitials } from "@/lib/utils";
@@ -44,7 +54,15 @@ const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
 
-type ChatTab = "all" | "direct" | "groups";
+type ChatTab = "all" | "direct" | "departments" | "projects" | "collab";
+type NewChatModule = "direct" | "departments" | "projects" | "collab";
+
+const channelModule = (c: any): Exclude<ChatTab, "all"> => {
+  if (c?.type === "DIRECT") return "direct";
+  if (c?.type === "DEPARTMENT") return "departments";
+  if (c?.type === "PROJECT" && !c?.project?.departmentId) return "collab";
+  return "projects";
+};
 
 export function ChatClient({ currentUser }: { currentUser: any }) {
   const { data: session } = useSession();
@@ -60,6 +78,9 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const [messageText, setMessageText] = useState("");
   const [listQuery, setListQuery] = useState("");
   const [listTab, setListTab] = useState<ChatTab>("all");
+  const [newChatOpen, setNewChatOpen] = useState(false);
+  const [dialogQuery, setDialogQuery] = useState("");
+  const [dialogTab, setDialogTab] = useState<NewChatModule>("direct");
   const [headerSearchOpen, setHeaderSearchOpen] = useState(false);
   const [headerQuery, setHeaderQuery] = useState("");
   const [replyTo, setReplyTo] = useState<any | null>(null);
@@ -165,8 +186,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const filteredChannels = useMemo(() => {
     const q = listQuery.trim().toLowerCase();
     return channels.filter((c: any) => {
-      if (listTab === "direct" && c.type !== "DIRECT") return false;
-      if (listTab === "groups" && c.type === "DIRECT") return false;
+      if (listTab !== "all" && channelModule(c) !== listTab) return false;
       if (!q) return true;
       const name = c.type !== "DIRECT"
         ? c.name
@@ -175,11 +195,24 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     });
   }, [channels, listQuery, listTab, currentUser.id]);
 
-  const visibleUsers = useMemo(() => {
-    const q = listQuery.trim().toLowerCase();
+  const dialogUsers = useMemo(() => {
+    const q = dialogQuery.trim().toLowerCase();
     if (!q) return companyUsers;
-    return companyUsers.filter((u: any) => u.name?.toLowerCase().includes(q));
-  }, [companyUsers, listQuery]);
+    return companyUsers.filter((u: any) =>
+      [u.name, u.email].some((value) => String(value || "").toLowerCase().includes(q))
+    );
+  }, [companyUsers, dialogQuery]);
+
+  const dialogChannelsByModule = useMemo(() => {
+    const q = dialogQuery.trim().toLowerCase();
+    const match = (c: any) =>
+      !q || String(c.name || "").toLowerCase().includes(q);
+    return {
+      departments: channels.filter((c: any) => channelModule(c) === "departments" && match(c)),
+      projects: channels.filter((c: any) => channelModule(c) === "projects" && match(c)),
+      collab: channels.filter((c: any) => channelModule(c) === "collab" && match(c)),
+    };
+  }, [channels, dialogQuery]);
 
   const visibleMessages = useMemo(() => {
     if (!Array.isArray(messages)) return [];
@@ -221,20 +254,37 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     }
   };
 
+  const openChannel = (channelId: string) => {
+    setActiveChannelId(channelId);
+    setNewChatOpen(false);
+    setDialogQuery("");
+  };
+
   const createDirectMessage = async (userId: string) => {
     const res = await fetch("/api/chat/channels", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ targetUserId: userId }),
     });
+    if (!res.ok) {
+      alert(t("chatClient.fetchError") || "Kanalları yükləyərkən xəta baş verdi");
+      return;
+    }
     const channel = await res.json();
-    setActiveChannelId(channel.id);
+    openChannel(channel.id);
     mutateChannels();
   };
 
   const getChannelAvatar = (c: any) => {
     if (c.type !== "DIRECT") return null;
     return c.members?.find((m: any) => m.user.id !== currentUser.id)?.user?.avatar ?? null;
+  };
+
+  const GroupIcon = ({ channel, className = "size-5" }: { channel: any; className?: string }) => {
+    const kind = channelModule(channel);
+    if (kind === "departments") return <Building className={className} />;
+    if (kind === "collab") return <Users className={className} />;
+    return <Hash className={className} />;
   };
 
   const lastMessageText = (c: any) => {
@@ -272,7 +322,9 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const tabs: { id: ChatTab; label: string }[] = [
     { id: "all", label: t("chatClient.tabAll") || "Bütün" },
     { id: "direct", label: t("chatClient.tabDirect") || "Şəxsi" },
-    { id: "groups", label: t("chatClient.tabGroups") || "Qruplar" },
+    { id: "departments", label: t("chatClient.tabDepartments") || "Şöbələr" },
+    { id: "projects", label: t("chatClient.tabProjects") || "Layihələr" },
+    { id: "collab", label: t("chatClient.tabCollab") || "Collab" },
   ];
 
   return (
@@ -280,14 +332,30 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
       {/* Left: 30% conversation list */}
       <aside className="flex w-[30%] min-w-[260px] flex-col border-r border-[#e9edef] bg-white">
         <div className="sticky top-0 z-10 space-y-2 bg-[#f0f2f5] px-3 py-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#54656f]" />
-            <Input
-              value={listQuery}
-              onChange={(e) => setListQuery(e.target.value)}
-              placeholder={t("chatClient.messages") || "Mesajlar"}
-              className="h-9 rounded-lg border-0 bg-white pl-9 text-sm shadow-none focus-visible:ring-0"
-            />
+          <div className="flex items-center gap-2">
+            <div className="relative min-w-0 flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#54656f]" />
+              <Input
+                value={listQuery}
+                onChange={(e) => setListQuery(e.target.value)}
+                placeholder={t("chatClient.messages") || "Mesajlar"}
+                className="h-9 rounded-lg border-0 bg-white pl-9 text-sm shadow-none focus-visible:ring-0"
+              />
+            </div>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="size-9 shrink-0 rounded-full bg-white text-[#54656f] hover:bg-[#d9fdd3] hover:text-[#136c3b]"
+              title={t("chatClient.newChat") || "Yeni Söhbət"}
+              onClick={() => {
+                setDialogTab("direct");
+                setDialogQuery("");
+                setNewChatOpen(true);
+              }}
+            >
+              <SquarePen className="size-4" />
+            </Button>
           </div>
           <div className="flex gap-1.5 overflow-x-auto pb-1">
             {tabs.map((tab) => (
@@ -332,7 +400,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                   </Avatar>
                 ) : (
                   <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-[#54656f]">
-                    {c.type === "PROJECT" ? <Hash className="size-5" /> : <Building className="size-5" />}
+                    <GroupIcon channel={c} />
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
@@ -354,29 +422,6 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
               </button>
             );
           })}
-
-          {visibleUsers.length > 0 && listTab !== "groups" && (
-            <div className="px-3 py-2">
-              <p className="px-1 pb-1 text-[10px] font-semibold tracking-wider text-[#667781] uppercase">
-                {t("chatClient.newChat") || "Yeni Söhbət Başla"}
-              </p>
-              {visibleUsers.map((u: any) => (
-                <button
-                  key={u.id}
-                  type="button"
-                  onClick={() => createDirectMessage(u.id)}
-                  className="flex w-full items-center gap-3 rounded-lg px-1 py-2 text-left transition-all hover:bg-gray-100"
-                >
-                  <Avatar className="size-10">
-                    <AvatarImage src={u.avatar} />
-                    <AvatarFallback className="text-xs">{getInitials(u.name)}</AvatarFallback>
-                  </Avatar>
-                  <span className="truncate text-sm text-[#111b21]">{u.name}</span>
-                  <UserIcon className="ml-auto size-4 text-[#667781]" />
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       </aside>
 
@@ -392,7 +437,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                 </Avatar>
               ) : (
                 <div className="flex size-10 items-center justify-center rounded-full bg-[#dfe5e7] text-[#54656f]">
-                  {activeChannel.type === "PROJECT" ? <Hash className="size-5" /> : <Building className="size-5" />}
+                  <GroupIcon channel={activeChannel} />
                 </div>
               )}
               <div className="min-w-0 flex-1">
@@ -478,15 +523,14 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                     const isMe = msg.sender?.id === currentUser.id;
                     return (
                       <div key={msg.id} className={cn("group flex", isMe ? "justify-end" : "justify-start")}>
-                        <div className="relative max-w-[75%]">
-                          <div
-                            className={cn(
-                              "rounded-lg px-2.5 py-1.5 text-sm shadow-sm",
-                              isMe
-                                ? "rounded-tr-none bg-[#d9fdd3] text-[#111b21]"
-                                : "rounded-tl-none bg-white text-[#111b21]"
-                            )}
-                          >
+                        <div
+                          className={cn(
+                            "relative max-w-[75%] rounded-lg px-2.5 py-1.5 text-sm shadow-sm",
+                            isMe
+                              ? "rounded-tr-none bg-[#d9fdd3] text-[#111b21]"
+                              : "rounded-tl-none bg-white text-[#111b21]"
+                          )}
+                        >
                             {!isMe && activeChannel.type !== "DIRECT" && (
                               <p className="mb-0.5 text-[11px] font-semibold text-[#06cf9c]">
                                 {msg.sender?.name}
@@ -518,21 +562,25 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                                 {format(new Date(msg.createdAt), "HH:mm")}
                               </span>
                             </div>
-                          </div>
 
                           <div
                             className={cn(
-                              "absolute top-0 hidden items-center gap-0.5 rounded-full bg-white/90 px-0.5 shadow-sm group-hover:flex",
-                              isMe ? "-left-16" : "-right-16"
+                              "absolute -top-3 z-20 flex items-center gap-0.5 rounded-full border border-[#e9edef] bg-white px-0.5 shadow-sm opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 has-[[data-state=open]]:opacity-100",
+                              isMe ? "-left-1" : "-right-1"
                             )}
                           >
-                            <DropdownMenu>
+                            <DropdownMenu modal={false}>
                               <DropdownMenuTrigger asChild>
                                 <button type="button" className="rounded-full p-1 hover:bg-gray-100">
                                   <Smile className="size-3.5 text-[#54656f]" />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent className="flex gap-1 p-1">
+                              <DropdownMenuContent
+                                align={isMe ? "end" : "start"}
+                                side="top"
+                                sideOffset={6}
+                                className="flex gap-1 p-1"
+                              >
                                 {EMOJIS.map((emoji) => (
                                   <button
                                     key={emoji}
@@ -547,13 +595,13 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                                 ))}
                               </DropdownMenuContent>
                             </DropdownMenu>
-                            <DropdownMenu>
+                            <DropdownMenu modal={false}>
                               <DropdownMenuTrigger asChild>
                                 <button type="button" className="rounded-full p-1 hover:bg-gray-100">
                                   <ChevronDown className="size-3.5 text-[#54656f]" />
                                 </button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align={isMe ? "end" : "start"}>
+                              <DropdownMenuContent align={isMe ? "end" : "start"} side="top" sideOffset={6}>
                                 <DropdownMenuItem onClick={() => setReplyTo(msg)}>
                                   <Reply className="mr-2 size-4" />
                                   {t("chatClient.reply") || "Cavab ver"}
@@ -707,6 +755,116 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
           </div>
         )}
       </section>
+
+      <Dialog open={newChatOpen} onOpenChange={setNewChatOpen}>
+        <DialogContent className="max-w-md gap-3 p-5 sm:rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>{t("chatClient.newChatTitle") || "Yeni Söhbət"}</DialogTitle>
+            <DialogDescription>
+              {t("chatClient.newChatDesc") ||
+                "Şəxsi söhbət, şöbə, layihə və ya collab qrupu seçin."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="relative">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[#54656f]" />
+            <Input
+              value={dialogQuery}
+              onChange={(e) => setDialogQuery(e.target.value)}
+              placeholder={t("chatClient.newChatSearch") || "Axtar..."}
+              className="h-9 rounded-lg border-[#e9edef] bg-[#f0f2f5] pl-9 text-sm"
+            />
+          </div>
+
+          <Tabs
+            value={dialogTab}
+            onValueChange={(value) => setDialogTab(value as NewChatModule)}
+            className="w-full"
+          >
+            <TabsList className="grid h-auto w-full grid-cols-4 gap-1 bg-[#f0f2f5] p-1">
+              <TabsTrigger value="direct" className="px-1 text-xs data-[state=active]:bg-white">
+                {t("chatClient.tabDirect") || "Şəxsi"}
+              </TabsTrigger>
+              <TabsTrigger value="departments" className="px-1 text-xs data-[state=active]:bg-white">
+                {t("chatClient.tabDepartments") || "Şöbələr"}
+              </TabsTrigger>
+              <TabsTrigger value="projects" className="px-1 text-xs data-[state=active]:bg-white">
+                {t("chatClient.tabProjects") || "Layihələr"}
+              </TabsTrigger>
+              <TabsTrigger value="collab" className="px-1 text-xs data-[state=active]:bg-white">
+                {t("chatClient.tabCollab") || "Collab"}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="direct" className="mt-3">
+              <div className="max-h-[320px] space-y-0.5 overflow-y-auto [scrollbar-width:thin]">
+                {dialogUsers.length === 0 ? (
+                  <p className="py-8 text-center text-sm text-[#667781]">
+                    {t("chatClient.emptyDirect") || "Söhbət ediləcək şəxs tapılmadı."}
+                  </p>
+                ) : (
+                  dialogUsers.map((u: any) => (
+                    <button
+                      key={u.id}
+                      type="button"
+                      onClick={() => createDirectMessage(u.id)}
+                      className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-[#f0f2f5]"
+                    >
+                      <Avatar className="size-10">
+                        <AvatarImage src={u.avatar} />
+                        <AvatarFallback className="text-xs">{getInitials(u.name)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-[#111b21]">{u.name}</p>
+                        <p className="truncate text-xs text-[#667781]">{u.email}</p>
+                      </div>
+                      <UserIcon className="ml-auto size-4 shrink-0 text-[#667781]" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            {(["departments", "projects", "collab"] as const).map((module) => (
+              <TabsContent key={module} value={module} className="mt-3">
+                <div className="max-h-[320px] space-y-0.5 overflow-y-auto [scrollbar-width:thin]">
+                  {dialogChannelsByModule[module].length === 0 ? (
+                    <p className="py-8 text-center text-sm text-[#667781]">
+                      {module === "departments"
+                        ? t("chatClient.emptyDepartments") || "Aid olduğunuz şöbə qrupu yoxdur."
+                        : module === "projects"
+                          ? t("chatClient.emptyProjects") || "Aid olduğunuz layihə çatı yoxdur."
+                          : t("chatClient.emptyCollab") || "Aid olduğunuz collab qrupu yoxdur."}
+                    </p>
+                  ) : (
+                    dialogChannelsByModule[module].map((c: any) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => openChannel(c.id)}
+                        className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition-colors hover:bg-[#f0f2f5]"
+                      >
+                        <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#dfe5e7] text-[#54656f]">
+                          <GroupIcon channel={c} className="size-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-[#111b21]">{c.name}</p>
+                          <p className="truncate text-xs text-[#667781]">
+                            {(t("chatClient.membersCount") || "{count} üzv").replace(
+                              "{count}",
+                              String(c.members?.length || 0)
+                            )}
+                          </p>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
