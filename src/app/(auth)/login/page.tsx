@@ -8,6 +8,16 @@ import { Briefcase, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { loginSchema } from "@/lib/validations";
 import { getTranslation } from "@/lib/i18n";
 
+const DEMO_USERS = [
+  { labelKey: "demoAdmin", email: "admin@demo.com", password: "Admin@1234" },
+  { labelKey: "demoFounder", email: "founder@mtrans.com", password: "Founder@1234" },
+  { labelKey: "demoSeniorDev", email: "ali@demo.com", password: "Member@1234" },
+  { labelKey: "demoFinance", email: "gunel@demo.com", password: "Member@1234" },
+  { labelKey: "demoFrontend", email: "leyla@demo.com", password: "Member@1234" },
+  { labelKey: "demoCeo", email: "m.babayev@m-trans.az", password: "Admin@1234" },
+  { labelKey: "demoLogistics", email: "nicat@demo.com", password: "Member@1234" },
+] as const;
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -25,6 +35,12 @@ function LoginForm() {
     if (errors[e.target.name]) {
       setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
     }
+  };
+
+  const fillDemo = (email: string, password: string) => {
+    setForm({ email, password });
+    setErrors({});
+    setServerError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -160,10 +176,27 @@ function LoginForm() {
 
       {/* Demo credentials */}
       <div className="mt-5 p-3 rounded-lg bg-white/5 border border-white/10">
-        <p className="text-xs text-slate-400 font-medium mb-2">{t("auth.demoTitle")}</p>
-        <div className="space-y-1 text-xs text-slate-500">
-          <p><span className="text-slate-400">{t("auth.demoFounder")}</span> founder@mtrans.com / Founder@1234</p>
-          <p><span className="text-slate-400">{t("auth.demoAdmin")}</span> admin@demo.com / Admin@1234</p>
+        <p className="text-xs text-slate-400 font-medium">{t("auth.demoTitle")}</p>
+        <p className="text-[11px] text-slate-500 mt-0.5 mb-2.5">{t("auth.demoHint")}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+          {DEMO_USERS.map((user) => {
+            const selected = form.email === user.email;
+            return (
+              <button
+                key={user.email}
+                type="button"
+                title={user.email}
+                onClick={() => fillDemo(user.email, user.password)}
+                className={`w-full px-2.5 py-1.5 rounded-full text-xs font-medium border truncate transition-all duration-150 ${
+                  selected
+                    ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-200 shadow-[0_0_0_1px_rgba(99,102,241,0.25)]"
+                    : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20 hover:text-white"
+                }`}
+              >
+                {t(`auth.${user.labelKey}`)}
+              </button>
+            );
+          })}
         </div>
       </div>
 
