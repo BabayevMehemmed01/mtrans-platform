@@ -2,6 +2,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { ProjectSettingsClient } from "./ProjectSettingsClient";
 import { hasPermission } from "@/lib/permissions";
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
@@ -44,14 +46,24 @@ export default async function ProjectSettingsPage({ params }: Props) {
 
   const canManage = member?.role === "OWNER" || member?.role === "MANAGER" || canEditCompanyWide;
   const canDelete = member?.role === "OWNER" || canDeleteCompanyWide;
+  const isCollab = !project.departmentId;
+  const backHref = isCollab ? `/dashboard/collab/${project.id}` : `/dashboard/projects/${project.id}`;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 max-w-3xl">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          {t("projectSettings.title") || "Layihə Parametrləri"}
-        </h2>
-        <p className="text-[hsl(var(--muted-foreground))]">{project.name}</p>
+      <div className="flex items-start gap-3">
+        <Link
+          href={backHref}
+          className="mt-1 p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-slate-600"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {t("projectSettings.title") || "Layihə Parametrləri"}
+          </h2>
+          <p className="text-[hsl(var(--muted-foreground))]">{project.name}</p>
+        </div>
       </div>
       <ProjectSettingsClient 
         project={project} 

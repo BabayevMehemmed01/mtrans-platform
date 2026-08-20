@@ -52,7 +52,7 @@ export default async function CollabPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
         {collabProjects.map((project) => (
-          <Link href={`/dashboard/projects/${project.id}?tab=tasks`} key={project.id} className="group">
+          <Link href={`/dashboard/collab/${project.id}?tab=list`} key={project.id} className="group">
             <div className="bg-white rounded-2xl border border-gray-200/80 p-5 hover:border-blue-300 hover:shadow-md transition-all flex flex-col h-full cursor-pointer">
               <div className="flex items-start justify-between mb-4">
                 <div 

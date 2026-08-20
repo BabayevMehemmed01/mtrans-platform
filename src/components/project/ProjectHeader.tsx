@@ -26,6 +26,8 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
+  const isCollab = !project.department;
+  const backHref = isCollab ? "/dashboard/collab" : "/dashboard/projects";
 
   // Status etiketlərini daxildə təyin edirik ki, 't' funksiyasını işlədə bilək
   const statusLabels: Record<string, string> = {
@@ -49,7 +51,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
         {/* Sol Tərəf: Geri düyməsi + Ad + Badgelər */}
         <div className="flex items-center gap-3">
           <Link
-            href="/dashboard/projects"
+            href={backHref}
             className="p-1.5 rounded-md border border-[hsl(var(--border))] hover:bg-muted transition-colors text-muted-foreground shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -80,7 +82,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
         {/* Sağ Tərəf: Ayarlar düyməsi */}
         <div className="flex items-center">
           <Link
-            href={`/dashboard/projects/${project.id}/settings`}
+            href={isCollab ? `/dashboard/collab/${project.id}/settings` : `/dashboard/projects/${project.id}/settings`}
             className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-white hover:bg-muted text-sm font-medium transition-colors shadow-sm"
           >
             <Settings className="w-4 h-4 text-muted-foreground" />

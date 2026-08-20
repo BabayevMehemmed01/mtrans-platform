@@ -292,7 +292,9 @@
     "inputPlaceholder": "Adı yaz, Enter bas...",
     "weekDays": {
       "mon": "B.e", "tue": "Ç.a", "wed": "Çər", "thu": "C.a", "fri": "Cüm", "sat": "Şən", "sun": "Baz"
-    }
+    },
+    "pickerTitle": "Təqvim",
+    "noTasksForDay": "Bu günə tapşırıq yoxdur"
   },
   "projectChat": {
     "generalChat": "Ümumi Layihə Çatı",
@@ -362,6 +364,20 @@
     "tabDashboard": "Analitika",
     "tabFiles": "Fayllar",
     "filesWip": "Fayllar modulu tezliklə əlavə olunacaq"
+  },
+  "projectFiles": {
+    "dropTitle": "Faylları bura sürüşdürün və ya seçin",
+    "dropHint": "PDF, şəkil və sənədlər dəstəklənir",
+    "uploading": "Yüklənir...",
+    "uploadError": "Fayl yüklənmədi",
+    "listTitle": "Yüklənmiş fayllar",
+    "empty": "Hələ heç bir fayl yoxdur",
+    "colName": "Ad",
+    "colSize": "Ölçü",
+    "colDate": "Tarix",
+    "colActions": "Əməliyyat",
+    "download": "Yüklə",
+    "delete": "Sil"
   },
   "taskListView": {
     "addTaskBtn": "Tapşırıq əlavə et",

@@ -10,6 +10,7 @@ import {
 import type { KanbanTask, TaskMember } from "@/components/kanban/types";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
+import { Card, CardContent } from "@/components/ui/card";
 
 interface ProjectDashboardProps {
   tasks: KanbanTask[];
@@ -80,13 +81,15 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
         {statCards.map((card) => {
           const Icon = card.icon;
           return (
-            <div key={card.label} className="bg-white rounded-2xl border border-gray-200/80 p-5 shadow-sm hover:shadow-md transition-shadow">
-              <div className={`w-12 h-12 rounded-xl border ${card.bg} flex items-center justify-center mb-4`}>
-                <Icon className={`w-6 h-6 ${card.color}`} />
-              </div>
-              <p className="text-3xl font-black text-slate-800">{card.value}</p>
-              <p className="text-[13px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">{card.label}</p>
-            </div>
+            <Card key={card.label} className="bg-white ring-gray-200/80 shadow-sm hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <div className={`w-12 h-12 rounded-xl border ${card.bg} flex items-center justify-center mb-4`}>
+                  <Icon className={`w-6 h-6 ${card.color}`} />
+                </div>
+                <p className="text-3xl font-black text-slate-800">{card.value}</p>
+                <p className="text-[13px] font-semibold text-slate-500 mt-1 uppercase tracking-wider">{card.label}</p>
+              </CardContent>
+            </Card>
           );
         })}
       </div>

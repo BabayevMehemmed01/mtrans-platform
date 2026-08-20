@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
 import {
@@ -20,6 +19,7 @@ import { ProjectDashboard } from "@/components/project/ProjectDashboard";
 import { ProjectMembersClient, ProjectMemberExt } from "@/components/project/ProjectMembersClient";
 import { ProjectCalendar } from "./ProjectCalendar";
 import { ProjectChat } from "./ProjectChat";
+import { ProjectFiles } from "./ProjectFiles";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 
 type TabId = "list" | "board" | "calendar" | "members" | "chat" | "dashboard" | "files";
@@ -33,10 +33,11 @@ interface ProjectViewsProps {
   memberCount: number;
   projectMembers: ProjectMemberExt[];
   companyUsers: TaskMember[];
-  initialTab?: TabId;
+  initialTab?: TabId | string;
   initialTaskId?: string;
   chatChannels?: any[]; 
-  currentUserRole?: string; 
+  currentUserRole?: string;
+  isCollab?: boolean;
 }
 
 export function ProjectViews({
@@ -52,6 +53,7 @@ export function ProjectViews({
   initialTaskId,
   chatChannels,
   currentUserRole,
+  isCollab = false,
 }: ProjectViewsProps) {
   
   // Tərcümə mühərriki
@@ -60,21 +62,27 @@ export function ProjectViews({
   const t = getTranslation(lang);
 
   // Tabları lüğətlə (useMemo içində, hər renderdə yenilənməsin deyə) qururuq
-  const TABS = useMemo(() => [
-    { id: "list" as TabId,      label: t("projectViews.tabList") || "Tasklar (Siyahı)", icon: List },
-    { id: "board" as TabId,     label: t("projectViews.tabBoard") || "Lövhə",           icon: LayoutGrid },
-    { id: "calendar" as TabId,  label: t("projectViews.tabCalendar") || "Təqvim",       icon: Calendar },
-    { id: "members" as TabId,   label: t("projectViews.tabMembers") || "İnsanlar",      icon: Users },
-    { id: "chat" as TabId,      label: t("projectViews.tabChat") || "Mesajlar",         icon: MessageCircle },
-    { id: "dashboard" as TabId, label: t("projectViews.tabDashboard") || "Analitika",   icon: LayoutDashboard },
-    { id: "files" as TabId,     label: t("projectViews.tabFiles") || "Fayllar",         icon: Paperclip },
-  ], [t]);
+  const TABS = useMemo(() => {
+    const tabs = [
+      { id: "list" as TabId,      label: t("projectViews.tabList") || "Tasklar (Siyahı)", icon: List },
+      { id: "board" as TabId,     label: t("projectViews.tabBoard") || "Lövhə",           icon: LayoutGrid },
+      { id: "calendar" as TabId,  label: t("projectViews.tabCalendar") || "Təqvim",       icon: Calendar },
+      { id: "members" as TabId,   label: t("projectViews.tabMembers") || "İnsanlar",      icon: Users },
+      { id: "chat" as TabId,      label: t("projectViews.tabChat") || "Mesajlar",         icon: MessageCircle },
+      { id: "dashboard" as TabId, label: t("projectViews.tabDashboard") || "Analitika",   icon: LayoutDashboard },
+      { id: "files" as TabId,     label: t("projectViews.tabFiles") || "Fayllar",         icon: Paperclip },
+    ];
+    return isCollab ? tabs.filter((tab) => tab.id !== "chat") : tabs;
+  }, [t, isCollab]);
 
-  const [activeTab, setActiveTab] = useState<TabId>(
-    initialTab && TABS.some((t) => t.id === initialTab) ? initialTab : "list"
-  );
+  const resolvedInitialTab = useMemo<TabId>(() => {
+    const mapped = initialTab === "tasks" ? "list" : initialTab;
+    if (mapped && TABS.some((tab) => tab.id === mapped)) return mapped as TabId;
+    return "list";
+  }, [initialTab, TABS]);
+
+  const [activeTab, setActiveTab] = useState<TabId>(resolvedInitialTab);
   const [tasks, setTasks] = useState<KanbanTask[]>(initialTasks);
-  const router = useRouter();
 
   const handleTaskUpdated = useCallback((updatedTask: KanbanTask) => {
     setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
@@ -116,7 +124,14 @@ export function ProjectViews({
       </div>
 
       {/* ─── Tab Content ──────────────────────────────────────────── */}
-      <div className="flex-1 overflow-hidden bg-[hsl(var(--background))]">
+      <div
+        className={cn(
+          "flex-1 bg-[hsl(var(--background))]",
+          activeTab === "list" || activeTab === "board" || activeTab === "chat"
+            ? "overflow-hidden"
+            : "overflow-auto"
+        )}
+      >
         {activeTab === "list" && (
           <TaskListView
             projectId={projectId}
@@ -175,14 +190,7 @@ export function ProjectViews({
           />
         )}
 
-        {activeTab === "files" && (
-          <div className="flex items-center justify-center h-full text-[hsl(var(--muted-foreground))]">
-            <div className="text-center space-y-2">
-              <Paperclip className="w-10 h-10 mx-auto opacity-30" />
-              <p className="text-sm">{t("projectViews.filesWip") || "Fayllar modulu tezliklə əlavə olunacaq"}</p>
-            </div>
-          </div>
-        )}
+        {activeTab === "files" && <ProjectFiles projectId={projectId} />}
       </div>
     </div>
   );

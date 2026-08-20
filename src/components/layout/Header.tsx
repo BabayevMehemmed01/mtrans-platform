@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Bell, Search, CheckCheck } from "lucide-react";
@@ -103,16 +104,18 @@ export function Header() {
             {index > 0 && (
               <span className="text-[hsl(var(--muted-foreground))]">/</span>
             )}
-            <span
-              className={cn(
-                "truncate",
-                crumb.isLast
-                  ? "font-semibold text-[hsl(var(--foreground))]"
-                  : "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
-              )}
-            >
-              {crumb.label}
-            </span>
+            {crumb.isLast ? (
+              <span className="truncate font-semibold text-[hsl(var(--foreground))]">
+                {crumb.label}
+              </span>
+            ) : (
+              <Link
+                href={crumb.href}
+                className="truncate text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+              >
+                {crumb.label}
+              </Link>
+            )}
           </span>
         ))}
       </nav>

@@ -14,8 +14,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return generateProjectMetadata(id);
 }
 
-export default async function ProjectDetailPage({ params, searchParams }: Props) {
+export default async function CollabDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { task, tab } = await searchParams;
-  return <ProjectDetailScreen id={id} tab={tab} task={task} kind="project" />;
+  return <ProjectDetailScreen id={id} tab={tab} task={task} kind="collab" />;
 }

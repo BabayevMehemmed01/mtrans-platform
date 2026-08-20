@@ -292,7 +292,9 @@
     "inputPlaceholder": "Type name, press Enter...",
     "weekDays": {
       "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat", "sun": "Sun"
-    }
+    },
+    "pickerTitle": "Calendar",
+    "noTasksForDay": "No tasks for this day"
   },
   "projectChat": {
     "generalChat": "General Project Chat",
@@ -362,6 +364,20 @@
     "tabDashboard": "Analytics",
     "tabFiles": "Files",
     "filesWip": "Files module will be added soon"
+  },
+  "projectFiles": {
+    "dropTitle": "Drop files here or click to select",
+    "dropHint": "PDF, images and documents are supported",
+    "uploading": "Uploading...",
+    "uploadError": "File upload failed",
+    "listTitle": "Uploaded files",
+    "empty": "No files yet",
+    "colName": "Name",
+    "colSize": "Size",
+    "colDate": "Date",
+    "colActions": "Actions",
+    "download": "Download",
+    "delete": "Delete"
   },
   "taskListView": {
     "addTaskBtn": "Add task",

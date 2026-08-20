@@ -98,7 +98,7 @@ export function ProjectSettingsClient({
       const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error((await res.json()).error ?? (t("projectSettingsClient.errorGeneric") || "Xəta baş verdi"));
       toast.success(t("projectSettingsClient.successDeleted") || "Layihə silindi");
-      router.push("/dashboard/projects");
+      router.push(project.departmentId ? "/dashboard/projects" : "/dashboard/collab");
     } catch (err: any) {
       toast.error(err.message || (t("projectSettingsClient.errorGeneric") || "Xəta baş verdi"));
       setDeleting(false);

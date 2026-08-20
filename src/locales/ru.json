@@ -292,7 +292,9 @@
     "inputPlaceholder": "Введите имя, нажмите Enter...",
     "weekDays": {
       "mon": "Пн", "tue": "Вт", "wed": "Ср", "thu": "Чт", "fri": "Пт", "sat": "Сб", "sun": "Вс"
-    }
+    },
+    "pickerTitle": "Календарь",
+    "noTasksForDay": "На этот день задач нет"
   },
   "projectChat": {
     "generalChat": "Общий чат проекта",
@@ -362,6 +364,20 @@
     "tabDashboard": "Аналитика",
     "tabFiles": "Файлы",
     "filesWip": "Модуль файлов будет добавлен в ближайшее время"
+  },
+  "projectFiles": {
+    "dropTitle": "Перетащите файлы сюда или выберите",
+    "dropHint": "Поддерживаются PDF, изображения и документы",
+    "uploading": "Загрузка...",
+    "uploadError": "Не удалось загрузить файл",
+    "listTitle": "Загруженные файлы",
+    "empty": "Файлов пока нет",
+    "colName": "Имя",
+    "colSize": "Размер",
+    "colDate": "Дата",
+    "colActions": "Действия",
+    "download": "Скачать",
+    "delete": "Удалить"
   },
   "taskListView": {
     "addTaskBtn": "Добавить задачу",

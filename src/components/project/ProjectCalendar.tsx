@@ -6,6 +6,8 @@ import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
 import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 import { TaskDetailSheet } from "@/components/kanban/TaskDetailSheet";
 
@@ -26,6 +28,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
   const t = getTranslation(lang);
 
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
   
   const [addingDate, setAddingDate] = useState<Date | null>(null);
@@ -34,7 +37,11 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
 
   const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
-  const today = () => setCurrentDate(new Date());
+  const today = () => {
+    const now = new Date();
+    setCurrentDate(now);
+    setSelectedDate(now);
+  };
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
@@ -84,6 +91,10 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
     }
   };
 
+  const selectedDayTasks = tasks.filter(
+    (task) => task.dueDate && isSameDay(new Date(task.dueDate), selectedDate) && !task.isArchived
+  );
+
   return (
     <div className="h-full flex flex-col bg-slate-50/50 overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
@@ -106,7 +117,50 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
       </div>
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 custom-scrollbar">
-        <div className="min-w-[900px] min-h-[750px] h-full flex flex-col bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-5 items-start">
+          <Card className="bg-white ring-gray-200/80">
+            <CardHeader className="pb-0">
+              <CardTitle className="text-sm font-bold text-slate-800">
+                {t("projectCalendar.pickerTitle") || "Təqvim"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-2 pb-3">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                month={currentDate}
+                onMonthChange={setCurrentDate}
+                onSelect={(date) => {
+                  if (!date) return;
+                  setSelectedDate(date);
+                  setCurrentDate(date);
+                }}
+              />
+              <div className="mt-3 space-y-2 px-2 pb-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  {format(selectedDate, "d MMMM yyyy")}
+                </p>
+                {selectedDayTasks.length === 0 ? (
+                  <p className="text-xs text-slate-400">
+                    {t("projectCalendar.noTasksForDay") || "Bu günə tapşırıq yoxdur"}
+                  </p>
+                ) : (
+                  selectedDayTasks.map((task) => (
+                    <button
+                      key={task.id}
+                      type="button"
+                      onClick={() => setSelectedTask(task)}
+                      className="w-full text-left px-2.5 py-2 text-[12px] font-semibold rounded-lg border border-blue-100 bg-blue-50 text-blue-700 truncate hover:bg-blue-100"
+                    >
+                      {task.title}
+                    </button>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+        <div className="min-w-0 min-h-[750px] h-full flex flex-col bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden">
           
           <div className="grid grid-cols-7 border-b border-gray-200 bg-slate-50/80">
             {weekDays.map((day, i) => (
@@ -125,10 +179,12 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
               return (
                 <div
                   key={i}
+                  onClick={() => setSelectedDate(day)}
                   className={cn(
                     "group relative p-2 border-r border-b border-gray-100 transition-colors hover:bg-slate-50/80 flex flex-col",
                     !isSameMonth(day, monthStart) && "bg-gray-50/50 text-gray-400 opacity-60",
-                    isToday(day) && "bg-blue-50/20"
+                    isToday(day) && "bg-blue-50/20",
+                    isSameDay(day, selectedDate) && "bg-blue-50/60"
                   )}
                 >
                   <div className="flex items-center justify-between mb-2">
@@ -188,6 +244,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
               );
             })}
           </div>
+        </div>
         </div>
       </div>
 

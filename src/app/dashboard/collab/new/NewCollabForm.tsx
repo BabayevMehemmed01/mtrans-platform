@@ -67,7 +67,7 @@ export function NewCollabForm() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? (t("newCollab.errorGeneric") || "Xəta baş verdi")); return; }
       
-      router.push(`/dashboard/projects/${data.id}?tab=tasks`);
+      router.push(`/dashboard/collab/${data.id}?tab=list`);
     } catch {
       setError(t("newCollab.errorNetwork") || "Şəbəkə xətası");
     } finally {
@@ -76,7 +76,7 @@ export function NewCollabForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative pb-24 space-y-5">
+    <form onSubmit={handleSubmit} className="relative space-y-5 pb-32">
       <div className="rounded-2xl border border-gray-200/80 bg-white p-6 space-y-5 shadow-sm">
         {error && (
           <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 font-medium text-sm">
@@ -198,7 +198,7 @@ export function NewCollabForm() {
       </div>
 
       {/* STICKY ACTIONS FOOTER */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-white border-t border-gray-200 p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-background p-4 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] md:left-64">
         <div className="max-w-2xl mx-auto flex items-center justify-end gap-3">
           <Link
             href="/dashboard/collab"
