@@ -35,7 +35,6 @@ export default async function DashboardPage() {
     recentProjects,
     topLabels,
     completedTasksRaw,
-    recentActivity,
     projectsThisMonth,
   ] = await Promise.all([
     prisma.project.groupBy({
@@ -89,12 +88,6 @@ export default async function DashboardPage() {
         completedAt: { gte: trendStartDate },
       },
       select: { completedAt: true },
-    }),
-    prisma.auditLog.findMany({
-      where: { companyId },
-      orderBy: { createdAt: "desc" },
-      take: 10,
-      include: { user: { select: { name: true, avatar: true } } },
     }),
     prisma.project.count({
       where: { companyId, isArchived: false, createdAt: { gte: monthStart } },
@@ -153,7 +146,6 @@ export default async function DashboardPage() {
       }}
       tasksTrendData={tasksTrendData}
       statusChartData={statusChartData}
-      recentActivity={recentActivity}
       recentTasks={recentTasks}
       recentProjects={recentProjects}
       topLabels={topLabels}

@@ -9,11 +9,9 @@ import {
   AlertCircle,
   ArrowRight,
   Tag,
-  Activity,
 } from "lucide-react";
 import { getTranslation } from "@/lib/i18n";
-import { describeAuditLog } from "@/lib/audit-labels";
-import { getStatusColor, getPriorityColor, getInitials, timeAgo } from "@/lib/utils";
+import { getStatusColor, getPriorityColor } from "@/lib/utils";
 import {
   Card,
   CardAction,
@@ -22,10 +20,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TasksTrendChart } from "@/components/dashboard/TasksTrendChart";
 import { TasksByStatusChart } from "@/components/dashboard/TasksByStatusChart";
-import type { ActivityLogItem } from "@/components/dashboard/RecentActivityFeed";
 
 const cardSurface =
   "bg-white ring-0 border border-border shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:bg-card dark:hover:border-gray-700";
@@ -45,7 +41,6 @@ export type DashboardClientProps = {
   };
   tasksTrendData: { date: string; count: number }[];
   statusChartData: { status: string; count: number }[];
-  recentActivity: ActivityLogItem[];
   recentTasks: {
     id: string;
     title: string;
@@ -73,7 +68,6 @@ export function DashboardClient({
   stats,
   tasksTrendData,
   statusChartData,
-  recentActivity,
   recentTasks,
   recentProjects,
   topLabels,
@@ -205,52 +199,6 @@ export function DashboardClient({
           </CardContent>
         </Card>
       </div>
-
-      <Card className={cardSurface}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="size-4 text-muted-foreground" />
-            {t("dashboard.recentActivity") || "Sistemdəki Son Fəaliyyətlər"}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="-mx-2">
-          {recentActivity.length === 0 ? (
-            <EmptyState icon={Activity} message="Hələ heç bir fəaliyyət qeydə alınmayıb" />
-          ) : (
-            <ul>
-              {recentActivity.map((log) => {
-                const userName = log.user?.name ?? "Naməlum istifadəçi";
-                return (
-                  <li
-                    key={log.id}
-                    className="flex items-start gap-3 border-b border-border px-3 py-3 last:border-b-0 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
-                  >
-                    <Avatar size="sm" className="mt-0.5">
-                      {log.user?.avatar ? (
-                        <AvatarImage src={log.user.avatar} alt={userName} />
-                      ) : null}
-                      <AvatarFallback className="text-[10px] font-semibold">
-                        {getInitials(userName)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm leading-snug text-gray-900 dark:text-white">
-                        <span className="font-medium">{userName}</span>{" "}
-                        <span className="font-normal text-muted-foreground">
-                          {describeAuditLog(log)}
-                        </span>
-                      </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {timeAgo(log.createdAt)}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <Card className={cardSurface}>

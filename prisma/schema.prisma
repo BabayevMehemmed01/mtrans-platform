@@ -595,10 +595,11 @@ model AuditLog {
   entityType EntityType
   entityId   String // Hansı entity-ə aid olduğu (project id, task id, etc.)
   entityName String? // Human-readable entity adı (log üçün)
-  metadata   Json? // Əlavə məlumat (before/after state, etc.)
-  ipAddress  String?
-  userAgent  String?
-  createdAt  DateTime    @default(now())
+  metadata           Json? // Əlavə məlumat (before/after state, etc.)
+  ipAddress          String?
+  userAgent          String?
+  sessionDurationMs  Int? // LOGOUT zamanı sessiya müddəti (ms)
+  createdAt          DateTime    @default(now())
 
   // Kim etdi
   userId String
@@ -610,6 +611,7 @@ model AuditLog {
 
   @@index([companyId, createdAt(sort: Desc)])
   @@index([userId])
+  @@index([action])
   @@index([entityType, entityId])
   @@map("audit_logs")
 }

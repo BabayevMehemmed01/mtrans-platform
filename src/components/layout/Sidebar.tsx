@@ -34,6 +34,7 @@ import {
   ListTodo,
   Clock,
   Archive,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ type NavItem = {
   icon: LucideIcon;
   exact?: boolean;
   children?: NavChild[];
+  superAdminOnly?: boolean;
 };
 
 const navItems: NavItem[] = [
@@ -148,6 +150,13 @@ const adminItems: NavItem[] = [
     icon: Tag,
   },
   {
+    title: "Sistem Qeydləri",
+    tKey: "menu.activityLogs",
+    href: "/dashboard/activity-logs",
+    icon: ScrollText,
+    superAdminOnly: true,
+  },
+  {
     title: "Parametrlər",
     tKey: "menu.settings",
     href: "/dashboard/settings",
@@ -192,6 +201,15 @@ function SidebarInner() {
   const t = getTranslation(lang);
 
   const currentView = searchParams.get("view");
+  const isSuperAdmin =
+    Boolean((session?.user as any)?.isSuperAdmin) ||
+    (((session?.user as any)?.role?.permissions as string[] | undefined) ?? []).includes(
+      "CAN_MANAGE_COMPANY"
+    ) ||
+    String((session?.user as any)?.role?.name ?? "")
+      .toUpperCase()
+      .includes("SUPER");
+  const visibleAdminItems = adminItems.filter((item) => !item.superAdminOnly || isSuperAdmin);
 
   const isActive = (href: string, exact = false) => {
     const { path, view } = parseHref(href);
@@ -244,7 +262,7 @@ function SidebarInner() {
         <div className="mx-2 my-3 border-t border-gray-200 dark:border-gray-800" />
 
         <NavGroup
-          items={adminItems}
+          items={visibleAdminItems}
           isCollapsed={isCollapsed}
           isActive={isActive}
           label={t("menu.administration") || "Administrasiya"}

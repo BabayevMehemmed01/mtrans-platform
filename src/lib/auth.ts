@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
 import bcrypt from "bcryptjs";
+import { logUserLogin, logUserLogout } from "@/lib/audit";
 
 // =============================================================================
 // NextAuth v5 Configuration — Credentials Provider
@@ -55,7 +56,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   slug: true,
                   logo: true,
                   plan: true,
-                  // YENİ ƏLAVƏLƏR: Şirkət üçün detallar
+                  ownerId: true,
                   taxId: true,
                   website: true,
                   description: true,
@@ -106,6 +107,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           data: { lastLoginAt: new Date() },
         });
 
+        const permissionKeys = user.role
+          ? user.role.permissions.map((rp) => rp.permission.key)
+          : [];
+        const isSuperAdmin =
+          user.company?.ownerId === user.id ||
+          permissionKeys.includes("CAN_MANAGE_COMPANY");
+
         // 6. JWT token üçün istifadəçi məlumatını qaytar
         return {
           id: user.id,
@@ -113,20 +121,32 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           name: user.name,
           image: user.avatar,
           jobTitle: user.jobTitle,
-          // YENİ ƏLAVƏLƏR: Token-a göndəririk
           phone: user.phone,
           address: user.address,
           bio: user.bio,
           workingHours: user.workingHours,
-          language: user.language, // BURA ƏLAVƏ OLUNDU
+          language: user.language,
           companyId: user.companyId,
-          company: user.company,
+          isSuperAdmin,
+          sessionStartedAt: Date.now(),
+          company: user.company
+            ? {
+                id: user.company.id,
+                name: user.company.name,
+                slug: user.company.slug,
+                logo: user.company.logo,
+                plan: user.company.plan,
+                taxId: user.company.taxId,
+                website: user.company.website,
+                description: user.company.description,
+              }
+            : null,
           role: user.role
             ? {
                 id: user.role.id,
                 name: user.role.name,
                 color: user.role.color,
-                permissions: user.role.permissions.map((rp) => rp.permission.key),
+                permissions: permissionKeys,
               }
             : null,
         };
@@ -150,6 +170,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.companyId = (user as any).companyId;
         token.company = (user as any).company;
         token.role = (user as any).role;
+        token.isSuperAdmin = Boolean((user as any).isSuperAdmin);
+        token.sessionStartedAt = (user as any).sessionStartedAt ?? Date.now();
       }
 
       // YENİ ƏLAVƏ: Ayarlardan update() çağırılanda token-i (dili) anında yeniləyirik!
@@ -176,8 +198,33 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.companyId = token.companyId as string;
         session.user.company = token.company as any;
         session.user.role = token.role as any;
+        (session.user as any).isSuperAdmin = Boolean(token.isSuperAdmin);
       }
       return session;
+    },
+  },
+
+  events: {
+    async signIn({ user }) {
+      const companyId = (user as any).companyId as string | undefined;
+      if (!user?.id || !companyId) return;
+      await logUserLogin({
+        userId: user.id,
+        companyId,
+        userName: user.name,
+      });
+    },
+    async signOut(message) {
+      const token = "token" in message ? (message as { token?: Record<string, unknown> }).token : undefined;
+      const userId = token?.id as string | undefined;
+      const companyId = token?.companyId as string | undefined;
+      if (!userId || !companyId) return;
+      await logUserLogout({
+        userId,
+        companyId,
+        userName: (token?.name as string | undefined) ?? null,
+        sessionStartedAt: (token?.sessionStartedAt as number | undefined) ?? null,
+      });
     },
   },
 
