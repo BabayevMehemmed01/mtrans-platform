@@ -33,7 +33,7 @@ export default async function InviteAcceptPage({
 }) {
   const { token } = await params;
 
-  const invite = await prisma.invite.findUnique({
+  const invite = await prisma.invitation.findUnique({
     where: { token },
     include: {
       company: { select: { name: true } },

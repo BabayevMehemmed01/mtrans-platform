@@ -162,7 +162,8 @@ export function MembersClient({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: `${inviteName} ${inviteSurname}`.trim(),
+          name: inviteName,
+          surname: inviteSurname,
           email: inviteEmail,
           message: inviteMessage,
           type: inviteType,

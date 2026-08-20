@@ -203,7 +203,7 @@ model Company {
   crmDeals      CrmDeal[]
   chatChannels  ChatChannel[]
   notifications Notification[]
-  invites       Invite[]
+  invites       Invitation[]
 
   @@map("companies")
 }
@@ -236,7 +236,7 @@ model Department {
   users        User[]
   projects     Project[]
   chatChannels ChatChannel[]
-  invites      Invite[]
+  invites      Invitation[]
 
   @@unique([companyId, name]) // Eyni şirkətdə eyni adlı şöbə olmaz
   @@map("departments")
@@ -302,7 +302,7 @@ model Role {
   // Relations
   permissions RolePermission[]
   users       User[]
-  invites     Invite[]
+  invites     Invitation[]
 
   @@unique([companyId, name])
   @@map("roles")
@@ -378,7 +378,7 @@ model User {
   channelMemberships     ChannelMember[]
   messagesSent           Message[]
   notifications          Notification[]
-  invitesSent            Invite[]         @relation("InviteSender")
+  invitesSent            Invitation[]     @relation("InviteSender")
   headOfDepartments      Department[]     @relation("DepartmentHead")
   callsInitiated         Call[]           @relation("CallCaller")
   callSignalsSent        CallSignal[]     @relation("CallSignalSender")
@@ -870,7 +870,8 @@ model Notification {
 }
 
 // =============================================================================
-// MODEL: Invite (token-based onboarding — Member / Guest)
+// MODEL: Invitation (Ağıllı Dəvət — token-based onboarding)
+// Cədvəl adı `invites` saxlanılır ki, mövcud data və arxitektura zədələnməsin.
 // =============================================================================
 
 enum InviteType {
@@ -885,11 +886,12 @@ enum InviteStatus {
   REVOKED
 }
 
-model Invite {
+model Invitation {
   id         String       @id @default(cuid())
   email      String
-  name       String?      // YENİ: Dəvət edilənin adı və soyadı
-  message    String?      // YENİ: Xüsusi dəvət mesajı
+  name       String?
+  surname    String?
+  message    String?
   token      String       @unique
   type       InviteType   @default(MEMBER)
   status     InviteStatus @default(PENDING)

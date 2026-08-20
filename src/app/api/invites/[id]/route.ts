@@ -2,27 +2,30 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requirePermission, PermissionError } from "@/lib/permissions";
-import { generateInviteToken, getInviteExpiryDate } from "@/lib/invites";
-import { sendInviteEmail } from "@/lib/resend";
+import { generateInviteToken, getInviteExpiryDate, invitationFullName } from "@/lib/invites";
+import { sendInviteEmail } from "@/lib/mailer";
 
 // =============================================================================
 // PATCH /api/invites/[id] — Dəvəti yenidən göndər (token + müddət yenilənir)
 // DELETE /api/invites/[id] — Dəvəti ləğv et (REVOKED)
 // =============================================================================
 
-export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const companyId = (session.user as any).companyId;
+    const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
     await requirePermission(session.user.id, "CAN_INVITE_USER");
 
     const { id } = await params;
 
-    const invite = await prisma.invite.findFirst({ where: { id, companyId } });
+    const invite = await prisma.invitation.findFirst({ where: { id, companyId } });
     if (!invite) return NextResponse.json({ error: "Dəvət tapılmadı" }, { status: 404 });
 
     if (invite.status !== "PENDING" && invite.status !== "EXPIRED") {
@@ -32,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       );
     }
 
-    const updated = await prisma.invite.update({
+    const updated = await prisma.invitation.update({
       where: { id },
       data: {
         token: generateInviteToken(),
@@ -47,14 +50,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     const inviterName = session.user.name || "Bir komanda üzvü";
-    const companyName = (session.user as any).company?.name || "şirkət";
+    const companyName =
+      (session.user as { company?: { name?: string } }).company?.name || "şirkət";
 
     await sendInviteEmail({
       to: updated.email,
+      recipientName: invitationFullName(updated.name, updated.surname),
       inviterName,
       companyName,
       token: updated.token,
       type: updated.type,
+      message: updated.message,
     });
 
     return NextResponse.json(updated);
@@ -67,22 +73,25 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const companyId = (session.user as any).companyId;
+    const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
     await requirePermission(session.user.id, "CAN_INVITE_USER");
 
     const { id } = await params;
 
-    const invite = await prisma.invite.findFirst({ where: { id, companyId } });
+    const invite = await prisma.invitation.findFirst({ where: { id, companyId } });
     if (!invite) return NextResponse.json({ error: "Dəvət tapılmadı" }, { status: 404 });
 
-    await prisma.invite.update({
+    await prisma.invitation.update({
       where: { id },
       data: { status: "REVOKED" },
     });

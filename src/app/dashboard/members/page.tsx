@@ -50,7 +50,7 @@ export default async function MembersPage() {
     orderBy: { name: "asc" },
   });
 
-  const invites = await prisma.invite.findMany({
+  const invites = await prisma.invitation.findMany({
     where: { companyId },
     include: {
       invitedBy: { select: { id: true, name: true, avatar: true } },

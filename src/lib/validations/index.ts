@@ -53,6 +53,28 @@ export const registerSchema = z
 export type LoginInput = z.infer<typeof loginSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 
+const passwordSchema = z
+  .string()
+  .min(8, "Şifrə ən az 8 simvol olmalıdır")
+  .regex(
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    "Şifrədə böyük hərf, kiçik hərf və rəqəm olmalıdır"
+  );
+
+/** Token-əsaslı (dəvət) qeydiyyat — yalnız şifrə tələb olunur */
+export const inviteRegisterSchema = z
+  .object({
+    token: z.string().min(1, "Dəvət token-i tələb olunur"),
+    password: passwordSchema,
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Şifrələr uyğun gəlmir",
+    path: ["confirmPassword"],
+  });
+
+export type InviteRegisterInput = z.infer<typeof inviteRegisterSchema>;
+
 // =============================================================================
 // COMPANY Validations
 // =============================================================================
@@ -123,6 +145,9 @@ export const createInviteSchema = z.object({
     .string()
     .min(1, "Email tələb olunur")
     .email("Düzgün email formatı daxil edin"),
+  name: z.string().min(1, "Ad tələb olunur").max(100, "Ad çox uzundur"),
+  surname: z.string().min(1, "Soyad tələb olunur").max(100, "Soyad çox uzundur"),
+  message: z.string().max(1000).optional().or(z.literal("")),
   type: z.enum(["MEMBER", "GUEST"]).default("MEMBER"),
   roleId: z.string().optional().or(z.null()),
   departmentId: z.string().optional().or(z.null()),

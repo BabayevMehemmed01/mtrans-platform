@@ -6,10 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Briefcase, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { loginSchema } from "@/lib/validations";
+import { getTranslation } from "@/lib/i18n";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const t = getTranslation("az");
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
 
   const [form, setForm] = useState({ email: "", password: "" });
@@ -53,7 +55,7 @@ function LoginForm() {
       if (res?.error) {
         setServerError(
           res.error === "CredentialsSignin"
-            ? "Email və ya şifrə düzgün deyil"
+            ? t("auth.invalidCredentials")
             : res.error
         );
       } else {
@@ -61,7 +63,7 @@ function LoginForm() {
         router.refresh();
       }
     } catch {
-      setServerError("Xəta baş verdi. Yenidən cəhd edin.");
+      setServerError(t("auth.genericError"));
     } finally {
       setLoading(false);
     }
@@ -74,8 +76,8 @@ function LoginForm() {
         <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg mb-4">
           <Briefcase className="w-7 h-7 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-white">WorkSpace ERP</h1>
-        <p className="text-sm text-slate-400 mt-1">Hesabınıza daxil olun</p>
+        <h1 className="text-2xl font-bold text-white">{t("auth.loginTitle")}</h1>
+        <p className="text-sm text-slate-400 mt-1">{t("auth.loginSubtitle")}</p>
       </div>
 
       {/* Server Error */}
@@ -91,7 +93,7 @@ function LoginForm() {
         {/* Email */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">
-            Email
+            {t("auth.email")}
           </label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -101,7 +103,7 @@ function LoginForm() {
               autoComplete="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="ad@sirket.com"
+              placeholder={t("auth.emailPlaceholder")}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-white placeholder:text-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
             />
           </div>
@@ -113,7 +115,7 @@ function LoginForm() {
         {/* Password */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">
-            Şifrə
+            {t("auth.password")}
           </label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
@@ -148,28 +150,28 @@ function LoginForm() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Giriş edilir...
+              {t("auth.signingIn")}
             </>
           ) : (
-            "Daxil Ol"
+            t("auth.signIn")
           )}
         </button>
       </form>
 
       {/* Demo credentials */}
       <div className="mt-5 p-3 rounded-lg bg-white/5 border border-white/10">
-        <p className="text-xs text-slate-400 font-medium mb-2">Demo giriş:</p>
+        <p className="text-xs text-slate-400 font-medium mb-2">{t("auth.demoTitle")}</p>
         <div className="space-y-1 text-xs text-slate-500">
-          <p><span className="text-slate-400">Admin:</span> admin@demo.com / Admin@1234</p>
-          <p><span className="text-slate-400">Manager:</span> ali@demo.com / Member@1234</p>
+          <p><span className="text-slate-400">{t("auth.demoFounder")}</span> founder@mtrans.com / Founder@1234</p>
+          <p><span className="text-slate-400">{t("auth.demoAdmin")}</span> admin@demo.com / Admin@1234</p>
         </div>
       </div>
 
       {/* Register link */}
       <p className="mt-5 text-center text-sm text-slate-500">
-        Hesabınız yoxdur?{" "}
+        {t("auth.noAccount")}{" "}
         <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-          Qeydiyyat
+          {t("auth.registerLink")}
         </Link>
       </p>
     </div>

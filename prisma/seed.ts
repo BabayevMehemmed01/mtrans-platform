@@ -322,16 +322,29 @@ async function main() {
   console.log("🏢 Demo şirkəti yaradılır...");
   const allPermissions = await prisma.permission.findMany();
 
-  // Admin istifadəçisi
+  // Admin istifadəçisi (Super Admin)
   const adminPassword = await bcrypt.hash("Admin@1234", 12);
   const admin = await prisma.user.upsert({
     where: { email: "admin@demo.com" },
-    update: {},
+    update: { passwordHash: adminPassword, jobTitle: "System Administrator" },
     create: {
       email: "admin@demo.com",
       name: "Admin İstifadəçi",
       passwordHash: adminPassword,
       jobTitle: "System Administrator",
+    },
+  });
+
+  // Founder / CEO
+  const founderPassword = await bcrypt.hash("Founder@1234", 12);
+  const founder = await prisma.user.upsert({
+    where: { email: "founder@mtrans.com" },
+    update: { passwordHash: founderPassword, jobTitle: "CEO / Founder" },
+    create: {
+      email: "founder@mtrans.com",
+      name: "Founder",
+      passwordHash: founderPassword,
+      jobTitle: "CEO / Founder",
     },
   });
 
@@ -356,13 +369,17 @@ async function main() {
       slug: "demo-company",
       description: "ERP platformasının demo şirkəti",
       plan: "PROFESSIONAL",
-      ownerId: admin.id,
+      ownerId: founder.id,
     },
   });
 
-  // Admin-ləri şirkətə bağla
+  // İstifadəçiləri şirkətə bağla
   await prisma.user.update({
     where: { id: admin.id },
+    data: { companyId: company.id },
+  });
+  await prisma.user.update({
+    where: { id: founder.id },
     data: { companyId: company.id },
   });
   await prisma.user.update({
@@ -381,6 +398,23 @@ async function main() {
       name: "Super Admin",
       description: "Bütün icazələrə sahib sistem administratoru",
       color: "#ef4444",
+      isSystem: true,
+      isDefault: false,
+      companyId: company.id,
+      permissions: {
+        create: allPermissions.map((p) => ({ permissionId: p.id })),
+      },
+    },
+  });
+
+  // Founder (CEO) rolu — Super Admin-dən fərqli, şirkətin təsisçisi
+  const founderRole = await prisma.role.upsert({
+    where: { companyId_name: { companyId: company.id, name: "Founder" } },
+    update: {},
+    create: {
+      name: "Founder",
+      description: "Şirkətin təsisçisi / CEO — bütün icazələrə sahibdir",
+      color: "#7c3aed",
       isSystem: true,
       isDefault: false,
       companyId: company.id,
@@ -473,10 +507,14 @@ async function main() {
 
   console.log("✅ Rollar yaradıldı\n");
 
-  // Admin-lərə Super Admin rolu ver
+  // Admin-ə Super Admin, Founder-ə Founder rolu ver
   await prisma.user.update({
     where: { id: admin.id },
     data: { roleId: adminRole.id },
+  });
+  await prisma.user.update({
+    where: { id: founder.id },
+    data: { roleId: founderRole.id },
   });
   await prisma.user.update({
     where: { id: realAdmin.id },
@@ -518,7 +556,7 @@ async function main() {
   const roleMap: Record<string, string> = {};
   for (const r of allRoles) roleMap[r.name] = r.id;
 
-  const createdUsers: string[] = [admin.id, realAdmin.id];
+  const createdUsers: string[] = [founder.id, admin.id, realAdmin.id];
   for (const u of demoUsers) {
     const user = await prisma.user.upsert({
       where: { email: u.email },
@@ -592,10 +630,11 @@ async function main() {
   console.log("🎉 Seed tamamlandı!");
   console.log("━".repeat(50));
   console.log("Demo giriş məlumatları:");
-  console.log("  Real Admin: m.babayev@m-trans.az / Admin@1234");
-  console.log("  Demo Admin: admin@demo.com  / Admin@1234");
-  console.log("  Manager: ali@demo.com    / Member@1234");
-  console.log("  Dev:     leyla@demo.com  / Member@1234");
+  console.log("  Founder:      founder@mtrans.com / Founder@1234");
+  console.log("  Super Admin:  admin@demo.com     / Admin@1234");
+  console.log("  Real Admin:   m.babayev@m-trans.az / Admin@1234");
+  console.log("  Manager:      ali@demo.com       / Member@1234");
+  console.log("  Dev:          leyla@demo.com     / Member@1234");
   console.log("━".repeat(50));
 }
 

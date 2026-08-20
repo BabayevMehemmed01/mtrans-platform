@@ -12,7 +12,7 @@ export default auth((req: NextRequest & { auth: any }) => {
   const session = req.auth;
 
   // Public route-lar — auth tələb olunmur
-  const publicRoutes = ["/login", "/register", "/invite", "/api/invites/accept"];
+  const publicRoutes = ["/login", "/register", "/invite", "/api/invites/accept", "/api/invites/verify"];
   const isPublicRoute = publicRoutes.some((route) =>
     pathname.startsWith(route)
   );

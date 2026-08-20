@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createInviteSchema } from "@/lib/validations";
 import { hasPermission, isDepartmentHead, PermissionError } from "@/lib/permissions";
-import { generateInviteToken, getInviteExpiryDate } from "@/lib/invites";
-import { sendInviteEmail } from "@/lib/resend";
+import { generateInviteToken, getInviteExpiryDate, invitationFullName } from "@/lib/invites";
+import { sendInviteEmail } from "@/lib/mailer";
 import { logAudit } from "@/lib/audit";
 
 // =============================================================================
@@ -17,16 +17,16 @@ export async function GET(req: NextRequest) {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const companyId = (session.user as any).companyId;
+    const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
-    const invites = await prisma.invite.findMany({
+    const invites = await prisma.invitation.findMany({
       where: {
         companyId,
-        ...(status ? { status: status as any } : {}),
+        ...(status ? { status: status as "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED" } : {}),
       },
       include: {
         invitedBy: { select: { id: true, name: true, avatar: true } },
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const companyId = (session.user as any).companyId;
+    const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
     const body = await req.json();
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { type, roleId, departmentId, projectIds } = parsed.data;
+    const { type, roleId, departmentId, projectIds, name, surname, message } = parsed.data;
     const email = parsed.data.email.toLowerCase().trim();
 
     // Dəvət göndərmək üçün ya qlobal CAN_INVITE_USER icazəsi, ya da bu
@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
       throw new PermissionError("Dəvət göndərmək üçün icazəniz yoxdur");
     }
 
-    // Artıq aktiv istifadəçi varmı? (bu şirkət daxilində)
     const existingUser = await prisma.user.findFirst({
       where: { email, companyId },
     });
@@ -83,8 +82,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Artıq gözləmədə olan dəvət varmı?
-    const existingInvite = await prisma.invite.findFirst({
+    const existingInvite = await prisma.invitation.findFirst({
       where: { email, companyId, status: "PENDING" },
     });
     if (existingInvite) {
@@ -94,7 +92,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Rol/şöbə bu şirkətə aiddirmi — cross-tenant sızmanın qarşısını al
     if (roleId) {
       const role = await prisma.role.findFirst({ where: { id: roleId, companyId } });
       if (!role) return NextResponse.json({ error: "Rol tapılmadı" }, { status: 400 });
@@ -113,10 +110,15 @@ export async function POST(req: NextRequest) {
       validProjectIds = projects.map((p) => p.id);
     }
 
-    const invite = await prisma.invite.create({
+    const token = generateInviteToken();
+
+    const invite = await prisma.invitation.create({
       data: {
         email,
-        token: generateInviteToken(),
+        name: name.trim(),
+        surname: surname.trim(),
+        message: message?.trim() || null,
+        token,
         type,
         expiresAt: getInviteExpiryDate(),
         projectIds: type === "GUEST" ? validProjectIds : [],
@@ -133,14 +135,17 @@ export async function POST(req: NextRequest) {
     });
 
     const inviterName = session.user.name || "Bir komanda üzvü";
-    const companyName = (session.user as any).company?.name || "şirkət";
+    const companyName =
+      (session.user as { company?: { name?: string } }).company?.name || "şirkət";
 
     await sendInviteEmail({
       to: email,
+      recipientName: invitationFullName(invite.name, invite.surname),
       inviterName,
       companyName,
       token: invite.token,
       type: invite.type,
+      message: invite.message,
     });
 
     await logAudit({
