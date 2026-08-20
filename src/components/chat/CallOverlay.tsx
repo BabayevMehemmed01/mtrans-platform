@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef } from "react";
+import { Rnd } from "react-rnd";
 import { useSession } from "next-auth/react"; // YENİ: Dil üçün
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 import {
@@ -228,8 +229,32 @@ export function CallOverlay() {
 
       {/* Aktiv zəng paneli */}
       {activeCall && (
-        <div className="fixed bottom-6 right-6 z-[100] w-80 bg-gray-900 rounded-2xl shadow-2xl overflow-hidden border border-gray-800">
-          <div className="relative bg-black aspect-video flex items-center justify-center">
+        <Rnd
+          default={{
+            x: Math.max(24, window.innerWidth - 320 - 24),
+            y: Math.max(24, window.innerHeight - 260 - 24),
+            width: 320,
+            height: 260,
+          }}
+          minWidth={240}
+          minHeight={200}
+          bounds="window"
+          cancel="button"
+          enableResizing={{
+            top: false,
+            right: false,
+            bottom: false,
+            left: false,
+            topRight: true,
+            bottomRight: true,
+            bottomLeft: true,
+            topLeft: true,
+          }}
+          style={{ zIndex: 100, position: "fixed" }}
+          className="overflow-hidden rounded-2xl border border-gray-800 bg-gray-900 shadow-2xl"
+        >
+          <div className="flex h-full w-full flex-col overflow-hidden bg-gray-900">
+          <div className="relative flex min-h-0 flex-1 items-center justify-center bg-black">
             {activeCall.type === "VIDEO" ? (
               <>
                 <video
@@ -243,7 +268,7 @@ export function CallOverlay() {
                   autoPlay
                   playsInline
                   muted
-                  className="absolute bottom-2 right-2 w-20 h-14 object-cover rounded-lg border border-gray-700 shadow-lg"
+                  className="absolute bottom-2 right-2 w-20 h-14 scale-x-[-1] object-cover rounded-lg border border-gray-700 shadow-lg"
                 />
                 {!webrtc.remoteStream && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-gray-300">
@@ -275,7 +300,7 @@ export function CallOverlay() {
             )}
           </div>
 
-          <div className="flex items-center justify-center gap-3 py-3 bg-gray-900">
+          <div className="flex shrink-0 items-center justify-center gap-3 py-3 bg-gray-900">
             <Button
               onClick={webrtc.toggleMute}
               size="icon"
@@ -300,7 +325,8 @@ export function CallOverlay() {
               <PhoneOff className="w-4 h-4" />
             </Button>
           </div>
-        </div>
+          </div>
+        </Rnd>
       )}
     </>
   );

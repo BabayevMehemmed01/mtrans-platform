@@ -61,7 +61,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadButton, uploadFiles } from "@/utils/uploadthing";
+import { UploadButton } from "@/utils/uploadthing";
 import { useCallStore } from "@/store/useCallStore";
 import { cn, getInitials } from "@/lib/utils";
 
@@ -333,12 +333,11 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const handlePickedFile = async (file: File | undefined) => {
     if (!file || !activeChannelId) return;
     try {
-      const res = await uploadFiles("chatAttachment", { files: [file] });
-      if (!res?.[0]) return;
+      const dataUrl = await blobToDataUrl(file);
       await postUploadedFile({
-        ...res[0],
-        name: file.name || res[0].name,
-        type: file.type || res[0].type,
+        url: dataUrl,
+        name: file.name,
+        type: file.type,
       });
     } catch (error) {
       alert(
