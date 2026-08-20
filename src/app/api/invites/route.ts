@@ -2,8 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createInviteSchema } from "@/lib/validations";
-import { hasPermission, isDepartmentHead, PermissionError } from "@/lib/permissions";
-import { generateInviteToken, getInviteExpiryDate, invitationFullName } from "@/lib/invites";
+import {
+  hasPermission,
+  isDepartmentHead,
+  PermissionError,
+  getInviteAuthority,
+  assertInviteTargetsAllowed,
+} from "@/lib/permissions";
+import {
+  generateInviteToken,
+  getInviteExpiryDate,
+  invitationFullName,
+  deleteStaleInvites,
+  invitationListInclude,
+} from "@/lib/invites";
 import { sendInviteEmail } from "@/lib/mailer";
 import { logAudit } from "@/lib/audit";
 
@@ -20,6 +32,8 @@ export async function GET(req: NextRequest) {
     const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
+    await deleteStaleInvites(companyId);
+
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
 
@@ -28,11 +42,7 @@ export async function GET(req: NextRequest) {
         companyId,
         ...(status ? { status: status as "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED" } : {}),
       },
-      include: {
-        invitedBy: { select: { id: true, name: true, avatar: true } },
-        role: { select: { id: true, name: true, color: true } },
-        department: { select: { id: true, name: true, color: true } },
-      },
+      include: invitationListInclude,
       orderBy: { createdAt: "desc" },
     });
 
@@ -63,9 +73,12 @@ export async function POST(req: NextRequest) {
     const { type, roleId, departmentId, projectIds, name, surname, message } = parsed.data;
     const email = parsed.data.email.toLowerCase().trim();
 
-    // Dəvət göndərmək üçün ya qlobal CAN_INVITE_USER icazəsi, ya da bu
-    // dəvətin hədəf aldığı şöbənin rəhbəri olmaq lazımdır.
+    const authority = await getInviteAuthority(session.user.id);
+
+    // Dəvət göndərmək üçün ya Super Admin/Founder, ya qlobal CAN_INVITE_USER,
+    // ya da bu dəvətin hədəf aldığı şöbənin rəhbəri olmaq lazımdır.
     const canInvite =
+      authority.isPrivileged ||
       (await hasPermission(session.user.id, "CAN_INVITE_USER")) ||
       (!!departmentId && (await isDepartmentHead(session.user.id, departmentId)));
     if (!canInvite) {
@@ -82,24 +95,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const existingInvite = await prisma.invitation.findFirst({
-      where: { email, companyId, status: "PENDING" },
-    });
-    if (existingInvite) {
-      return NextResponse.json(
-        { error: "Bu email ünvanına artıq gözləmədə olan bir dəvət göndərilib" },
-        { status: 400 }
-      );
-    }
-
+    let assignedRoleName: string | null = null;
     if (roleId) {
       const role = await prisma.role.findFirst({ where: { id: roleId, companyId } });
       if (!role) return NextResponse.json({ error: "Rol tapılmadı" }, { status: 400 });
+      assignedRoleName = role.name;
     }
     if (departmentId) {
       const department = await prisma.department.findFirst({ where: { id: departmentId, companyId } });
       if (!department) return NextResponse.json({ error: "Şöbə tapılmadı" }, { status: 400 });
     }
+
+    assertInviteTargetsAllowed(authority, departmentId, assignedRoleName);
 
     let validProjectIds: string[] = [];
     if (type === "GUEST" && projectIds && projectIds.length > 0) {
@@ -111,28 +118,44 @@ export async function POST(req: NextRequest) {
     }
 
     const token = generateInviteToken();
+    const now = new Date();
+    const inviteData = {
+      email,
+      name: name.trim(),
+      surname: surname.trim(),
+      message: message?.trim() || null,
+      token,
+      type,
+      status: "PENDING" as const,
+      expiresAt: getInviteExpiryDate(),
+      createdAt: now,
+      projectIds: type === "GUEST" ? validProjectIds : [],
+      companyId,
+      roleId: roleId || null,
+      departmentId: departmentId || null,
+      invitedById: session.user.id,
+    };
 
-    const invite = await prisma.invitation.create({
-      data: {
-        email,
-        name: name.trim(),
-        surname: surname.trim(),
-        message: message?.trim() || null,
-        token,
-        type,
-        expiresAt: getInviteExpiryDate(),
-        projectIds: type === "GUEST" ? validProjectIds : [],
-        companyId,
-        roleId: roleId || null,
-        departmentId: departmentId || null,
-        invitedById: session.user.id,
-      },
-      include: {
-        invitedBy: { select: { id: true, name: true, avatar: true } },
-        role: { select: { id: true, name: true, color: true } },
-        department: { select: { id: true, name: true, color: true } },
-      },
+    const existingPending = await prisma.invitation.findFirst({
+      where: { email, companyId, status: "PENDING" },
     });
+    const existingExpired = existingPending
+      ? null
+      : await prisma.invitation.findFirst({
+          where: { email, companyId, status: "EXPIRED" },
+        });
+    const existingInvite = existingPending ?? existingExpired;
+
+    const invite = existingInvite
+      ? await prisma.invitation.update({
+          where: { id: existingInvite.id },
+          data: inviteData,
+          include: invitationListInclude,
+        })
+      : await prisma.invitation.create({
+          data: inviteData,
+          include: invitationListInclude,
+        });
 
     const inviterName = session.user.name || "Bir komanda üzvü";
     const companyName =
@@ -157,7 +180,7 @@ export async function POST(req: NextRequest) {
       entityName: invite.email,
     });
 
-    return NextResponse.json(invite, { status: 201 });
+    return NextResponse.json(invite, { status: existingInvite ? 200 : 201 });
   } catch (error) {
     if (error instanceof PermissionError) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });

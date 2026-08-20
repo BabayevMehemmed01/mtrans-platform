@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { MembersClient } from "./MembersClient";
 import type { Metadata } from "next";
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
+import { deleteStaleInvites, invitationListInclude } from "@/lib/invites";
 
 // YENİ: Metadata dinamikləşdirildi
 export async function generateMetadata(): Promise<Metadata> {
@@ -50,13 +51,11 @@ export default async function MembersPage() {
     orderBy: { name: "asc" },
   });
 
+  await deleteStaleInvites(companyId);
+
   const invites = await prisma.invitation.findMany({
     where: { companyId },
-    include: {
-      invitedBy: { select: { id: true, name: true, avatar: true } },
-      role: { select: { id: true, name: true, color: true } },
-      department: { select: { id: true, name: true, color: true } },
-    },
+    include: invitationListInclude,
     orderBy: { createdAt: "desc" },
   });
 

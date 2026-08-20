@@ -20,6 +20,31 @@ export function getInviteExpiryDate(): Date {
   return new Date(Date.now() + INVITE_EXPIRY_MS);
 }
 
+/** PENDING və ləğv edilmiş (REVOKED) dəvətlərin avtomatik silinmə müddəti */
+export const STALE_INVITE_MS = 24 * 60 * 60 * 1000;
+
+export const invitationListInclude = {
+  invitedBy: { select: { id: true, name: true, avatar: true } },
+  role: { select: { id: true, name: true, color: true } },
+  department: { select: { id: true, name: true, color: true } },
+} as const;
+
+/**
+ * Yaranma tarixindən 24 saat keçmiş PENDING və REVOKED dəvətləri silir.
+ * (UI-dakı "Ləğv edilib" statusu sxemada REVOKED-dir.)
+ */
+export async function deleteStaleInvites(companyId: string): Promise<number> {
+  const cutoff = new Date(Date.now() - STALE_INVITE_MS);
+  const result = await prisma.invitation.deleteMany({
+    where: {
+      companyId,
+      status: { in: ["PENDING", "REVOKED"] },
+      createdAt: { lt: cutoff },
+    },
+  });
+  return result.count;
+}
+
 export function invitationFullName(name?: string | null, surname?: string | null): string {
   return [name, surname].filter(Boolean).join(" ").trim();
 }

@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { requirePermission, PermissionError } from "@/lib/permissions";
-import { generateInviteToken, getInviteExpiryDate, invitationFullName } from "@/lib/invites";
+import {
+  requirePermission,
+  hasPermission,
+  isDepartmentHead,
+  PermissionError,
+  getInviteAuthority,
+  assertInviteTargetsAllowed,
+} from "@/lib/permissions";
+import {
+  generateInviteToken,
+  getInviteExpiryDate,
+  invitationFullName,
+  invitationListInclude,
+} from "@/lib/invites";
 import { sendInviteEmail } from "@/lib/mailer";
 
 // =============================================================================
@@ -21,12 +33,24 @@ export async function PATCH(
     const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
 
-    await requirePermission(session.user.id, "CAN_INVITE_USER");
-
+    const authority = await getInviteAuthority(session.user.id);
     const { id } = await params;
 
-    const invite = await prisma.invitation.findFirst({ where: { id, companyId } });
+    const invite = await prisma.invitation.findFirst({
+      where: { id, companyId },
+      include: { role: { select: { name: true } } },
+    });
     if (!invite) return NextResponse.json({ error: "Dəvət tapılmadı" }, { status: 404 });
+
+    const canResend =
+      authority.isPrivileged ||
+      (await hasPermission(session.user.id, "CAN_INVITE_USER")) ||
+      (!!invite.departmentId && (await isDepartmentHead(session.user.id, invite.departmentId)));
+    if (!canResend) {
+      throw new PermissionError("Dəvəti yenidən göndərmək üçün icazəniz yoxdur");
+    }
+
+    assertInviteTargetsAllowed(authority, invite.departmentId, invite.role?.name);
 
     if (invite.status !== "PENDING" && invite.status !== "EXPIRED") {
       return NextResponse.json(
@@ -35,18 +59,16 @@ export async function PATCH(
       );
     }
 
+    const now = new Date();
     const updated = await prisma.invitation.update({
       where: { id },
       data: {
         token: generateInviteToken(),
+        createdAt: now,
         expiresAt: getInviteExpiryDate(),
         status: "PENDING",
       },
-      include: {
-        invitedBy: { select: { id: true, name: true, avatar: true } },
-        role: { select: { id: true, name: true, color: true } },
-        department: { select: { id: true, name: true, color: true } },
-      },
+      include: invitationListInclude,
     });
 
     const inviterName = session.user.name || "Bir komanda üzvü";

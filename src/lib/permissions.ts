@@ -1,5 +1,6 @@
 import { PermissionKey } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { isManagerInviteRoleName, isPrivilegedInviteRoleName } from "@/lib/invite-rbac";
 
 // =============================================================================
 // RBAC Permission Checker — Granular permission system
@@ -197,6 +198,74 @@ export async function isDepartmentHead(
     select: { headUserId: true },
   });
   return !!department && department.headUserId === userId;
+}
+
+export type InviteAuthority = {
+  isPrivileged: boolean;
+  isDepartmentScoped: boolean;
+  allowedDepartmentIds: string[];
+  lockedDepartmentId: string | null;
+};
+
+/**
+ * Dəvət göndərənin səlahiyyəti: Super Admin / Founder hər şöbə və rola
+ * dəvət edə bilər; Manager / şöbə rəhbəri yalnız öz şöbəsinə və alt rollara.
+ */
+export async function getInviteAuthority(userId: string): Promise<InviteAuthority> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      departmentId: true,
+      role: { select: { name: true } },
+      headOfDepartments: { select: { id: true } },
+    },
+  });
+
+  const roleName = user?.role?.name ?? null;
+  const isPrivileged =
+    (await isSuperAdmin(userId)) || isPrivilegedInviteRoleName(roleName);
+  const headedIds = user?.headOfDepartments.map((d) => d.id) ?? [];
+  const isDepartmentScoped =
+    !isPrivileged && (isManagerInviteRoleName(roleName) || headedIds.length > 0);
+
+  const allowedDepartmentIds = isPrivileged
+    ? []
+    : headedIds.length > 0
+      ? headedIds
+      : user?.departmentId
+        ? [user.departmentId]
+        : [];
+
+  return {
+    isPrivileged,
+    isDepartmentScoped,
+    allowedDepartmentIds,
+    lockedDepartmentId: isDepartmentScoped ? (allowedDepartmentIds[0] ?? null) : null,
+  };
+}
+
+/**
+ * Postman bypass-ə qarşı: Manager Super Admin/Founder dəvət edə bilməz
+ * və yalnız öz şöbəsinə dəvət göndərə bilər.
+ */
+export function assertInviteTargetsAllowed(
+  authority: InviteAuthority,
+  departmentId: string | null | undefined,
+  roleName: string | null | undefined
+): void {
+  if (authority.isPrivileged) return;
+
+  if (isPrivilegedInviteRoleName(roleName)) {
+    throw new PermissionError(
+      "Super Admin və ya Founder roluna yalnız Super Admin və Founder dəvət göndərə bilər"
+    );
+  }
+
+  if (authority.isDepartmentScoped) {
+    if (!departmentId || !authority.allowedDepartmentIds.includes(departmentId)) {
+      throw new PermissionError("Yalnız öz şöbənizə dəvət göndərə bilərsiniz");
+    }
+  }
 }
 
 /**

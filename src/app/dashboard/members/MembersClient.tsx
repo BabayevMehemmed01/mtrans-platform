@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import Link from "next/link"
+import { useState, useMemo, useEffect } from "react"
+import { isManagerInviteRoleName, isPrivilegedInviteRoleName } from "@/lib/invite-rbac"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react" // YENİ
 import { getTranslation } from "@/lib/i18n" // YENİ
@@ -84,10 +84,48 @@ export function MembersClient({
   const lang = (session?.user as any)?.language || "az"
   const t = getTranslation(lang)
   const currentUserId = (session?.user as any)?.id
+  const currentRoleName = (session?.user as any)?.role?.name || ""
+  const isPrivilegedInviter =
+    Boolean((session?.user as any)?.isSuperAdmin) || isPrivilegedInviteRoleName(currentRoleName)
 
   const [members, setMembers] = useState(initialData)
   const [invites, setInvites] = useState(initialInvites)
   const [searchTerm, setSearchTerm] = useState("")
+
+  const headedDepartments = useMemo(
+    () => departments.filter((d) => d.headUserId === currentUserId),
+    [departments, currentUserId]
+  )
+  const currentMember = useMemo(
+    () => members.find((m) => m.id === currentUserId),
+    [members, currentUserId]
+  )
+  const isManagerInviter =
+    !isPrivilegedInviter &&
+    (isManagerInviteRoleName(currentRoleName) || headedDepartments.length > 0)
+
+  const scopedDepartmentIds = useMemo(() => {
+    if (!isManagerInviter) return [] as string[]
+    if (headedDepartments.length > 0) return headedDepartments.map((d) => d.id as string)
+    return currentMember?.departmentId ? [currentMember.departmentId as string] : []
+  }, [isManagerInviter, headedDepartments, currentMember])
+
+  const inviteDepartments = useMemo(
+    () =>
+      isManagerInviter
+        ? departments.filter((d) => scopedDepartmentIds.includes(d.id))
+        : departments,
+    [isManagerInviter, departments, scopedDepartmentIds]
+  )
+  const lockDepartmentSelect = isManagerInviter && inviteDepartments.length <= 1
+  const lockedDepartmentId = scopedDepartmentIds[0] || ""
+  const assignableInviteRoles = useMemo(
+    () =>
+      isManagerInviter
+        ? roles.filter((r) => !isPrivilegedInviteRoleName(r.name))
+        : roles,
+    [isManagerInviter, roles]
+  )
 
   // Dialog States
   const [isInviteOpen, setIsInviteOpen] = useState(false)
@@ -112,6 +150,19 @@ export function MembersClient({
   const [editRoleId, setEditRoleId] = useState("")
 
   const router = useRouter()
+
+  useEffect(() => {
+    if (isInviteOpen && lockedDepartmentId) {
+      setInviteDepartmentId(lockedDepartmentId)
+    }
+    if (
+      isManagerInviter &&
+      inviteRoleId &&
+      !assignableInviteRoles.some((r) => r.id === inviteRoleId)
+    ) {
+      setInviteRoleId("")
+    }
+  }, [isInviteOpen, lockedDepartmentId, isManagerInviter, inviteRoleId, assignableInviteRoles])
 
   // Axtarış və Sıralama (Rəhbərlər öndə)
   const filteredAndSortedMembers = useMemo(() => {
@@ -140,7 +191,7 @@ export function MembersClient({
     setInviteName("")
     setInviteSurname("")
     setInviteEmail("")
-    setInviteDepartmentId("")
+    setInviteDepartmentId(lockedDepartmentId)
     setInviteRoleId("")
     setInviteMessage(t("membersClient.inviteMessageDefault") || "Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
     setInviteProjectIds([])
@@ -174,7 +225,7 @@ export function MembersClient({
       })
       const data = await res.json()
       if (res.ok) {
-        setInvites([data, ...invites])
+        setInvites((prev) => [data, ...prev.filter((i) => i.id !== data.id)])
         setIsInviteOpen(false)
         resetInviteForm()
         router.refresh()
@@ -236,13 +287,26 @@ export function MembersClient({
     }
   }
 
-  const handleResendInvite = async (id: string) => {
+  const handleResendInvite = async (invite: any) => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/invites/${id}`, { method: "PATCH" })
+      const res = await fetch("/api/invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: invite.name || invite.email?.split("@")[0] || "İstifadəçi",
+          surname: invite.surname || "-",
+          email: invite.email,
+          message: invite.message || "",
+          type: invite.type || "MEMBER",
+          departmentId: invite.departmentId || invite.department?.id || null,
+          roleId: invite.roleId || invite.role?.id || null,
+          projectIds: invite.projectIds || [],
+        }),
+      })
       const data = await res.json()
       if (res.ok) {
-        setInvites(invites.map(i => i.id === id ? data : i))
+        setInvites((prev) => [data, ...prev.filter((i) => i.id !== data.id)])
         router.refresh()
       } else {
         alert(data.error || (t("membersClient.resendFail") || "Dəvəti yenidən göndərmək mümkün olmadı"))
@@ -285,7 +349,7 @@ export function MembersClient({
           />
         </div>
 
-        <Dialog open={isInviteOpen} onOpenChange={(open) => { setIsInviteOpen(open); if (!open) resetInviteForm() }}>
+        <Dialog open={isInviteOpen} onOpenChange={(open) => { setIsInviteOpen(open); resetInviteForm() }}>
           <DialogTrigger asChild>
             <Button className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
               <Mail className="w-4 h-4 mr-2" />
@@ -379,12 +443,15 @@ export function MembersClient({
                   <Label htmlFor="dept">{t("membersClient.dept") || "Şöbə"}</Label>
                   <select
                     id="dept"
-                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     value={inviteDepartmentId}
                     onChange={(e) => setInviteDepartmentId(e.target.value)}
+                    disabled={lockDepartmentSelect}
                   >
-                    <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
-                    {departments.map(d => (
+                    {inviteDepartments.length !== 1 && (
+                      <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
+                    )}
+                    {inviteDepartments.map(d => (
                       <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
                   </select>
@@ -398,7 +465,7 @@ export function MembersClient({
                     onChange={(e) => setInviteRoleId(e.target.value)}
                   >
                     <option value="">{t("membersClient.standardRole") || "Standart rol"}</option>
-                    {roles.map(r => (
+                    {assignableInviteRoles.map(r => (
                       <option key={r.id} value={r.id}>{r.name}</option>
                     ))}
                   </select>
@@ -653,7 +720,7 @@ export function MembersClient({
                             variant="ghost"
                             className="h-8 w-8 p-0"
                             title={t("membersClient.resend") || "Yenidən göndər"}
-                            onClick={() => handleResendInvite(invite.id)}
+                            onClick={() => handleResendInvite(invite)}
                           >
                             <RefreshCw className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
                           </Button>
