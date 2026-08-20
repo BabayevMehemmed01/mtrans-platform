@@ -47,7 +47,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadButton, uploadFiles } from "@/utils/uploadthing";
+import { UploadButton } from "@/utils/uploadthing";
 import { useCallStore } from "@/store/useCallStore";
 import { cn, getInitials } from "@/lib/utils";
 
@@ -79,6 +79,17 @@ const pickRecorderMime = () => {
   const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
   return types.find((type) => MediaRecorder.isTypeSupported(type)) || "";
 };
+
+const blobToDataUrl = (blob: Blob) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("Failed to read audio"));
+    };
+    reader.onerror = () => reject(reader.error || new Error("Failed to read audio"));
+    reader.readAsDataURL(blob);
+  });
 
 const isAudioMessage = (msg: any) =>
   String(msg?.fileType || "").startsWith("audio/") ||
@@ -290,23 +301,26 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const sendVoiceBlob = async (blob: Blob, mimeType: string, quotedArg?: any) => {
     if (!activeChannelId || blob.size === 0) {
       setVoiceSending(false);
+      if (blob.size === 0) {
+        alert(t("chatClient.recordingError") || "Səs yazıla bilmədi");
+      }
       return;
     }
     setVoiceSending(true);
-    const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
-    const file = new File([blob], `voice-${Date.now()}.${ext}`, {
-      type: mimeType || "audio/webm",
-    });
+    const audioType = (mimeType || "audio/webm").split(";")[0] || "audio/webm";
+    const ext = audioType.includes("mp4") ? "m4a" : audioType.includes("ogg") ? "ogg" : "webm";
+    const fileName = `voice-${Date.now()}.${ext}`;
     const quoted = quotedArg ?? replyingRef.current;
-    const localUrl = URL.createObjectURL(blob);
+    const previewUrl = URL.createObjectURL(blob);
+    const tempId = "temp-voice-" + Date.now();
     mutateMessages(
       (prev: any) => [
         ...(prev || []),
         {
-          id: "temp-voice-" + Date.now(),
-          fileUrl: localUrl,
-          fileName: file.name,
-          fileType: file.type,
+          id: tempId,
+          fileUrl: previewUrl,
+          fileName,
+          fileType: audioType,
           sender: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar || currentUser.image },
           createdAt: new Date().toISOString(),
           replyPreview: quoted
@@ -317,23 +331,41 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
       false
     );
     try {
-      const uploaded = await uploadFiles("chatAttachment", { files: [file] });
-      const uploadedFile = uploaded[0];
-      await postUploadedFile(
-        {
-          url: uploadedFile?.ufsUrl || uploadedFile?.url,
-          ufsUrl: uploadedFile?.ufsUrl,
-          name: uploadedFile?.name || file.name,
-          type: uploadedFile?.type || file.type,
-        },
-        quoted
+      const dataUrl = await blobToDataUrl(blob);
+      mutateMessages(
+        (prev: any) =>
+          Array.isArray(prev)
+            ? prev.map((m: any) => (m.id === tempId ? { ...m, fileUrl: dataUrl } : m))
+            : prev,
+        false
       );
+      URL.revokeObjectURL(previewUrl);
+
+      const res = await fetch("/api/chat/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          channelId: activeChannelId,
+          fileUrl: dataUrl,
+          fileName,
+          fileType: audioType,
+        }),
+      });
+      if (!res.ok) throw new Error("voice send failed");
+      const saved = await res.json().catch(() => null);
+      rememberReply(saved?.id, quoted);
+      setReplyingToMessage(null);
+      await mutateMessages();
+      await mutateChannels();
     } catch (error) {
       console.error(error);
       alert(t("chatClient.recordingError") || "Səs yazıla bilmədi");
-      mutateMessages();
+      mutateMessages(
+        (prev: any) => (Array.isArray(prev) ? prev.filter((m: any) => m.id !== tempId) : prev),
+        false
+      );
+      URL.revokeObjectURL(previewUrl);
     } finally {
-      URL.revokeObjectURL(localUrl);
       setVoiceSending(false);
     }
   };
@@ -355,20 +387,24 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
         : new MediaRecorder(stream);
 
       recorder.ondataavailable = (event) => {
-        if (event.data.size > 0) chunksRef.current.push(event.data);
+        if (event.data && event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
       };
       recorder.onstop = () => {
         const shouldSend = sendAfterStopRef.current;
-        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const chunks = chunksRef.current.slice();
+        const audioBlob = new Blob(chunks, { type: "audio/webm" });
         const quoted = replyingRef.current;
+        const recordedType = (recorder.mimeType || "audio/webm").split(";")[0] || "audio/webm";
         resetRecordingUi();
         if (shouldSend) {
-          void sendVoiceBlobRef.current(blob, recorder.mimeType || blob.type || "audio/webm", quoted);
+          void sendVoiceBlobRef.current(audioBlob, recordedType, quoted);
         }
       };
 
       mediaRecorderRef.current = recorder;
-      recorder.start(250);
+      recorder.start();
       setIsRecording(true);
       setRecordSeconds(0);
       timerRef.current = setInterval(() => {
@@ -385,7 +421,6 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     if (!recorder || recorder.state === "inactive") return;
     sendAfterStopRef.current = true;
     setVoiceSending(true);
-    if (typeof recorder.requestData === "function") recorder.requestData();
     recorder.stop();
   };
 
