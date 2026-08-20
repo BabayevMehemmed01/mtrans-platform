@@ -40,6 +40,11 @@ export type CrmDeal = {
   probability: number;
   status: string;
   expectedCloseDate: string | null;
+  deadline: string | null;
+  clientName: string | null;
+  clientCompany: string | null;
+  clientPhone: string | null;
+  clientEmail: string | null;
   createdAt: string;
   stageId: string;
   stage?: CrmStage | null;

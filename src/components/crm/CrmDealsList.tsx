@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, MoreHorizontal, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, MoreHorizontal, Pencil, Trash2, Search, Mail, Phone } from "lucide-react";
 import { toast } from "react-hot-toast";
-import { useSession } from "next-auth/react"; // YENİ
-import { getTranslation } from "@/lib/i18n"; // YENİ
+import { useSession } from "next-auth/react";
+import { getTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CrmDealDialog } from "./CrmDealDialog";
 import { CrmStageDialog } from "./CrmStageDialog";
+import { formatDealDate, getBitrixStageColor, isDeadlineOverdue } from "./crmUtils";
 import type { CrmBoard } from "./useCrmBoard";
 import type { CrmDeal } from "./types";
 
@@ -25,7 +26,6 @@ interface CrmDealsListProps {
 // dəyişikliklər dərhal sinxronlaşır.
 // =============================================================================
 export default function CrmDealsList({ board }: CrmDealsListProps) {
-  // YENİ: Tərcümə mühərrikini qoşuruq
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
@@ -39,7 +39,16 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
   });
   const [isStageDialogOpen, setIsStageDialogOpen] = useState(false);
 
-  const filteredDeals = deals.filter((d) => d.title.toLowerCase().includes(search.toLowerCase()));
+  const filteredDeals = deals.filter((d) => {
+    const q = search.toLowerCase();
+    return (
+      d.title.toLowerCase().includes(q) ||
+      (d.clientName || "").toLowerCase().includes(q) ||
+      (d.clientCompany || "").toLowerCase().includes(q) ||
+      (d.clientEmail || "").toLowerCase().includes(q) ||
+      (d.clientPhone || "").includes(search)
+    );
+  });
 
   const openCreate = () => setDialogState({ open: true, mode: "create", deal: null });
   const openEdit = (deal: CrmDeal) => setDialogState({ open: true, mode: "edit", deal });
@@ -80,59 +89,84 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
         </div>
       </div>
 
-      <div className="border rounded-md">
+      <div className="border rounded-md bg-white">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t("crmDealsList.thDeal") || "Əqd"}</TableHead>
+              <TableHead>{t("crmDealsList.thName") || t("crmDealsList.thDeal") || "Ad"}</TableHead>
+              <TableHead>{t("crmDealsList.thClientCompany") || "Müştəri/Şirkət"}</TableHead>
+              <TableHead>{t("crmDealsList.thContactDetails") || t("crmDealsList.thContact") || "Əlaqə"}</TableHead>
               <TableHead>{t("crmDealsList.thStage") || "Mərhələ"}</TableHead>
               <TableHead>{t("crmDealsList.thValue") || "Məbləğ"}</TableHead>
-              <TableHead>{t("crmDealsList.thProbability") || "Ehtimal"}</TableHead>
-              <TableHead>{t("crmDealsList.thCloseDate") || "Bağlanma Tarixi"}</TableHead>
-              <TableHead>{t("crmDealsList.thAssignee") || "İcraçı"}</TableHead>
-              <TableHead>{t("crmDealsList.thContact") || "Əlaqə/Şirkət"}</TableHead>
+              <TableHead>{t("crmDealsList.thDeadline") || t("crmDealsList.thCloseDate") || "Deadline"}</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center h-24">
+                <TableCell colSpan={7} className="text-center h-24">
                   {t("crmDealsList.loading") || "Yüklənir..."}
                 </TableCell>
               </TableRow>
             ) : filteredDeals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center h-24 text-muted-foreground">
+                <TableCell colSpan={7} className="text-center h-24 text-muted-foreground">
                   {t("crmDealsList.noMatch") || "Əqd tapılmadı."}
                 </TableCell>
               </TableRow>
             ) : (
               filteredDeals.map((deal) => {
-                const stage = stages.find((s) => s.id === deal.stageId);
+                const stage = stages.find((s) => s.id === deal.stageId) || deal.stage;
+                const stageColor = stage ? getBitrixStageColor(stage) : "#94a3b8";
+                const clientLine = [deal.clientName, deal.clientCompany].filter(Boolean).join(" · ")
+                  || (deal.crmContact
+                    ? `${deal.crmContact.firstName} ${deal.crmContact.lastName ?? ""}`.trim()
+                    : deal.crmCompany?.name)
+                  || "—";
+                const overdue = isDeadlineOverdue(deal.deadline);
+
                 return (
                   <TableRow key={deal.id} className="cursor-pointer" onClick={() => openEdit(deal)}>
                     <TableCell className="font-medium">{deal.title}</TableCell>
                     <TableCell>
+                      <div className="flex flex-col">
+                        {deal.clientName && <span className="font-semibold text-sm">{deal.clientName}</span>}
+                        {deal.clientCompany && <span className="text-xs text-muted-foreground">{deal.clientCompany}</span>}
+                        {!deal.clientName && !deal.clientCompany && <span>{clientLine}</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
+                        {deal.clientEmail ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Mail className="w-3 h-3" /> {deal.clientEmail}
+                          </span>
+                        ) : null}
+                        {deal.clientPhone ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Phone className="w-3 h-3" /> {deal.clientPhone}
+                          </span>
+                        ) : null}
+                        {!deal.clientEmail && !deal.clientPhone && "—"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
                       {stage && (
                         <Badge
                           variant="outline"
-                          style={{ backgroundColor: `${stage.color}15`, color: stage.color, borderColor: `${stage.color}30` }}
+                          className="text-white border-transparent"
+                          style={{ backgroundColor: stageColor }}
                         >
                           {stage.name}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>{deal.value?.toLocaleString?.() ?? deal.value} {deal.currency}</TableCell>
-                    <TableCell>{deal.probability}%</TableCell>
-                    <TableCell>
-                      {deal.expectedCloseDate ? new Intl.DateTimeFormat(lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : "az-AZ").format(new Date(deal.expectedCloseDate)) : "-"}
+                    <TableCell className="font-semibold">
+                      {deal.value?.toLocaleString?.() ?? deal.value} {deal.currency}
                     </TableCell>
-                    <TableCell>{deal.assignee?.name || "-"}</TableCell>
-                    <TableCell>
-                      {deal.crmContact
-                        ? `${deal.crmContact.firstName} ${deal.crmContact.lastName ?? ""}`.trim()
-                        : deal.crmCompany?.name || "-"}
+                    <TableCell className={overdue ? "text-red-600 font-semibold" : ""}>
+                      {deal.deadline ? formatDealDate(deal.deadline, lang) : "—"}
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       <DropdownMenu>

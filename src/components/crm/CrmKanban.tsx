@@ -140,7 +140,7 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
   return (
     <div className="flex flex-col h-full space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">{t("crmKanban.salesFunnel") || "Satış Qıfı"}</h3>
+        <h3 className="text-lg font-medium">{t("crmKanban.salesFunnel") || "Deals"}</h3>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => setIsStageDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> {t("crmKanban.newStageBtn") || "Yeni Mərhələ"}

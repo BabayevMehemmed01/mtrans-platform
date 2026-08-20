@@ -11,7 +11,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const body = await req.json();
-    const { stageId, title, value, currency, probability, expectedCloseDate, status, assigneeId, crmContactId, crmCompanyId } = body;
+    const {
+      stageId, title, value, currency, probability, expectedCloseDate, deadline,
+      clientName, clientCompany, clientPhone, clientEmail,
+      status, assigneeId, crmContactId, crmCompanyId,
+    } = body;
 
     const existingDeal = await prisma.crmDeal.findFirst({ where: { id, companyId } });
     if (!existingDeal) {
@@ -30,6 +34,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (currency !== undefined) data.currency = currency;
     if (probability !== undefined) data.probability = parseInt(probability) || 0;
     if (expectedCloseDate !== undefined) data.expectedCloseDate = expectedCloseDate ? new Date(expectedCloseDate) : null;
+    if (deadline !== undefined) data.deadline = deadline ? new Date(deadline) : null;
+    if (clientName !== undefined) data.clientName = clientName ? String(clientName).trim() : null;
+    if (clientCompany !== undefined) data.clientCompany = clientCompany ? String(clientCompany).trim() : null;
+    if (clientPhone !== undefined) data.clientPhone = clientPhone ? String(clientPhone).trim() : null;
+    if (clientEmail !== undefined) data.clientEmail = clientEmail ? String(clientEmail).trim() : null;
     if (status !== undefined) data.status = status;
     if (assigneeId !== undefined) data.assigneeId = assigneeId || null;
     if (crmContactId !== undefined) data.crmContactId = crmContactId || null;

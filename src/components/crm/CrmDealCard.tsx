@@ -3,9 +3,11 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import { Calendar, GripVertical } from "lucide-react";
+import { Calendar, GripVertical, Mail, MessageCircle, Phone } from "lucide-react";
 import type { CrmDeal } from "./types";
-import { useSession } from "next-auth/react"; // YENİ: Tarix formatı üçün dil
+import { useSession } from "next-auth/react";
+import { getTranslation } from "@/lib/i18n";
+import { formatDealDate, isDeadlineOverdue } from "./crmUtils";
 
 interface CrmDealCardProps {
   deal: CrmDeal;
@@ -16,6 +18,7 @@ interface CrmDealCardProps {
 export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
 
   const {
     attributes,
@@ -31,67 +34,97 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
     transition,
   };
 
+  const overdue = isDeadlineOverdue(deal.deadline);
+  const clientName = deal.clientName || (deal.crmContact
+    ? `${deal.crmContact.firstName} ${deal.crmContact.lastName ?? ""}`.trim()
+    : null);
+  const clientCompany = deal.clientCompany || deal.crmCompany?.name || null;
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative bg-[hsl(var(--card))] rounded-xl border border-[hsl(var(--border))]",
-        "p-3.5 cursor-pointer select-none",
-        "hover:border-[hsl(var(--primary)/0.4)] hover:shadow-md transition-all duration-150",
+        "group relative bg-white rounded-lg border border-[hsl(var(--border))]",
+        "p-3 cursor-pointer select-none",
+        "hover:border-[hsl(var(--primary)/0.35)] hover:shadow-md transition-all duration-150",
         (isSortableDragging || isDragging) && "opacity-40 shadow-2xl scale-105"
       )}
       onClick={onClick}
     >
-      {/* Drag handle */}
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 rounded text-[hsl(var(--muted-foreground))]"
+        className="absolute left-0.5 top-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 rounded text-[hsl(var(--muted-foreground))]"
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical className="w-3 h-3" />
       </div>
 
-      {/* Title */}
-      <p className="text-sm font-medium leading-snug mb-2.5 line-clamp-2 pl-3 pr-1">
+      <p className="text-[13px] font-medium leading-snug mb-2 line-clamp-2 pl-3 pr-1 text-[hsl(var(--foreground))]">
         {deal.title}
       </p>
 
-      {/* Value + probability */}
-      <div className="flex items-center justify-between mb-2.5 pl-3">
-        <span className="font-semibold text-sm">
-          {deal.value?.toLocaleString?.() ?? deal.value} {deal.currency}
-        </span>
-        {deal.probability > 0 && (
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))] font-medium">
-            {deal.probability}%
-          </span>
+      <div className="pl-3 space-y-0.5">
+        <p className="font-bold text-sm text-[hsl(var(--foreground))]">
+          {(deal.value ?? 0).toLocaleString()} {deal.currency}
+        </p>
+        {clientName && (
+          <p className="font-bold text-[12px] leading-tight truncate">{clientName}</p>
+        )}
+        {clientCompany && (
+          <p className="font-bold text-[12px] leading-tight truncate text-[hsl(var(--foreground)/0.85)]">{clientCompany}</p>
+        )}
+        {deal.clientPhone && (
+          <p className="font-light text-[11px] text-[hsl(var(--muted-foreground))] truncate">{deal.clientPhone}</p>
+        )}
+        {deal.clientEmail && (
+          <p className="font-light text-[11px] text-[hsl(var(--muted-foreground))] truncate">{deal.clientEmail}</p>
         )}
       </div>
 
-      {/* Footer */}
-      <div className="flex items-center justify-between pt-2.5 border-t border-[hsl(var(--border)/0.5)] pl-3">
-        <div className="flex items-center gap-1 text-[10px] text-[hsl(var(--muted-foreground))]">
-          {deal.expectedCloseDate && (
-            <>
-              <Calendar className="w-3 h-3" />
-              {new Intl.DateTimeFormat(lang === "en" ? "en-US" : lang === "ru" ? "ru-RU" : "az-AZ").format(new Date(deal.expectedCloseDate))}
-            </>
-          )}
+      <div className="flex items-end justify-between gap-2 mt-2.5 pt-2 border-t border-[hsl(var(--border)/0.6)] pl-3">
+        <div className="flex items-center gap-1 min-w-0">
+          <Calendar className={cn("w-3 h-3 flex-shrink-0", overdue ? "text-red-500" : "text-[hsl(var(--muted-foreground))]")} />
+          <span
+            className={cn(
+              "text-[10px] font-medium truncate",
+              overdue ? "text-red-600" : "text-[hsl(var(--muted-foreground))]"
+            )}
+          >
+            {deal.deadline
+              ? formatDealDate(deal.deadline, lang)
+              : (t("crmCalendar.noDeadline") || "Deadline yoxdur")}
+          </span>
         </div>
 
-        {deal.assignee ? (
-          <div
-            className="w-6 h-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] text-white font-bold"
-            title={deal.assignee.name ?? undefined}
-          >
-            {deal.assignee.name?.[0]}
-          </div>
-        ) : (
-          <div className="w-6 h-6 rounded-full border-2 border-dashed border-[hsl(var(--border))]" />
-        )}
+        <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+          <QuickAction icon={Phone} label={t("crmDealCard.call") || "Telefon"} />
+          <QuickAction icon={Mail} label={t("crmDealCard.mail") || "Mail"} />
+          <QuickAction icon={MessageCircle} label={t("crmDealCard.chat") || "Chat"} />
+          {deal.assignee ? (
+            <div
+              className="ml-1 w-6 h-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] text-white font-bold"
+              title={deal.assignee.name ?? undefined}
+            >
+              {deal.assignee.name?.[0]}
+            </div>
+          ) : null}
+        </div>
       </div>
     </div>
+  );
+}
+
+function QuickAction({ icon: Icon, label }: { icon: typeof Phone; label: string }) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      className="p-1 rounded-md text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))] transition-colors"
+    >
+      <Icon className="w-3.5 h-3.5" />
+    </button>
   );
 }

@@ -764,7 +764,11 @@
     "tabDeals": "Deals",
     "tabContacts": "Contacts & Companies",
     "viewKanban": "Kanban",
-    "viewList": "List"
+    "viewList": "List",
+    "tabKanban": "Kanban",
+    "tabList": "List",
+    "tabCalendar": "Calendar",
+    "tabContactCenter": "Contact Center"
   },
   "crmCompanySelect": {
     "errorNameRequired": "Company name is required",
@@ -836,6 +840,15 @@
     "notSelected": "Not selected",
     "contactPerson": "Contact Person",
     "relatedCompany": "Related Company",
+    "deadline": "Deadline",
+    "clientName": "Client Name",
+    "clientCompany": "Company name",
+    "clientPhone": "Phone Number",
+    "clientEmail": "Email",
+    "clientNamePlaceholder": "e.g. John Smith",
+    "clientCompanyPlaceholder": "e.g. ABC LLC",
+    "clientPhonePlaceholder": "+1 555 000 0000",
+    "clientEmailPlaceholder": "name@company.com",
     "status": "Status",
     "statusOpen": "Open",
     "statusWon": "Won",
@@ -860,6 +873,10 @@
     "thCloseDate": "Close Date",
     "thAssignee": "Assignee",
     "thContact": "Contact/Company",
+    "thName": "Name",
+    "thClientCompany": "Client/Company",
+    "thContactDetails": "Contact",
+    "thDeadline": "Deadline",
     "loading": "Loading...",
     "noMatch": "No deals found.",
     "editBtn": "Edit",
@@ -868,7 +885,7 @@
   "crmKanban": {
     "errorStageUpdate": "Deal stage could not be updated",
     "loading": "Loading...",
-    "salesFunnel": "Sales Funnel",
+    "salesFunnel": "Deals",
     "newStageBtn": "New Stage",
     "newDealBtn": "New Deal"
   },
@@ -876,6 +893,33 @@
     "addDealTitle": "Add deal",
     "total": "total",
     "addDealEmpty": "+ Add deal"
+  },
+  "crmDealCard": {
+    "call": "Phone",
+    "mail": "Mail",
+    "chat": "Chat"
+  },
+  "crmCalendar": {
+    "today": "Today",
+    "noDeadline": "No deadline",
+    "weekMon": "Mon",
+    "weekTue": "Tue",
+    "weekWed": "Wed",
+    "weekThu": "Thu",
+    "weekFri": "Fri",
+    "weekSat": "Sat",
+    "weekSun": "Sun"
+  },
+  "crmContactCenter": {
+    "title": "Contact Center",
+    "subtitle": "Manage all customer communication channels in one place",
+    "mail": "Mail",
+    "telephony": "Telephony",
+    "whatsapp": "WhatsApp",
+    "liveChat": "Live Chat",
+    "telegram": "Telegram",
+    "facebook": "Facebook",
+    "comingSoon": "Coming soon"
   },
   "crmStageDialog": {
     "errorNameRequired": "Stage name is required",

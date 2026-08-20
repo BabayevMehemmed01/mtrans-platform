@@ -764,7 +764,11 @@
     "tabDeals": "Сделки",
     "tabContacts": "Контакты и компании",
     "viewKanban": "Канбан",
-    "viewList": "Таблица"
+    "viewList": "Таблица",
+    "tabKanban": "Канбан",
+    "tabList": "Список",
+    "tabCalendar": "Календарь",
+    "tabContactCenter": "Контакт-центр"
   },
   "crmCompanySelect": {
     "errorNameRequired": "Название компании обязательно",
@@ -836,6 +840,15 @@
     "notSelected": "Не выбрано",
     "contactPerson": "Контактное лицо",
     "relatedCompany": "Связанная компания",
+    "deadline": "Дедлайн",
+    "clientName": "Имя клиента",
+    "clientCompany": "Название компании",
+    "clientPhone": "Номер телефона",
+    "clientEmail": "Email",
+    "clientNamePlaceholder": "Например: Али Мамедов",
+    "clientCompanyPlaceholder": "Например: ООО ABC",
+    "clientPhonePlaceholder": "+994 50 000 00 00",
+    "clientEmailPlaceholder": "name@company.com",
     "status": "Статус",
     "statusOpen": "Открыта",
     "statusWon": "Выиграна",
@@ -860,6 +873,10 @@
     "thCloseDate": "Дата закрытия",
     "thAssignee": "Исполнитель",
     "thContact": "Контакт/Компания",
+    "thName": "Название",
+    "thClientCompany": "Клиент/Компания",
+    "thContactDetails": "Контакт",
+    "thDeadline": "Дедлайн",
     "loading": "Загрузка...",
     "noMatch": "Сделки не найдены.",
     "editBtn": "Редактировать",
@@ -868,7 +885,7 @@
   "crmKanban": {
     "errorStageUpdate": "Не удалось обновить этап сделки",
     "loading": "Загрузка...",
-    "salesFunnel": "Воронка продаж",
+    "salesFunnel": "Сделки",
     "newStageBtn": "Новый этап",
     "newDealBtn": "Новая сделка"
   },
@@ -876,6 +893,33 @@
     "addDealTitle": "Добавить сделку",
     "total": "итого",
     "addDealEmpty": "+ Добавить сделку"
+  },
+  "crmDealCard": {
+    "call": "Телефон",
+    "mail": "Почта",
+    "chat": "Чат"
+  },
+  "crmCalendar": {
+    "today": "Сегодня",
+    "noDeadline": "Нет дедлайна",
+    "weekMon": "Пн",
+    "weekTue": "Вт",
+    "weekWed": "Ср",
+    "weekThu": "Чт",
+    "weekFri": "Пт",
+    "weekSat": "Сб",
+    "weekSun": "Вс"
+  },
+  "crmContactCenter": {
+    "title": "Контакт-центр",
+    "subtitle": "Управляйте всеми каналами связи с клиентами в одном месте",
+    "mail": "Mail",
+    "telephony": "Telephony",
+    "whatsapp": "WhatsApp",
+    "liveChat": "Live Chat",
+    "telegram": "Telegram",
+    "facebook": "Facebook",
+    "comingSoon": "Скоро"
   },
   "crmStageDialog": {
     "errorNameRequired": "Название этапа обязательно",

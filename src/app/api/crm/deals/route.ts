@@ -35,7 +35,11 @@ export async function POST(req: Request) {
     if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
 
     const body = await req.json();
-    const { title, value, currency, probability, expectedCloseDate, stageId, crmContactId, crmCompanyId, assigneeId } = body;
+    const {
+      title, value, currency, probability, expectedCloseDate, deadline,
+      clientName, clientCompany, clientPhone, clientEmail,
+      stageId, crmContactId, crmCompanyId, assigneeId,
+    } = body;
 
     if (!title || !stageId) {
       return NextResponse.json({ error: "Title and stage are required" }, { status: 400 });
@@ -56,6 +60,11 @@ export async function POST(req: Request) {
         currency: currency || "AZN",
         probability: probability ? parseInt(probability) : 0,
         expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null,
+        deadline: deadline ? new Date(deadline) : null,
+        clientName: clientName?.trim() || null,
+        clientCompany: clientCompany?.trim() || null,
+        clientPhone: clientPhone?.trim() || null,
+        clientEmail: clientEmail?.trim() || null,
         companyId,
         stageId,
         crmContactId: crmContactId || null,

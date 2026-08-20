@@ -764,7 +764,11 @@
     "tabDeals": "Əqdlər",
     "tabContacts": "Əlaqələr & Şirkətlər",
     "viewKanban": "Kanban",
-    "viewList": "Cədvəl"
+    "viewList": "Cədvəl",
+    "tabKanban": "Kanban",
+    "tabList": "Siyahı",
+    "tabCalendar": "Təqvim",
+    "tabContactCenter": "Əlaqə Mərkəzi"
   },
   "crmCompanySelect": {
     "errorNameRequired": "Şirkət adı mütləqdir",
@@ -836,6 +840,15 @@
     "notSelected": "Seçilməyib",
     "contactPerson": "Əlaqədar Şəxs",
     "relatedCompany": "Əlaqədar Şirkət",
+    "deadline": "Deadline",
+    "clientName": "Müştəri Adı",
+    "clientCompany": "Şirkət adı",
+    "clientPhone": "Telefon Nömrəsi",
+    "clientEmail": "Email",
+    "clientNamePlaceholder": "Məs: Əli Məmmədov",
+    "clientCompanyPlaceholder": "Məs: ABC MMC",
+    "clientPhonePlaceholder": "+994 50 000 00 00",
+    "clientEmailPlaceholder": "name@company.com",
     "status": "Status",
     "statusOpen": "Açıq",
     "statusWon": "Qazanıldı",
@@ -860,6 +873,10 @@
     "thCloseDate": "Bağlanma Tarixi",
     "thAssignee": "İcraçı",
     "thContact": "Əlaqə/Şirkət",
+    "thName": "Ad",
+    "thClientCompany": "Müştəri/Şirkət",
+    "thContactDetails": "Əlaqə",
+    "thDeadline": "Deadline",
     "loading": "Yüklənir...",
     "noMatch": "Əqd tapılmadı.",
     "editBtn": "Redaktə et",
@@ -868,7 +885,7 @@
   "crmKanban": {
     "errorStageUpdate": "Əqdin mərhələsi yenilənmədi",
     "loading": "Yüklənir...",
-    "salesFunnel": "Satış Qıfı",
+    "salesFunnel": "Əqdlər",
     "newStageBtn": "Yeni Mərhələ",
     "newDealBtn": "Yeni Əqd"
   },
@@ -876,6 +893,33 @@
     "addDealTitle": "Əqd əlavə et",
     "total": "məcmu",
     "addDealEmpty": "+ Əqd əlavə et"
+  },
+  "crmDealCard": {
+    "call": "Telefon",
+    "mail": "Mail",
+    "chat": "Chat"
+  },
+  "crmCalendar": {
+    "today": "Bu gün",
+    "noDeadline": "Deadline yoxdur",
+    "weekMon": "B.e",
+    "weekTue": "Ç.a",
+    "weekWed": "Ç",
+    "weekThu": "C.a",
+    "weekFri": "C",
+    "weekSat": "Ş",
+    "weekSun": "B"
+  },
+  "crmContactCenter": {
+    "title": "Əlaqə Mərkəzi",
+    "subtitle": "Müştərilərlə əlaqə kanallarını bir yerdən idarə edin",
+    "mail": "Mail",
+    "telephony": "Telephony",
+    "whatsapp": "WhatsApp",
+    "liveChat": "Live Chat",
+    "telegram": "Telegram",
+    "facebook": "Facebook",
+    "comingSoon": "Tezliklə"
   },
   "crmStageDialog": {
     "errorNameRequired": "Mərhələ adı mütləqdir",

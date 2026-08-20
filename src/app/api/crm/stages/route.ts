@@ -16,11 +16,11 @@ export async function GET(req: Request) {
 
     if (stages.length === 0) {
       const defaultStages = [
-        { name: "Yeni Müraciət", color: "#3b82f6", position: 0 },
-        { name: "Danışıqlar", color: "#f59e0b", position: 1 },
-        { name: "Müqavilə Hazırlığı", color: "#8b5cf6", position: 2 },
-        { name: "Qazanıldı", color: "#10b981", position: 3 },
-        { name: "İtirilmiş", color: "#ef4444", position: 4 },
+        { name: "Yeni Müraciət", color: "#2FC6F6", position: 0 },
+        { name: "Danışıqlar", color: "#55D0E0", position: 1 },
+        { name: "Müqavilə Hazırlığı", color: "#8284F8", position: 2 },
+        { name: "Qazanıldı", color: "#F7A700", position: 3 },
+        { name: "İtirilmiş", color: "#A8ADB4", position: 4 },
       ];
 
       await prisma.crmStage.createMany({
