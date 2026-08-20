@@ -573,7 +573,11 @@
     "reply": "Reply",
     "attachImage": "Photo",
     "attachFile": "File / photo",
-    "voiceMessage": "Voice message"
+    "voiceMessage": "Voice message",
+    "micDenied": "Microphone permission was denied",
+    "recordingError": "Could not record audio",
+    "cancelRecording": "Cancel",
+    "sendVoice": "Send"
   },
   "callOverlay": {
     "incomingVideo": "Incoming video call...",

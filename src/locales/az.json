@@ -573,7 +573,11 @@
     "reply": "Cavab ver",
     "attachImage": "Şəkil",
     "attachFile": "Fayl / şəkil",
-    "voiceMessage": "Səsli mesaj"
+    "voiceMessage": "Səsli mesaj",
+    "micDenied": "Mikrofon icazəsi verilmədi",
+    "recordingError": "Səs yazıla bilmədi",
+    "cancelRecording": "Ləğv et",
+    "sendVoice": "Göndər"
   },
   "callOverlay": {
     "incomingVideo": "Video zəng edir...",

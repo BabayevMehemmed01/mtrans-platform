@@ -27,6 +27,7 @@ import {
   Reply,
   SquarePen,
   Users,
+  Trash2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -46,13 +47,42 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { UploadButton } from "@/utils/uploadthing";
+import { UploadButton, uploadFiles } from "@/utils/uploadthing";
 import { useCallStore } from "@/store/useCallStore";
 import { cn, getInitials } from "@/lib/utils";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 const EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏"];
+const REPLY_STORE_KEY = "chat-reply-previews";
+
+type ReplyPreview = { name: string; content: string };
+
+const loadReplyStore = (): Record<string, ReplyPreview> => {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = sessionStorage.getItem(REPLY_STORE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+};
+
+const formatRecordTime = (totalSeconds: number) => {
+  const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, "0");
+  const seconds = (totalSeconds % 60).toString().padStart(2, "0");
+  return `${minutes}:${seconds}`;
+};
+
+const pickRecorderMime = () => {
+  if (typeof MediaRecorder === "undefined") return "";
+  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg;codecs=opus"];
+  return types.find((type) => MediaRecorder.isTypeSupported(type)) || "";
+};
+
+const isAudioMessage = (msg: any) =>
+  String(msg?.fileType || "").startsWith("audio/") ||
+  /\.(webm|ogg|mp3|m4a|wav)$/i.test(String(msg?.fileName || ""));
 
 type ChatTab = "all" | "direct" | "departments" | "projects" | "collab";
 type NewChatModule = "direct" | "departments" | "projects" | "collab";
@@ -83,10 +113,22 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   const [dialogTab, setDialogTab] = useState<NewChatModule>("direct");
   const [headerSearchOpen, setHeaderSearchOpen] = useState(false);
   const [headerQuery, setHeaderQuery] = useState("");
-  const [replyTo, setReplyTo] = useState<any | null>(null);
+  const [replyingToMessage, setReplyingToMessage] = useState<any | null>(null);
+  const [replyPreviews, setReplyPreviews] = useState<Record<string, ReplyPreview>>(loadReplyStore);
   const [reactions, setReactions] = useState<Record<string, string>>({});
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const [voiceSending, setVoiceSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sendAfterStopRef = useRef(false);
+  const sendVoiceBlobRef = useRef<(blob: Blob, mimeType: string, quoted?: any) => Promise<void>>(async () => {});
+  const replyingRef = useRef<any>(null);
+  replyingRef.current = replyingToMessage;
 
   const { data: messages, mutate: mutateMessages } = useSWR(
     activeChannelId ? `/api/chat/messages?channelId=${activeChannelId}` : null,
@@ -102,19 +144,94 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   }, [messages]);
 
   useEffect(() => {
-    setReplyTo(null);
+    try {
+      sessionStorage.setItem(REPLY_STORE_KEY, JSON.stringify(replyPreviews));
+    } catch {
+      // ignore quota / private mode
+    }
+  }, [replyPreviews]);
+
+  const replySnippet = (msg: any) => {
+    if (msg?.content) return String(msg.content);
+    if (isAudioMessage(msg)) return t("chatClient.voiceMessage") || "Səsli mesaj";
+    return msg?.fileName || t("chatClient.downloadFile") || "Fayl";
+  };
+
+  const replyAuthor = (msg: any) =>
+    msg?.sender?.id === currentUser.id
+      ? t("chatClient.me") || "Mən"
+      : msg?.sender?.name || t("chatClient.unknown") || "Naməlum";
+
+  const rememberReply = (messageId: string | undefined, quoted: any | null) => {
+    if (!messageId || !quoted) return;
+    const preview: ReplyPreview = {
+      name: replyAuthor(quoted),
+      content: replySnippet(quoted),
+    };
+    setReplyPreviews((prev) => ({ ...prev, [messageId]: preview }));
+  };
+
+  const stopMediaTracks = () => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  };
+
+  const clearRecordingTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const resetRecordingUi = () => {
+    clearRecordingTimer();
+    setIsRecording(false);
+    setRecordSeconds(0);
+    mediaRecorderRef.current = null;
+    chunksRef.current = [];
+    sendAfterStopRef.current = false;
+    stopMediaTracks();
+  };
+
+  const cancelRecording = () => {
+    sendAfterStopRef.current = false;
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+    } else {
+      resetRecordingUi();
+    }
+  };
+
+  useEffect(() => {
+    setReplyingToMessage(null);
     setHeaderQuery("");
     setHeaderSearchOpen(false);
+    cancelRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reset composer when switching chats
   }, [activeChannelId]);
+
+  useEffect(() => {
+    return () => {
+      sendAfterStopRef.current = false;
+      const recorder = mediaRecorderRef.current;
+      if (recorder && recorder.state !== "inactive") recorder.stop();
+      stopMediaTracks();
+      clearRecordingTimer();
+    };
+  }, []);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!messageText.trim() || !activeChannelId) return;
+    if (!messageText.trim() || !activeChannelId || isRecording) return;
 
     const tempText = messageText;
-    const quoted = replyTo;
+    const quoted = replyingToMessage;
+    const preview = quoted
+      ? { name: replyAuthor(quoted), content: replySnippet(quoted) }
+      : null;
     setMessageText("");
-    setReplyTo(null);
+    setReplyingToMessage(null);
     if (textareaRef.current) textareaRef.current.style.height = "40px";
 
     mutateMessages(
@@ -125,40 +242,154 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
           content: tempText,
           sender: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar || currentUser.image },
           createdAt: new Date().toISOString(),
-          replyPreview: quoted
-            ? { name: quoted.sender?.name, content: quoted.content || quoted.fileName }
-            : null,
+          replyPreview: preview,
         },
       ],
       false
     );
 
-    await fetch("/api/chat/messages", {
+    const res = await fetch("/api/chat/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channelId: activeChannelId, content: tempText }),
     });
+    const saved = await res.json().catch(() => null);
+    rememberReply(saved?.id, quoted);
+    mutateMessages();
+    mutateChannels();
+  };
+
+  const postUploadedFile = async (file: { url?: string; ufsUrl?: string; name?: string; type?: string }, quoted = replyingRef.current) => {
+    if (!activeChannelId) return;
+    const fileUrl = file.ufsUrl || file.url;
+    if (!fileUrl) return;
+
+    setReplyingToMessage(null);
+
+    const res = await fetch("/api/chat/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        channelId: activeChannelId,
+        fileUrl,
+        fileName: file.name,
+        fileType: file.type,
+      }),
+    });
+    const saved = await res.json().catch(() => null);
+    rememberReply(saved?.id, quoted);
     mutateMessages();
     mutateChannels();
   };
 
   const handleUploadComplete = async (res: any[]) => {
-    if (!activeChannelId || !res || res.length === 0) return;
-    const file = res[0];
-
-    await fetch("/api/chat/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        channelId: activeChannelId,
-        fileUrl: file.url,
-        fileName: file.name,
-        fileType: file.type,
-      }),
-    });
-    mutateMessages();
-    mutateChannels();
+    if (!res || res.length === 0) return;
+    await postUploadedFile(res[0]);
   };
+
+  const sendVoiceBlob = async (blob: Blob, mimeType: string, quotedArg?: any) => {
+    if (!activeChannelId || blob.size === 0) {
+      setVoiceSending(false);
+      return;
+    }
+    setVoiceSending(true);
+    const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
+    const file = new File([blob], `voice-${Date.now()}.${ext}`, {
+      type: mimeType || "audio/webm",
+    });
+    const quoted = quotedArg ?? replyingRef.current;
+    const localUrl = URL.createObjectURL(blob);
+    mutateMessages(
+      (prev: any) => [
+        ...(prev || []),
+        {
+          id: "temp-voice-" + Date.now(),
+          fileUrl: localUrl,
+          fileName: file.name,
+          fileType: file.type,
+          sender: { id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar || currentUser.image },
+          createdAt: new Date().toISOString(),
+          replyPreview: quoted
+            ? { name: replyAuthor(quoted), content: replySnippet(quoted) }
+            : null,
+        },
+      ],
+      false
+    );
+    try {
+      const uploaded = await uploadFiles("chatAttachment", { files: [file] });
+      const uploadedFile = uploaded[0];
+      await postUploadedFile(
+        {
+          url: uploadedFile?.ufsUrl || uploadedFile?.url,
+          ufsUrl: uploadedFile?.ufsUrl,
+          name: uploadedFile?.name || file.name,
+          type: uploadedFile?.type || file.type,
+        },
+        quoted
+      );
+    } catch (error) {
+      console.error(error);
+      alert(t("chatClient.recordingError") || "Səs yazıla bilmədi");
+      mutateMessages();
+    } finally {
+      URL.revokeObjectURL(localUrl);
+      setVoiceSending(false);
+    }
+  };
+
+  const startRecording = async () => {
+    if (isRecording || voiceSending || !activeChannelId) return;
+    if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices?.getUserMedia) {
+      alert(t("chatClient.recordingError") || "Səs yazıla bilmədi");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      sendAfterStopRef.current = false;
+      const mimeType = pickRecorderMime();
+      const recorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
+
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) chunksRef.current.push(event.data);
+      };
+      recorder.onstop = () => {
+        const shouldSend = sendAfterStopRef.current;
+        const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const quoted = replyingRef.current;
+        resetRecordingUi();
+        if (shouldSend) {
+          void sendVoiceBlobRef.current(blob, recorder.mimeType || blob.type || "audio/webm", quoted);
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start(250);
+      setIsRecording(true);
+      setRecordSeconds(0);
+      timerRef.current = setInterval(() => {
+        setRecordSeconds((value) => value + 1);
+      }, 1000);
+    } catch {
+      stopMediaTracks();
+      alert(t("chatClient.micDenied") || "Mikrofon icazəsi verilmədi");
+    }
+  };
+
+  const sendRecording = () => {
+    const recorder = mediaRecorderRef.current;
+    if (!recorder || recorder.state === "inactive") return;
+    sendAfterStopRef.current = true;
+    setVoiceSending(true);
+    if (typeof recorder.requestData === "function") recorder.requestData();
+    recorder.stop();
+  };
+
+  sendVoiceBlobRef.current = sendVoiceBlob;
 
   const insertEmoji = (emoji: string) => {
     setMessageText((prev) => prev + emoji);
@@ -216,10 +447,14 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
 
   const visibleMessages = useMemo(() => {
     if (!Array.isArray(messages)) return [];
+    const withReplies = messages.map((m: any) => ({
+      ...m,
+      replyPreview: m.replyPreview || replyPreviews[m.id] || null,
+    }));
     const q = headerQuery.trim().toLowerCase();
-    if (!q) return messages;
-    return messages.filter((m: any) => (m.content || m.fileName || "").toLowerCase().includes(q));
-  }, [messages, headerQuery]);
+    if (!q) return withReplies;
+    return withReplies.filter((m: any) => (m.content || m.fileName || "").toLowerCase().includes(q));
+  }, [messages, headerQuery, replyPreviews]);
 
   const startCall = async (type: "AUDIO" | "VIDEO") => {
     if (!activeChannel || callStarting) return;
@@ -291,6 +526,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
     const last = c.messages?.[0];
     if (!last) return t("chatClient.noMessages") || "Bu söhbətdə hələ mesaj yoxdur.";
     if (last.content) return last.content;
+    if (isAudioMessage(last)) return t("chatClient.voiceMessage") || "Səsli mesaj";
     return last.fileName || t("chatClient.downloadFile") || "Fayl";
   };
 
@@ -543,7 +779,9 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                               </div>
                             )}
                             {msg.content && <p className="whitespace-pre-wrap break-words leading-5">{msg.content}</p>}
-                            {msg.fileUrl && (
+                            {isAudioMessage(msg) && msg.fileUrl ? (
+                              <audio controls src={msg.fileUrl} className="mt-1 max-w-full" />
+                            ) : msg.fileUrl ? (
                               <a
                                 href={msg.fileUrl}
                                 target="_blank"
@@ -555,7 +793,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                                   {msg.fileName || t("chatClient.downloadFile") || "Faylı yüklə"}
                                 </span>
                               </a>
-                            )}
+                            ) : null}
                             <div className="mt-0.5 flex items-center justify-end gap-1">
                               {reactions[msg.id] && <span className="text-xs">{reactions[msg.id]}</span>}
                               <span className="text-[11px] text-[#667781]">
@@ -602,7 +840,12 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                                 </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align={isMe ? "end" : "start"} side="top" sideOffset={6}>
-                                <DropdownMenuItem onClick={() => setReplyTo(msg)}>
+                                <DropdownMenuItem
+                                  onSelect={() => {
+                                    setReplyingToMessage(msg);
+                                    requestAnimationFrame(() => textareaRef.current?.focus());
+                                  }}
+                                >
                                   <Reply className="mr-2 size-4" />
                                   {t("chatClient.reply") || "Cavab ver"}
                                 </DropdownMenuItem>
@@ -619,106 +862,145 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
             </div>
 
             <div className="shrink-0 bg-[#f0f2f5] px-3 py-2">
-              {replyTo && (
-                <div className="mb-2 flex items-center gap-2 rounded-lg border-l-4 border-[#06cf9c] bg-white px-3 py-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-[#06cf9c]">
-                      {replyTo.sender?.id === currentUser.id
-                        ? t("chatClient.me") || "Mən"
-                        : replyTo.sender?.name}
-                    </p>
-                    <p className="truncate text-xs text-[#667781]">
-                      {replyTo.content || replyTo.fileName}
-                    </p>
-                  </div>
-                  <button type="button" onClick={() => setReplyTo(null)} className="text-[#54656f]">
-                    <X className="size-4" />
-                  </button>
-                </div>
-              )}
-
               <form onSubmit={handleSendMessage} className="flex items-end gap-1.5">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button type="button" size="icon" variant="ghost" className="mb-0.5 rounded-full text-[#54656f]">
-                      <Smile className="size-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="grid grid-cols-6 gap-1 p-2">
-                    {EMOJIS.concat(["🔥", "👏", "🎉", "👌", "😁", "🤝"]).map((emoji) => (
+                {isRecording ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="mb-0.5 rounded-full text-red-500 hover:bg-red-50 hover:text-red-600"
+                    title={t("chatClient.cancelRecording") || "Ləğv et"}
+                    onClick={cancelRecording}
+                  >
+                    <Trash2 className="size-5" />
+                  </Button>
+                ) : (
+                  <>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" size="icon" variant="ghost" className="mb-0.5 rounded-full text-[#54656f]">
+                          <Smile className="size-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="grid grid-cols-6 gap-1 p-2">
+                        {EMOJIS.concat(["🔥", "👏", "🎉", "👌", "😁", "🤝"]).map((emoji) => (
+                          <button
+                            key={emoji}
+                            type="button"
+                            className="rounded p-1 text-lg hover:bg-gray-100"
+                            onClick={() => insertEmoji(emoji)}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" size="icon" variant="ghost" className="mb-0.5 rounded-full text-[#54656f]">
+                          <Plus className="size-5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-48">
+                        <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
+                          <ImageIcon className="size-4" />
+                          {t("chatClient.attachImage") || "Şəkil"}
+                          <span className="sr-only">upload</span>
+                        </DropdownMenuItem>
+                        <div className="px-2 pb-2">
+                          <UploadButton
+                            endpoint="chatAttachment"
+                            onClientUploadComplete={handleUploadComplete}
+                            onUploadError={(error: Error) => {
+                              alert(
+                                (t("chatClient.errorPrefix") || "Xəta: {message}").replace(
+                                  "{message}",
+                                  error.message
+                                )
+                              );
+                            }}
+                            appearance={{
+                              button:
+                                "w-full h-8 ut-ready:bg-transparent ut-uploading:bg-transparent after:bg-transparent text-sm text-[#111b21] border-0 shadow-none",
+                              allowedContent: "hidden",
+                            }}
+                            content={{
+                              button: (
+                                <span className="flex items-center gap-2">
+                                  <FileText className="size-4" />
+                                  {t("chatClient.attachFile") || "Fayl / şəkil"}
+                                </span>
+                              ),
+                            }}
+                          />
+                        </div>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </>
+                )}
+
+                <div className="min-w-0 flex-1 overflow-hidden rounded-lg bg-white">
+                  {replyingToMessage && (
+                    <div className="flex items-start gap-2 border-l-4 border-[#06cf9c] bg-[#f0f2f5] px-3 py-1.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-[#06cf9c]">
+                          {replyAuthor(replyingToMessage)}
+                        </p>
+                        <p className="truncate text-xs text-[#667781]">
+                          {replySnippet(replyingToMessage)}
+                        </p>
+                      </div>
                       <button
-                        key={emoji}
                         type="button"
-                        className="rounded p-1 text-lg hover:bg-gray-100"
-                        onClick={() => insertEmoji(emoji)}
+                        onClick={() => setReplyingToMessage(null)}
+                        className="mt-0.5 shrink-0 text-[#54656f] hover:text-[#111b21]"
                       >
-                        {emoji}
+                        <X className="size-4" />
                       </button>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button type="button" size="icon" variant="ghost" className="mb-0.5 rounded-full text-[#54656f]">
-                      <Plus className="size-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-48">
-                    <DropdownMenuItem className="gap-2" onSelect={(e) => e.preventDefault()}>
-                      <ImageIcon className="size-4" />
-                      {t("chatClient.attachImage") || "Şəkil"}
-                      <span className="sr-only">upload</span>
-                    </DropdownMenuItem>
-                    <div className="px-2 pb-2">
-                      <UploadButton
-                        endpoint="chatAttachment"
-                        onClientUploadComplete={handleUploadComplete}
-                        onUploadError={(error: Error) => {
-                          alert(
-                            (t("chatClient.errorPrefix") || "Xəta: {message}").replace(
-                              "{message}",
-                              error.message
-                            )
-                          );
-                        }}
-                        appearance={{
-                          button:
-                            "w-full h-8 ut-ready:bg-transparent ut-uploading:bg-transparent after:bg-transparent text-sm text-[#111b21] border-0 shadow-none",
-                          allowedContent: "hidden",
-                        }}
-                        content={{
-                          button: (
-                            <span className="flex items-center gap-2">
-                              <FileText className="size-4" />
-                              {t("chatClient.attachFile") || "Fayl / şəkil"}
-                            </span>
-                          ),
-                        }}
-                      />
                     </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  )}
 
-                <Textarea
-                  ref={textareaRef}
-                  value={messageText}
-                  onChange={(e) => {
-                    setMessageText(e.target.value);
-                    resizeTextarea();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder={t("chatClient.placeholder") || "Mesajınızı yazın..."}
-                  rows={1}
-                  className="max-h-[120px] min-h-[40px] flex-1 resize-none rounded-lg border-0 bg-white px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
-                />
+                  {isRecording ? (
+                    <div className="flex h-10 items-center gap-2 px-3">
+                      <span className="size-2.5 shrink-0 animate-pulse rounded-full bg-red-500" />
+                      <span className="text-sm tabular-nums text-[#111b21]">
+                        {formatRecordTime(recordSeconds)}
+                      </span>
+                    </div>
+                  ) : (
+                    <Textarea
+                      ref={textareaRef}
+                      value={messageText}
+                      onChange={(e) => {
+                        setMessageText(e.target.value);
+                        resizeTextarea();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
+                      placeholder={t("chatClient.placeholder") || "Mesajınızı yazın..."}
+                      rows={1}
+                      className="max-h-[120px] min-h-[40px] w-full resize-none rounded-none border-0 bg-transparent px-3 py-2.5 text-sm shadow-none focus-visible:ring-0"
+                    />
+                  )}
+                </div>
 
-                {messageText.trim() ? (
+                {isRecording || voiceSending ? (
+                  <Button
+                    type="button"
+                    size="icon"
+                    disabled={voiceSending}
+                    className="mb-0.5 rounded-full bg-[#00a884] text-white hover:bg-[#008f72]"
+                    title={t("chatClient.sendVoice") || "Göndər"}
+                    onClick={sendRecording}
+                  >
+                    {voiceSending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                  </Button>
+                ) : messageText.trim() ? (
                   <Button
                     type="submit"
                     size="icon"
@@ -733,6 +1015,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
                     variant="ghost"
                     className="mb-0.5 rounded-full text-[#54656f]"
                     title={t("chatClient.voiceMessage") || "Səsli mesaj"}
+                    onClick={startRecording}
                   >
                     <Mic className="size-5" />
                   </Button>

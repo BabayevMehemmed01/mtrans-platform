@@ -573,7 +573,11 @@
     "reply": "Ответить",
     "attachImage": "Фото",
     "attachFile": "Файл / фото",
-    "voiceMessage": "Голосовое сообщение"
+    "voiceMessage": "Голосовое сообщение",
+    "micDenied": "Доступ к микрофону не разрешён",
+    "recordingError": "Не удалось записать аудио",
+    "cancelRecording": "Отмена",
+    "sendVoice": "Отправить"
   },
   "callOverlay": {
     "incomingVideo": "Входящий видеозвонок...",
