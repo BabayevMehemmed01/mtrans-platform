@@ -42,8 +42,8 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
   const pathname = usePathname();
 
   return (
-    <div className="flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-border bg-white px-4 dark:bg-card">
-      <div className="flex flex-1 items-center gap-1 overflow-x-auto">
+    <div className="relative z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-4 dark:border-border dark:bg-card">
+      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {MY_WORK_TABS.map((tab) => {
           const isActive = pathname?.startsWith(tab.href) ?? false;
           const Icon = tab.icon;
@@ -63,15 +63,22 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
             </Link>
           );
         })}
+      </div>
 
+      <div className="relative z-50 flex flex-shrink-0 items-center gap-2 py-2">
         <Popover>
           <PopoverTrigger
-            className="ml-1 flex size-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="flex size-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             title="Add / remove tabs"
           >
             <Plus className="size-4" />
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-64">
+          <PopoverContent
+            align="end"
+            side="bottom"
+            sideOffset={8}
+            className="z-50 w-64 rounded-md bg-white shadow-xl"
+          >
             <PopoverHeader>
               <PopoverTitle>Add / remove tabs</PopoverTitle>
               <PopoverDescription>Choose which tabs appear in My Work.</PopoverDescription>
@@ -89,9 +96,7 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
             </div>
           </PopoverContent>
         </Popover>
-      </div>
 
-      <div className="flex flex-shrink-0 items-center gap-2 py-2">
         <StatBadge
           count={stats.late}
           label="Late"

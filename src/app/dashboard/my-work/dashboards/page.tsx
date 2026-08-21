@@ -12,7 +12,8 @@ export const metadata = {
   title: "Dashboards | My Work | ERP",
 };
 
-const cardSurface = "border border-border bg-white shadow-sm dark:bg-card";
+const cardSurface =
+  "rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-border dark:bg-card";
 
 // =============================================================================
 // My Work → Dashboards
@@ -68,7 +69,7 @@ export default async function MyWorkDashboardsPage() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       <Card className={cardSurface}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-sm">
@@ -79,14 +80,14 @@ export default async function MyWorkDashboardsPage() {
         </CardHeader>
         <CardContent>
           {upcomingEvents.length === 0 ? (
-            <p className="py-6 text-center text-xs text-muted-foreground">Yaxınlaşan hadisə yoxdur.</p>
+            <p className="py-10 text-center text-sm text-slate-500">Yaxınlaşan hadisə yoxdur.</p>
           ) : (
-            <ul className="flex flex-col gap-2.5">
+            <ul className="flex flex-col gap-1">
               {upcomingEvents.map((task) => (
                 <li key={task.id}>
                   <Link
                     href={`/dashboard/projects/${task.project.id}?task=${task.id}`}
-                    className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-muted/50"
+                    className="flex items-center gap-2.5 rounded-lg px-2 py-2 transition-colors hover:bg-slate-50"
                   >
                     <span
                       className="size-2 flex-shrink-0 rounded-full"
@@ -94,9 +95,9 @@ export default async function MyWorkDashboardsPage() {
                     />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">{task.title}</p>
-                      <p className="truncate text-[11px] text-muted-foreground">{task.project.name}</p>
+                      <p className="truncate text-[11px] text-slate-500">{task.project.name}</p>
                     </div>
-                    <span className="flex-shrink-0 text-[11px] font-medium text-muted-foreground">
+                    <span className="flex-shrink-0 text-[11px] font-medium text-slate-500">
                       {format(new Date(task.dueDate!), "dd MMM")}
                     </span>
                   </Link>
@@ -129,17 +130,23 @@ export default async function MyWorkDashboardsPage() {
           <CardDescription>Sizə təyin olunmuş tapşırıqların icra faizi.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-1 flex-col gap-4">
-          <div className="flex items-end justify-between">
-            <span className="text-3xl font-semibold tracking-tight">{progressPct}%</span>
-            <span className="text-xs text-muted-foreground">
-              {done} / {total} tamamlandı
-            </span>
-          </div>
-          <Progress value={progressPct} />
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{total - done} qalır</span>
-            <span>{total} cəmi tapşırıq</span>
-          </div>
+          {total === 0 ? (
+            <p className="py-10 text-center text-sm text-slate-500">Hələ tapşırıq yoxdur.</p>
+          ) : (
+            <>
+              <div className="flex items-end justify-between">
+                <span className="text-3xl font-semibold tracking-tight">{progressPct}%</span>
+                <span className="text-xs text-slate-500">
+                  {done} / {total} tamamlandı
+                </span>
+              </div>
+              <Progress value={progressPct} />
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span>{total - done} qalır</span>
+                <span>{total} cəmi tapşırıq</span>
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>

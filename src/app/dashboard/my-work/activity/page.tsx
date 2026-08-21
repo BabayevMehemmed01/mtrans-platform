@@ -2,7 +2,8 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@prisma/client";
-import { Activity, FolderKanban } from "lucide-react";
+import { isToday, isYesterday } from "date-fns";
+import { Activity } from "lucide-react";
 import { describeAuditLog } from "@/lib/audit-labels";
 import { getInitials, timeAgo } from "@/lib/utils";
 
@@ -10,12 +11,24 @@ export const metadata = {
   title: "Activity | My Work | ERP",
 };
 
-const OTHER_KEY = "__other__";
+type TimeBucket = "today" | "yesterday" | "older";
+
+const TIME_SECTIONS: { key: TimeBucket; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "yesterday", label: "Yesterday" },
+  { key: "older", label: "Older" },
+];
+
+function bucketFor(date: Date): TimeBucket {
+  if (isToday(date)) return "today";
+  if (isYesterday(date)) return "yesterday";
+  return "older";
+}
 
 // =============================================================================
 // My Work → Activity
 // Yalnız bu istifadəçinin etdiyi VƏ YA bu istifadəçinin tapşırıqları üzərində
-// edilən hərəkətlər (AuditLog). Layihə adlarına görə qruplaşdırılır.
+// edilən hərəkətlər (AuditLog). Zamana görə qruplaşdırılır.
 // =============================================================================
 
 export default async function MyWorkActivityPage() {
@@ -28,13 +41,9 @@ export default async function MyWorkActivityPage() {
 
   const myTasks = await prisma.task.findMany({
     where: { assigneeId: userId, project: { companyId } },
-    select: {
-      id: true,
-      project: { select: { id: true, name: true, color: true } },
-    },
+    select: { id: true },
   });
   const myTaskIds = myTasks.map((t) => t.id);
-  const taskProjectMap = new Map(myTasks.map((t) => [t.id, t.project]));
 
   const orConditions: Prisma.AuditLogWhereInput[] = [{ userId }];
   if (myTaskIds.length > 0) {
@@ -48,67 +57,40 @@ export default async function MyWorkActivityPage() {
     take: 150,
   });
 
-  const projectEntityIds = Array.from(
-    new Set(logs.filter((l) => l.entityType === "PROJECT").map((l) => l.entityId))
-  );
-  const projects = projectEntityIds.length
-    ? await prisma.project.findMany({
-        where: { id: { in: projectEntityIds } },
-        select: { id: true, name: true, color: true },
-      })
-    : [];
-  const projectMap = new Map(projects.map((p) => [p.id, p]));
-
-  type Group = { key: string; name: string; color: string; logs: typeof logs };
-  const groupMap = new Map<string, Group>();
+  const groups: Record<TimeBucket, typeof logs> = {
+    today: [],
+    yesterday: [],
+    older: [],
+  };
 
   for (const log of logs) {
-    let project: { id: string; name: string; color: string } | undefined;
-    if (log.entityType === "TASK") project = taskProjectMap.get(log.entityId);
-    else if (log.entityType === "PROJECT") project = projectMap.get(log.entityId);
-
-    const key = project?.id ?? OTHER_KEY;
-    const name = project?.name ?? "Ümumi Fəaliyyət";
-    const color = project?.color ?? "#94a3b8";
-    const group = groupMap.get(key) ?? { key, name, color, logs: [] as typeof logs };
-    group.logs.push(log);
-    groupMap.set(key, group);
+    groups[bucketFor(new Date(log.createdAt))].push(log);
   }
 
-  const orderedGroups = Array.from(groupMap.values()).sort((a, b) => {
-    if (a.key === OTHER_KEY) return 1;
-    if (b.key === OTHER_KEY) return -1;
-    return b.logs.length - a.logs.length;
-  });
+  const sections = TIME_SECTIONS.filter((section) => groups[section.key].length > 0);
 
-  if (orderedGroups.length === 0) {
+  if (sections.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border py-20 text-center">
-        <Activity className="size-10 text-muted-foreground/50" />
-        <p className="text-sm font-medium text-foreground">Hələ heç bir fəaliyyət qeydə alınmayıb.</p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 py-20 text-center">
+        <Activity className="size-10 text-slate-400" />
+        <p className="text-sm font-medium text-slate-500">Hələ heç bir fəaliyyət qeydə alınmayıb.</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col gap-5">
-      {orderedGroups.map((group) => (
-        <div key={group.key} className="overflow-hidden rounded-xl border border-border bg-white dark:bg-card">
-          <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-3">
-            <span
-              className="flex size-6 flex-shrink-0 items-center justify-center rounded-md"
-              style={{ backgroundColor: `${group.color}20`, color: group.color }}
-            >
-              <FolderKanban className="size-3.5" />
-            </span>
-            <h3 className="text-sm font-semibold text-foreground">{group.name}</h3>
-            <span className="ml-auto text-xs text-muted-foreground">{group.logs.length}</span>
-          </div>
-          <ul className="divide-y divide-border">
-            {group.logs.map((log) => {
+    <div className="flex flex-col">
+      {sections.map((section) => (
+        <section key={section.key} className="mt-6 first:mt-0">
+          <h3 className="mb-4 font-semibold text-gray-700">{section.label}</h3>
+          <ul className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:divide-border dark:border-border dark:bg-card">
+            {groups[section.key].map((log) => {
               const userName = log.user?.name ?? "Naməlum istifadəçi";
               return (
-                <li key={log.id} className="flex items-start gap-3 px-4 py-3">
+                <li
+                  key={log.id}
+                  className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50"
+                >
                   {log.user?.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -117,24 +99,24 @@ export default async function MyWorkActivityPage() {
                       className="size-8 flex-shrink-0 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
+                    <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">
                       {getInitials(userName)}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm">
+                    <p className="text-sm leading-relaxed">
                       <span className="font-medium text-foreground">{userName}</span>{" "}
-                      <span className="text-muted-foreground">{describeAuditLog(log)}</span>
+                      <span className="text-slate-500">{describeAuditLog(log)}</span>
                     </p>
                   </div>
-                  <span className="flex-shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">
+                  <span className="flex-shrink-0 whitespace-nowrap pt-0.5 text-[11px] text-slate-400">
                     {timeAgo(log.createdAt)}
                   </span>
                 </li>
               );
             })}
           </ul>
-        </div>
+        </section>
       ))}
     </div>
   );

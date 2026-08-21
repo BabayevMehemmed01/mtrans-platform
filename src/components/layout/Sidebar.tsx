@@ -70,7 +70,7 @@ const navItems: NavItem[] = [
   {
     title: "Mənim İşlərim",
     tKey: "menu.myWork",
-    href: "/dashboard/my-work/tasks",
+    href: "/dashboard/my-work",
     icon: CircleUser,
     children: [
       {
@@ -413,6 +413,12 @@ function CollapsibleNavItem({
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="w-52">
+          <DropdownMenuItem asChild>
+            <Link href={item.href} className="flex cursor-pointer items-center gap-2">
+              <Icon className="h-4 w-4 text-gray-500" />
+              {displayTitle}
+            </Link>
+          </DropdownMenuItem>
           {item.children?.map((child) => (
             <SubNavLink
               key={child.href}
@@ -429,19 +435,34 @@ function CollapsibleNavItem({
 
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen}>
-      <Collapsible.Trigger
-        type="button"
-        className={cn(itemClassName(groupActive, false), "w-full cursor-pointer")}
+      <div
+        className={cn(
+          "flex items-center rounded-md text-sm font-medium transition-all duration-200",
+          groupActive
+            ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
+            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+        )}
       >
-        <Icon className="h-4 w-4 flex-shrink-0" />
-        <span className="truncate">{displayTitle}</span>
-        <ChevronDown
-          className={cn(
-            "ml-auto h-4 w-4 flex-shrink-0 text-gray-400 transition-all duration-200",
-            open && "rotate-180"
-          )}
-        />
-      </Collapsible.Trigger>
+        <Link
+          href={item.href}
+          className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
+        >
+          <Icon className="h-4 w-4 flex-shrink-0" />
+          <span className="truncate">{displayTitle}</span>
+        </Link>
+        <Collapsible.Trigger
+          type="button"
+          aria-label="Toggle submenu"
+          className="flex h-9 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+        >
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 transition-transform duration-200",
+              open && "rotate-180"
+            )}
+          />
+        </Collapsible.Trigger>
+      </div>
       <Collapsible.Content className="overflow-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
         <ul className="ml-4 mt-1 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
           {item.children?.map((child) => (

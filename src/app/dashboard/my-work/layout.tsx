@@ -64,9 +64,11 @@ export default async function MyWorkLayout({
   }
 
   return (
-    <div className="-m-6 flex h-full flex-col">
-      <MyWorkTabsBar stats={{ late, today, upcoming }} />
-      <div className="flex-1 overflow-y-auto p-6">{children}</div>
+    <div className="-m-6 flex h-full min-h-0 flex-col">
+      <div className="relative z-20 flex-shrink-0">
+        <MyWorkTabsBar stats={{ late, today, upcoming }} />
+      </div>
+      <div className="relative z-0 min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
     </div>
   );
 }

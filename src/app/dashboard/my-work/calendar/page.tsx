@@ -6,6 +6,7 @@ import { addDays, addWeeks, format, startOfWeek } from "date-fns";
 import { az } from "date-fns/locale";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 export const metadata = {
   title: "My calendar | My Work | ERP",
@@ -60,72 +61,80 @@ export default async function MyWorkCalendarPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">
-          {format(weekStart, "d MMM", { locale: az })} – {format(addDays(weekStart, 4), "d MMM yyyy", { locale: az })}
+        <h2 className="text-lg font-semibold tracking-tight text-slate-800">
+          {format(weekStart, "d MMM", { locale: az })} –{" "}
+          {format(addDays(weekStart, 4), "d MMM yyyy", { locale: az })}
         </h2>
         <div className="flex items-center gap-1">
-          <Link href={prevWeekHref} className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+          <Link
+            href={prevWeekHref}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "text-slate-500")}
+            aria-label="Previous week"
+          >
             <ChevronLeft className="size-4" />
           </Link>
           <Link
             href="/dashboard/my-work/calendar"
-            className="rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             Bu həftə
           </Link>
-          <Link href={nextWeekHref} className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground">
+          <Link
+            href={nextWeekHref}
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "text-slate-500")}
+            aria-label="Next week"
+          >
             <ChevronRight className="size-4" />
           </Link>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-5">
-        {days.map((day) => {
-          const key = format(day, "yyyy-MM-dd");
-          const dayTasks = tasksByDay.get(key) ?? [];
-          const isToday = key === todayKey;
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-border dark:bg-card">
+        <div className="grid grid-cols-1 divide-y divide-slate-200 md:grid-cols-5 md:divide-x md:divide-y-0">
+          {days.map((day) => {
+            const key = format(day, "yyyy-MM-dd");
+            const dayTasks = tasksByDay.get(key) ?? [];
+            const isToday = key === todayKey;
 
-          return (
-            <div
-              key={key}
-              className={cn(
-                "flex min-h-[240px] flex-col rounded-xl border border-border bg-white p-3 dark:bg-card",
-                isToday && "border-blue-300 ring-1 ring-blue-100 dark:border-blue-800 dark:ring-blue-900/40"
-              )}
-            >
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {format(day, "EEE", { locale: az })}
-                </span>
-                <span
-                  className={cn(
-                    "flex size-6 items-center justify-center rounded-full text-xs font-semibold",
-                    isToday ? "bg-blue-600 text-white" : "text-foreground"
+            return (
+              <div
+                key={key}
+                className={cn("flex min-h-0 flex-col", isToday && "bg-blue-50/40")}
+              >
+                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                    {format(day, "EEE", { locale: az })}
+                  </span>
+                  <span
+                    className={cn(
+                      "flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
+                      isToday ? "bg-blue-600 text-white shadow-sm" : "text-slate-800"
+                    )}
+                  >
+                    {format(day, "d")}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1.5 p-2.5">
+                  {dayTasks.length === 0 ? (
+                    <p className="px-1 py-3 text-center text-[11px] text-slate-400">No tasks</p>
+                  ) : (
+                    dayTasks.map((task) => (
+                      <Link
+                        key={task.id}
+                        href={`/dashboard/projects/${task.project.id}?task=${task.id}`}
+                        className="rounded-lg border border-slate-100 bg-white px-2.5 py-2 text-[11px] shadow-sm transition-all hover:border-slate-200 hover:shadow-md"
+                        style={{ borderLeftWidth: 3, borderLeftColor: task.project.color }}
+                      >
+                        <p className="truncate font-medium text-slate-800">{task.title}</p>
+                        <p className="mt-0.5 truncate text-[10px] text-slate-500">{task.project.name}</p>
+                      </Link>
+                    ))
                   )}
-                >
-                  {format(day, "d")}
-                </span>
+                </div>
               </div>
-              <div className="flex flex-1 flex-col gap-1.5">
-                {dayTasks.length === 0 ? (
-                  <p className="mt-6 text-center text-[11px] text-muted-foreground">—</p>
-                ) : (
-                  dayTasks.map((task) => (
-                    <Link
-                      key={task.id}
-                      href={`/dashboard/projects/${task.project.id}?task=${task.id}`}
-                      className="rounded-md border-l-2 bg-muted/40 px-2 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-muted"
-                      style={{ borderColor: task.project.color }}
-                    >
-                      <p className="truncate">{task.title}</p>
-                      <p className="truncate text-[10px] text-muted-foreground">{task.project.name}</p>
-                    </Link>
-                  ))
-                )}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

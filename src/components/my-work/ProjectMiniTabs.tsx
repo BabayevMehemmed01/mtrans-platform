@@ -44,7 +44,7 @@ export function ProjectMiniTabs({
           </button>
         ))}
       </div>
-      <div className="min-h-[36px] pt-2 text-xs text-muted-foreground">
+      <div className="min-h-[36px] pt-2 text-xs text-slate-500">
         {tab === "about" ? (
           <p className="line-clamp-2">{description || "No description provided."}</p>
         ) : (
