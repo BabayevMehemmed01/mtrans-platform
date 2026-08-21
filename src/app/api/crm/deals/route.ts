@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendDealWelcomeNotification } from "@/lib/integrationService";
 
 export async function GET(req: Request) {
   try {
@@ -53,6 +54,46 @@ export async function POST(req: Request) {
       if (!assignee) return NextResponse.json({ error: "Assignee not found" }, { status: 404 });
     }
 
+    const trimmedPhone = clientPhone?.trim() || null;
+    const trimmedEmail = clientEmail?.trim() || null;
+    const trimmedName = clientName?.trim() || null;
+    const trimmedCompany = clientCompany?.trim() || null;
+
+    // Əqdə uyğun Customer tapılır (telefon/email üzrə) və ya yaradılır —
+    // xarici inteqrasiyalar (1C, Email, SMS, WhatsApp, Telegram) bu kartla işləyir.
+    let customer = null as Awaited<ReturnType<typeof prisma.customer.findFirst>> | null;
+    if (trimmedPhone || trimmedEmail) {
+      const orConditions: Array<{ phone: string } | { email: string }> = [];
+      if (trimmedPhone) orConditions.push({ phone: trimmedPhone });
+      if (trimmedEmail) orConditions.push({ email: trimmedEmail });
+
+      customer = await prisma.customer.findFirst({
+        where: { companyId, OR: orConditions },
+      });
+
+      if (!customer) {
+        customer = await prisma.customer.create({
+          data: {
+            name: trimmedName || "Naməlum Müştəri",
+            company: trimmedCompany,
+            phone: trimmedPhone,
+            email: trimmedEmail,
+            source: "CRM",
+            companyId,
+          },
+        });
+      } else {
+        const updateData: Record<string, unknown> = {};
+        if (trimmedName && !customer.name) updateData.name = trimmedName;
+        if (trimmedCompany && !customer.company) updateData.company = trimmedCompany;
+        if (trimmedEmail && !customer.email) updateData.email = trimmedEmail;
+        if (trimmedPhone && !customer.phone) updateData.phone = trimmedPhone;
+        if (Object.keys(updateData).length > 0) {
+          customer = await prisma.customer.update({ where: { id: customer.id }, data: updateData });
+        }
+      }
+    }
+
     const deal = await prisma.crmDeal.create({
       data: {
         title,
@@ -61,23 +102,40 @@ export async function POST(req: Request) {
         probability: probability ? parseInt(probability) : 0,
         expectedCloseDate: expectedCloseDate ? new Date(expectedCloseDate) : null,
         deadline: deadline ? new Date(deadline) : null,
-        clientName: clientName?.trim() || null,
-        clientCompany: clientCompany?.trim() || null,
-        clientPhone: clientPhone?.trim() || null,
-        clientEmail: clientEmail?.trim() || null,
+        clientName: trimmedName,
+        clientCompany: trimmedCompany,
+        clientPhone: trimmedPhone,
+        clientEmail: trimmedEmail,
         companyId,
         stageId,
         crmContactId: crmContactId || null,
         crmCompanyId: crmCompanyId || null,
         assigneeId: assigneeId || null,
+        customerId: customer?.id || null,
       },
       include: {
         stage: true,
         crmContact: true,
         crmCompany: true,
         assignee: true,
+        customer: true,
       },
     });
+
+    // Əqd yaradıldıqdan dərhal sonra, arxa planda (bloklamadan) müştəriyə
+    // "Xoş gəldiniz" bildirişi göndərilir. Xəta əqdin yaranmasını ƏSLA bloklamır.
+    if (customer && (customer.email || customer.phone)) {
+      void sendDealWelcomeNotification({
+        customerName: customer.name,
+        dealTitle: deal.title,
+        customerEmail: customer.email,
+        customerPhone: customer.phone,
+        dealId: deal.id,
+        customerId: customer.id,
+      }).catch((err) => {
+        console.error("[CRM_DEAL_WELCOME_NOTIFY_FAILED]", err);
+      });
+    }
 
     return NextResponse.json(deal);
   } catch (error) {

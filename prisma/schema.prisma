@@ -92,6 +92,20 @@ enum EntityType {
   LABEL
 }
 
+// --- CRM İNTEQRASİYA ENUM-LARI (1C / Email / Twilio / Telegram) ---
+
+enum MessageLogType {
+  EMAIL
+  WHATSAPP
+  TELEGRAM
+  SMS
+}
+
+enum MessageLogStatus {
+  SENT
+  FAILED
+}
+
 // =============================================================================
 // PERMISSION KEYS — 38 Granular Permission Types
 // =============================================================================
@@ -173,7 +187,7 @@ model Company {
   description String?
   logo        String? // URL
   website     String?
-  taxId       String?     // YENİ: VÖEN və ya Qeydiyyat Nömrəsi
+  taxId       String? // YENİ: VÖEN və ya Qeydiyyat Nömrəsi
   plan        CompanyPlan @default(FREE)
   isActive    Boolean     @default(true)
   createdAt   DateTime    @default(now())
@@ -204,6 +218,7 @@ model Company {
   chatChannels  ChatChannel[]
   notifications Notification[]
   invites       Invitation[]
+  customers     Customer[]
 
   @@map("companies")
 }
@@ -215,7 +230,7 @@ model Company {
 model Department {
   id          String   @id @default(cuid())
   name        String
-  code        String?  // YENİ: Şöbə Kodu (Məsələn: IT-001)
+  code        String? // YENİ: Şöbə Kodu (Məsələn: IT-001)
   description String?
   color       String   @default("#6366f1") // Hex color for UI
   icon        String? // Lucide icon name
@@ -337,19 +352,19 @@ model User {
   status       UserStatus @default(ACTIVE)
   jobTitle     String? // "Senior Developer", "Product Manager"
   phone        String?
-  address      String?    // YENİ: Yaşayış/İş ünvanı
-  bio          String?    // YENİ: Haqqında qısa məlumat
+  address      String? // YENİ: Yaşayış/İş ünvanı
+  bio          String? // YENİ: Haqqında qısa məlumat
   workingHours String     @default("09:00 - 18:00 (B.E - Cümə)") // YENİ: İş saatları
 
   // YENİ ƏLAVƏLƏR: Görünüş və Ayarlar
-  theme        String     @default("light") // "light", "dark", "system"
-  language     String     @default("az")    // "az", "en", "ru"
-  wallpaper    String     @default("default")
+  theme     String @default("light") // "light", "dark", "system"
+  language  String @default("az") // "az", "en", "ru"
+  wallpaper String @default("default")
 
-  timezone     String     @default("Asia/Baku")
-  lastLoginAt  DateTime?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  timezone    String    @default("Asia/Baku")
+  lastLoginAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   // Company membership
   companyId String?
@@ -393,7 +408,7 @@ model User {
 // =============================================================================
 
 model Project {
-  id          String        @id @default(cuid())
+  id          String          @id @default(cuid())
   name        String
   description String?
   status      ProjectStatus   @default(PLANNING)
@@ -590,16 +605,16 @@ model Attachment {
 // =============================================================================
 
 model AuditLog {
-  id         String      @id @default(cuid())
-  action     AuditAction
-  entityType EntityType
-  entityId   String // Hansı entity-ə aid olduğu (project id, task id, etc.)
-  entityName String? // Human-readable entity adı (log üçün)
-  metadata           Json? // Əlavə məlumat (before/after state, etc.)
-  ipAddress          String?
-  userAgent          String?
-  sessionDurationMs  Int? // LOGOUT zamanı sessiya müddəti (ms)
-  createdAt          DateTime    @default(now())
+  id                String      @id @default(cuid())
+  action            AuditAction
+  entityType        EntityType
+  entityId          String // Hansı entity-ə aid olduğu (project id, task id, etc.)
+  entityName        String? // Human-readable entity adı (log üçün)
+  metadata          Json? // Əlavə məlumat (before/after state, etc.)
+  ipAddress         String?
+  userAgent         String?
+  sessionDurationMs Int? // LOGOUT zamanı sessiya müddəti (ms)
+  createdAt         DateTime    @default(now())
 
   // Kim etdi
   userId String
@@ -710,9 +725,71 @@ model CrmDeal {
   assigneeId String?
   assignee   User?   @relation("CrmDealAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
 
+  // Xarici inteqrasiyalar üçün (1C / Email / SMS / WhatsApp / Telegram) əlaqələndirilmiş müştəri
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  messageLogs MessageLog[]
+
   @@index([companyId])
   @@index([stageId])
+  @@index([customerId])
   @@map("crm_deals")
+}
+
+// =============================================================================
+// MODEL: Customer — Xarici sistemlərlə (1C, Email, WhatsApp, Telegram, SMS)
+// inteqrasiya olunan real müştəri kartı.
+// =============================================================================
+
+model Customer {
+  id             String   @id @default(cuid())
+  name           String
+  company        String?
+  phone          String?
+  email          String?
+  source         String   @default("CRM") // "CRM", "1C", və s.
+  external_1c_id String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Multi-tenant (deal yaradılarkən CRM tərəfindən doldurulur; 1C sinxronizasiyası
+  // zamanı naməlum ola bilər)
+  companyId String?
+  tenant    Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+
+  deals       CrmDeal[]
+  messageLogs MessageLog[]
+
+  @@index([companyId])
+  @@index([phone])
+  @@index([email])
+  @@map("customers")
+}
+
+// =============================================================================
+// MODEL: MessageLog — Göndərilən hər Email/WhatsApp/Telegram/SMS mesajının
+// real nəticəsinin (SENT/FAILED) jurnalı.
+// =============================================================================
+
+model MessageLog {
+  id     String   @id @default(cuid())
+  dealId String?
+  deal   CrmDeal? @relation(fields: [dealId], references: [id], onDelete: SetNull)
+
+  customerId String?
+  customer   Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  type         MessageLogType
+  content      String
+  status       MessageLogStatus
+  errorMessage String?
+  createdAt    DateTime         @default(now())
+
+  @@index([dealId])
+  @@index([customerId])
+  @@index([createdAt])
+  @@map("message_logs")
 }
 
 // =============================================================================

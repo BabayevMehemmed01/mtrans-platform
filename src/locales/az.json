@@ -936,9 +936,8 @@
     "mail": "Mail",
     "telephony": "Telephony",
     "whatsapp": "WhatsApp",
-    "liveChat": "Live Chat",
     "telegram": "Telegram",
-    "facebook": "Facebook",
+    "sms": "SMS",
     "comingSoon": "Tezliklə"
   },
   "crmStageDialog": {
