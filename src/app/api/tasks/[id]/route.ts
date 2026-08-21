@@ -1,11 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { kanbanTaskInclude } from "@/lib/task-include";
 import { updateTaskSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
+}
+
+async function companyUserIds(companyId: string, ids: string[]) {
+  if (!ids.length) return [] as string[];
+  const users = await prisma.user.findMany({
+    where: { companyId, id: { in: ids } },
+    select: { id: true },
+  });
+  return users.map((u) => u.id);
 }
 
 // =============================================================================
@@ -23,9 +33,8 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     const task = await prisma.task.findFirst({
       where: { id, project: { companyId: (session.user as any).companyId } },
       include: {
-        assignee: { select: { id: true, name: true, avatar: true } },
+        ...kanbanTaskInclude,
         createdBy: { select: { id: true, name: true, avatar: true } },
-        labels: { include: { label: true } },
         subtasks: {
           select: {
             id: true,
@@ -43,7 +52,6 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
           include: { author: { select: { id: true, name: true, avatar: true } } },
         },
         attachments: true,
-        _count: { select: { subtasks: true, comments: true, attachments: true } },
       },
     });
 
@@ -61,15 +69,14 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
     const body = await req.json();
+    const companyId = (session.user as any).companyId;
 
-    // Tapşırığın bu şirkətə aid olduğunu yoxla
     const existing = await prisma.task.findFirst({
-      where: { id, project: { companyId: (session.user as any).companyId } },
+      where: { id, project: { companyId } },
     });
     if (!existing) return NextResponse.json({ error: "Tapşırıq tapılmadı" }, { status: 404 });
 
-    // labelIds ayrıca işlənir
-    const { labelIds, ...rest } = body;
+    const { labelIds, observerIds, ...rest } = body;
 
     const parsed = updateTaskSchema.safeParse(rest);
     if (!parsed.success) {
@@ -94,8 +101,16 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (data.status === "DONE" && existing.status !== "DONE") updateData.completedAt = new Date();
     if (data.status !== undefined && data.status !== "DONE") updateData.completedAt = null;
 
+    if (observerIds !== undefined) {
+      const rawIds = Array.isArray(observerIds) ? observerIds : [];
+      const uniqueObserverIds = await companyUserIds(
+        companyId,
+        [...new Set(rawIds.filter((oid: string) => oid && oid !== (updateData.assigneeId ?? existing.assigneeId)))]
+      );
+      updateData.observers = { set: uniqueObserverIds.map((uid) => ({ id: uid })) };
+    }
+
     const task = await prisma.$transaction(async (tx) => {
-      // Labels-i yenilə (varsa)
       if (labelIds !== undefined) {
         await tx.taskLabel.deleteMany({ where: { taskId: id } });
         if (labelIds.length > 0) {
@@ -108,11 +123,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       return tx.task.update({
         where: { id },
         data: updateData,
-        include: {
-          assignee: { select: { id: true, name: true, avatar: true } },
-          labels: { include: { label: true } },
-          _count: { select: { subtasks: true, comments: true, attachments: true } },
-        },
+        include: kanbanTaskInclude,
       });
     });
 
@@ -125,7 +136,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     await logAudit({
       userId: session.user.id,
-      companyId: (session.user as any).companyId,
+      companyId,
       action: auditAction,
       entityType: "TASK",
       entityId: task.id,

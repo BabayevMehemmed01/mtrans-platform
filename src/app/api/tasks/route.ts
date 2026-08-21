@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { kanbanTaskInclude } from "@/lib/task-include";
+import { DEFAULT_TASK_STATUS } from "@/lib/task-status";
 import { createTaskSchema } from "@/lib/validations";
 import { logAudit } from "@/lib/audit";
 
@@ -8,6 +10,15 @@ import { logAudit } from "@/lib/audit";
 // GET  /api/tasks?projectId=xxx  — Layihənin tapşırıqlarını qaytar
 // POST /api/tasks                — Yeni tapşırıq yarat
 // =============================================================================
+
+async function companyUserIds(companyId: string, ids: string[]) {
+  if (!ids.length) return [] as string[];
+  const users = await prisma.user.findMany({
+    where: { companyId, id: { in: ids } },
+    select: { id: true },
+  });
+  return users.map((u) => u.id);
+}
 
 export async function GET(req: NextRequest) {
   try {
@@ -29,11 +40,7 @@ export async function GET(req: NextRequest) {
         parentId: null,
       },
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
-      include: {
-        assignee: { select: { id: true, name: true, avatar: true } },
-        labels: { include: { label: true } },
-        _count: { select: { subtasks: true, comments: true, attachments: true } },
-      },
+      include: kanbanTaskInclude,
     });
 
     return NextResponse.json(tasks);
@@ -60,26 +67,33 @@ export async function POST(req: NextRequest) {
     const {
       title, description, status, priority, dueDate,
       startDate, estimatedHours, assigneeId, parentId,
-      labelIds, projectId,
+      labelIds, projectId, observerIds,
     } = parsed.data;
 
-    // Proyektin şirkətə aid olduğunu yoxla
+    const companyId = (session.user as any).companyId;
+
     const project = await prisma.project.findFirst({
-      where: { id: projectId, companyId: (session.user as any).companyId },
+      where: { id: projectId, companyId },
     });
     if (!project) return NextResponse.json({ error: "Layihə tapılmadı" }, { status: 404 });
 
-    // Max order-i tap
+    const resolvedStatus = (status as any) ?? DEFAULT_TASK_STATUS;
+
     const maxPos = await prisma.task.aggregate({
-      where: { projectId, status: (status as any) ?? "TODO" },
+      where: { projectId, status: resolvedStatus },
       _max: { position: true },
     });
+
+    const uniqueObserverIds = await companyUserIds(
+      companyId,
+      [...new Set((observerIds ?? []).filter((id) => id && id !== assigneeId))]
+    );
 
     const task = await prisma.task.create({
       data: {
         title,
         description,
-        status: (status as any) ?? "TODO",
+        status: resolvedStatus,
         priority: (priority as any) ?? "MEDIUM",
         dueDate: dueDate ? new Date(dueDate) : null,
         startDate: startDate ? new Date(startDate) : null,
@@ -92,17 +106,16 @@ export async function POST(req: NextRequest) {
         labels: labelIds?.length
           ? { create: labelIds.map((id: string) => ({ labelId: id })) }
           : undefined,
+        observers: uniqueObserverIds.length
+          ? { connect: uniqueObserverIds.map((id) => ({ id })) }
+          : undefined,
       },
-      include: {
-        assignee: { select: { id: true, name: true, avatar: true } },
-        labels: { include: { label: true } },
-        _count: { select: { subtasks: true, comments: true, attachments: true } },
-      },
+      include: kanbanTaskInclude,
     });
 
     await logAudit({
       userId: session.user.id,
-      companyId: (session.user as any).companyId,
+      companyId,
       action: "CREATE",
       entityType: "TASK",
       entityId: task.id,

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useSession } from "next-auth/react"; // YENİ
-import { getTranslation } from "@/lib/i18n"; // YENİ
+import { useCallback, useMemo, useState } from "react";
+import { useSession } from "next-auth/react";
+import { getTranslation } from "@/lib/i18n";
 import {
   DndContext,
   DragOverlay,
@@ -21,48 +21,74 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
+import { format } from "date-fns";
 import { KanbanColumn } from "./KanbanColumn";
 import { TaskCard } from "./TaskCard";
 import { CreateTaskModal } from "./CreateTaskModal";
 import { TaskDetailSheet } from "./TaskDetailSheet";
 import type { KanbanTask, KanbanColumn as ColType, TaskMember, KanbanLabel } from "./types";
+import { PLANNER_COLUMNS, toPlannerStatus, DEFAULT_TASK_STATUS } from "@/lib/task-status";
+import { DEADLINE_COLUMNS, dueDateForBucket, getDeadlineBucket } from "@/lib/task-deadline";
 
-// =============================================================================
-// Kanban Status Sütunları (İlkin Statik Tərif)
-// =============================================================================
-const COLUMNS_BASE: ColType[] = [
-  { id: "BACKLOG",     label: "Backlog",     color: "#94a3b8", bgColor: "#94a3b8/10" },
-  { id: "TODO",        label: "To Do",        color: "#6366f1", bgColor: "#6366f1/10" },
-  { id: "IN_PROGRESS", label: "In Progress", color: "#f59e0b", bgColor: "#f59e0b/10" },
-  { id: "IN_REVIEW",   label: "In Review",   color: "#8b5cf6", bgColor: "#8b5cf6/10" },
-  { id: "DONE",        label: "Done",         color: "#22c55e", bgColor: "#22c55e/10" },
-  { id: "CANCELLED",   label: "Cancelled",   color: "#ef4444", bgColor: "#ef4444/10" },
-];
+type BoardVariant = "planner" | "deadline";
+
+const PLANNER_TRANS_KEY: Record<string, string> = {
+  NOT_PLANNED: "colNotPlanned",
+  IN_PROGRESS: "colInProgress",
+  REVIEW: "colReview",
+  DONE: "colDone",
+};
+
+const DEADLINE_TRANS_KEY: Record<string, string> = {
+  OVERDUE: "colOverdue",
+  DUE_TODAY: "colDueToday",
+  DUE_THIS_WEEK: "colDueThisWeek",
+  DUE_NEXT_WEEK: "colDueNextWeek",
+  NO_DEADLINE: "colNoDeadline",
+};
 
 interface KanbanBoardProps {
   projectId?: string;
   initialTasks: KanbanTask[];
   members: TaskMember[];
   labels: KanbanLabel[];
+  variant?: BoardVariant;
+  onTaskCreated?: (task: KanbanTask) => void;
+  onTaskUpdated?: (task: KanbanTask) => void;
+  onTaskDeleted?: (taskId: string) => void;
 }
 
-export function KanbanBoard({ projectId, initialTasks, members, labels }: KanbanBoardProps) {
-  // YENİ: Tərcümə
+function columnIdForTask(task: KanbanTask, variant: BoardVariant): string {
+  if (variant === "deadline") return getDeadlineBucket(task.dueDate);
+  return toPlannerStatus(task.status);
+}
+
+export function KanbanBoard({
+  projectId,
+  initialTasks,
+  members,
+  labels,
+  variant = "planner",
+  onTaskCreated,
+  onTaskUpdated,
+  onTaskDeleted,
+}: KanbanBoardProps) {
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
 
-  // Kolon adlarını dilə görə dinamikləşdiririk
-  const COLUMNS = COLUMNS_BASE.map(col => {
-    let transKey = "";
-    if (col.id === "BACKLOG") transKey = "colBacklog";
-    if (col.id === "TODO") transKey = "colTodo";
-    if (col.id === "IN_PROGRESS") transKey = "colInProgress";
-    if (col.id === "IN_REVIEW") transKey = "colInReview";
-    if (col.id === "DONE") transKey = "colDone";
-    if (col.id === "CANCELLED") transKey = "colCancelled";
-    return { ...col, label: t(`kanbanBoard.${transKey}`) || col.label };
-  });
+  const COLUMNS: ColType[] = useMemo(() => {
+    if (variant === "deadline") {
+      return DEADLINE_COLUMNS.map((col) => ({
+        ...col,
+        label: t(`kanbanBoard.${DEADLINE_TRANS_KEY[col.id]}`) || col.label,
+      }));
+    }
+    return PLANNER_COLUMNS.map((col) => ({
+      ...col,
+      label: t(`kanbanBoard.${PLANNER_TRANS_KEY[col.id]}`) || col.label,
+    }));
+  }, [variant, t]);
 
   const [tasks, setTasks] = useState<KanbanTask[]>(initialTasks);
   const [activeTask, setActiveTask] = useState<KanbanTask | null>(null);
@@ -74,9 +100,37 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
     useSensor(KeyboardSensor)
   );
 
-  // ---- Drag Handlers ----
+  const applyColumn = useCallback(
+    (task: KanbanTask, columnId: string): KanbanTask => {
+      if (variant === "deadline") {
+        return { ...task, dueDate: dueDateForBucket(columnId) };
+      }
+      return { ...task, status: columnId as KanbanTask["status"] };
+    },
+    [variant]
+  );
+
+  const persistMove = useCallback(
+    async (taskId: string, columnId: string) => {
+      const payload =
+        variant === "deadline"
+          ? { dueDate: dueDateForBucket(columnId)?.toISOString() ?? null }
+          : { status: columnId };
+      try {
+        await fetch(`/api/tasks/${taskId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.error(t("kanbanBoard.errorStatusUpdate") || "Task status update failed:", err);
+      }
+    },
+    [variant, t]
+  );
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    const task = tasks.find((t) => t.id === event.active.id);
+    const task = tasks.find((item) => item.id === event.active.id);
     setActiveTask(task ?? null);
   }, [tasks]);
 
@@ -90,26 +144,28 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
     const overColumn = COLUMNS.find((c) => c.id === overId);
     if (overColumn) {
       setTasks((prev) =>
-        prev.map((t) =>
-          t.id === activeId ? { ...t, status: overColumn.id as any } : t
+        prev.map((item) =>
+          item.id === activeId ? applyColumn(item, overColumn.id) : item
         )
       );
       return;
     }
 
-    const overTask = tasks.find((t) => t.id === overId);
+    const overTask = tasks.find((item) => item.id === overId);
     if (!overTask) return;
 
     setTasks((prev) => {
-      const activeIndex = prev.findIndex((t) => t.id === activeId);
-      const overIndex = prev.findIndex((t) => t.id === overId);
+      const activeIndex = prev.findIndex((item) => item.id === activeId);
+      const overIndex = prev.findIndex((item) => item.id === overId);
+      if (activeIndex < 0 || overIndex < 0) return prev;
       const updated = [...prev];
-      if (updated[activeIndex].status !== overTask.status) {
-        updated[activeIndex] = { ...updated[activeIndex], status: overTask.status };
+      const nextColumn = columnIdForTask(overTask, variant);
+      if (columnIdForTask(updated[activeIndex], variant) !== nextColumn) {
+        updated[activeIndex] = applyColumn(updated[activeIndex], nextColumn);
       }
       return arrayMove(updated, activeIndex, overIndex);
     });
-  }, [tasks, COLUMNS]);
+  }, [tasks, COLUMNS, applyColumn, variant]);
 
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -117,35 +173,43 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
     if (!over) return;
 
     const activeId = active.id as string;
-    const movedTask = tasks.find((t) => t.id === activeId);
+    const movedTask = tasks.find((item) => item.id === activeId);
     if (!movedTask) return;
 
-    try {
-      await fetch(`/api/tasks/${activeId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: movedTask.status }),
-      });
-    } catch (err) {
-      console.error(t("kanbanBoard.errorStatusUpdate") || "Task status update failed:", err);
-    }
-  }, [tasks, t]);
+    const columnId = columnIdForTask(movedTask, variant);
+    await persistMove(activeId, columnId);
+    onTaskUpdated?.(movedTask);
+  }, [tasks, variant, persistMove, onTaskUpdated]);
 
-  // ---- Task CRUD callbacks ----
   const handleTaskCreated = useCallback((newTask: KanbanTask) => {
     setTasks((prev) => [newTask, ...prev]);
     setCreateCol(null);
-  }, []);
+    onTaskCreated?.(newTask);
+  }, [onTaskCreated]);
 
   const handleTaskUpdated = useCallback((updatedTask: KanbanTask) => {
-    setTasks((prev) => prev.map((t) => (t.id === updatedTask.id ? updatedTask : t)));
+    setTasks((prev) => prev.map((item) => (item.id === updatedTask.id ? updatedTask : item)));
     setSelectedTask(updatedTask);
-  }, []);
+    onTaskUpdated?.(updatedTask);
+  }, [onTaskUpdated]);
 
   const handleTaskDeleted = useCallback((taskId: string) => {
-    setTasks((prev) => prev.filter((t) => t.id !== taskId));
+    setTasks((prev) => prev.filter((item) => item.id !== taskId));
     setSelectedTask(null);
-  }, []);
+    onTaskDeleted?.(taskId);
+  }, [onTaskDeleted]);
+
+  const createDefaults = useMemo(() => {
+    if (!createCol) return { status: DEFAULT_TASK_STATUS, dueDate: "" };
+    if (variant === "deadline") {
+      const due = dueDateForBucket(createCol);
+      return {
+        status: DEFAULT_TASK_STATUS,
+        dueDate: due ? format(due, "yyyy-MM-dd") : "",
+      };
+    }
+    return { status: createCol, dueDate: "" };
+  }, [createCol, variant]);
 
   return (
     <>
@@ -157,15 +221,19 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
         onDragEnd={handleDragEnd}
         modifiers={[restrictToWindowEdges]}
       >
-        {/* Scrollable columns container */}
         <div className="flex gap-4 h-full overflow-x-auto px-6 py-4">
           {COLUMNS.map((col) => {
-            const colTasks = tasks.filter((t) => t.status === col.id && !t.isArchived);
+            const colTasks = tasks.filter(
+              (item) =>
+                !item.isArchived &&
+                item.status !== "CANCELLED" &&
+                columnIdForTask(item, variant) === col.id
+            );
             return (
               <SortableContext
                 key={col.id}
                 id={col.id}
-                items={colTasks.map((t) => t.id)}
+                items={colTasks.map((item) => item.id)}
                 strategy={verticalListSortingStrategy}
               >
                 <KanbanColumn
@@ -179,7 +247,6 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
           })}
         </div>
 
-        {/* Drag Overlay */}
         <DragOverlay>
           {activeTask ? (
             <TaskCard
@@ -191,11 +258,11 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
         </DragOverlay>
       </DndContext>
 
-      {/* Create Task Modal */}
       {createCol && (
         <CreateTaskModal
           projectId={projectId || ""}
-          defaultStatus={createCol}
+          defaultStatus={createDefaults.status}
+          defaultDueDate={createDefaults.dueDate || null}
           members={members}
           labels={labels}
           onCreated={handleTaskCreated}
@@ -203,7 +270,6 @@ export function KanbanBoard({ projectId, initialTasks, members, labels }: Kanban
         />
       )}
 
-      {/* Task Detail Sheet */}
       {selectedTask && (
         <TaskDetailSheet
           task={selectedTask}

@@ -11,6 +11,7 @@ import type { KanbanTask, TaskMember } from "@/components/kanban/types";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
 import { Card, CardContent } from "@/components/ui/card";
+import { toPlannerStatus } from "@/lib/task-status";
 
 interface ProjectDashboardProps {
   tasks: KanbanTask[];
@@ -24,13 +25,12 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
 
-  const activeTasks = tasks.filter((t) => !t.isArchived);
-  const done = activeTasks.filter((t) => t.status === "DONE").length;
-  const inProgress = activeTasks.filter((t) => t.status === "IN_PROGRESS").length;
-  const todo = activeTasks.filter((t) => t.status === "TODO").length;
-  const backlog = activeTasks.filter((t) => t.status === "BACKLOG").length;
-  const inReview = activeTasks.filter((t) => t.status === "IN_REVIEW").length;
-  const cancelled = activeTasks.filter((t) => t.status === "CANCELLED").length;
+  const activeTasks = tasks.filter((item) => !item.isArchived);
+  const done = activeTasks.filter((item) => toPlannerStatus(item.status) === "DONE").length;
+  const inProgress = activeTasks.filter((item) => toPlannerStatus(item.status) === "IN_PROGRESS").length;
+  const notPlanned = activeTasks.filter((item) => item.status !== "CANCELLED" && toPlannerStatus(item.status) === "NOT_PLANNED").length;
+  const inReview = activeTasks.filter((item) => toPlannerStatus(item.status) === "REVIEW").length;
+  const cancelled = activeTasks.filter((item) => item.status === "CANCELLED").length;
   const total = activeTasks.length;
   const activeTotal = total - cancelled;
   const percent = activeTotal > 0 ? Math.round((done / activeTotal) * 100) : 0;
@@ -103,12 +103,11 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
           </h3>
           <div className="space-y-4">
             {[
-              { label: "To Do", count: todo, color: "#6366f1" },
-              { label: "In Progress", count: inProgress, color: "#f59e0b" },
-              { label: "In Review", count: inReview, color: "#8b5cf6" },
-              { label: "Done", count: done, color: "#22c55e" },
-              { label: "Backlog", count: backlog, color: "#94a3b8" },
-              { label: "Cancelled", count: cancelled, color: "#ef4444" },
+              { label: t("status.NOT_PLANNED") || "Not Planned", count: notPlanned, color: "#94a3b8" },
+              { label: t("status.IN_PROGRESS") || "In Progress", count: inProgress, color: "#f59e0b" },
+              { label: t("status.REVIEW") || "Review", count: inReview, color: "#8b5cf6" },
+              { label: t("status.DONE") || "Done", count: done, color: "#22c55e" },
+              { label: t("status.CANCELLED") || "Cancelled", count: cancelled, color: "#ef4444" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-4 group">
                 <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />

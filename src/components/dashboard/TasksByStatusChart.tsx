@@ -18,10 +18,12 @@ export interface TaskStatusCount {
 }
 
 const STATUS_META: Record<string, { label: string; color: string }> = {
+  NOT_PLANNED: { label: "Planlaşdırılmayıb", color: "#94a3b8" },
   BACKLOG: { label: "Növbəti", color: "#64748b" },
   TODO: { label: "Gözləyir", color: "#94a3b8" },
   IN_PROGRESS: { label: "Davam edir", color: "#2563eb" },
   IN_REVIEW: { label: "Nəzərdən keçirilir", color: "#9333ea" },
+  REVIEW: { label: "Yoxlanılır", color: "#8b5cf6" },
   DONE: { label: "Tamamlandı", color: "#16a34a" },
   CANCELLED: { label: "Ləğv edildi", color: "#dc2626" },
 };

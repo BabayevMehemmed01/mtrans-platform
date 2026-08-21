@@ -232,23 +232,39 @@ export type UpdateProjectInput = z.infer<typeof updateProjectSchema>;
 // TASK Validations
 // =============================================================================
 
+const taskStatusEnum = z.enum([
+  "NOT_PLANNED",
+  "IN_PROGRESS",
+  "REVIEW",
+  "DONE",
+  "BACKLOG",
+  "TODO",
+  "IN_REVIEW",
+  "CANCELLED",
+]);
+
 export const createTaskSchema = z.object({
   title: z
     .string()
     .min(1, "Tapşırıq başlığı tələb olunur")
     .max(300, "Tapşırıq başlığı çox uzundur"),
   description: z.string().max(10000).optional(),
-  status: z
-    .enum(["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELLED"])
-    .optional(),
+  status: taskStatusEnum.optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   dueDate: flexibleDateString.optional().or(z.null()),
   startDate: flexibleDateString.optional().or(z.null()),
   estimatedHours: z.number().positive().optional().or(z.null()),
   assigneeId: z.string().optional().or(z.null()),
+  observerIds: z.array(z.string()).optional(),
   parentId: z.string().optional().or(z.null()),
   labelIds: z.array(z.string()).optional(),
   projectId: z.string().min(1, "Layihə ID-si tələb olunur"),
+});
+
+export const createTaskTemplateSchema = z.object({
+  name: z.string().min(1, "Şablon adı tələb olunur").max(300),
+  description: z.string().max(10000).optional().or(z.null()),
+  departmentId: z.string().optional().or(z.null()),
 });
 
 export const updateTaskSchema = createTaskSchema.partial().omit({ projectId: true });
@@ -257,6 +273,7 @@ export const taskSchema = createTaskSchema;
 
 export type CreateTaskInput = z.infer<typeof createTaskSchema>;
 export type UpdateTaskInput = z.infer<typeof updateTaskSchema>;
+export type CreateTaskTemplateInput = z.infer<typeof createTaskTemplateSchema>;
 
 // =============================================================================
 // COMMENT Validations

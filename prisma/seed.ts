@@ -195,7 +195,7 @@ const PERMISSIONS: {
   {
     key: "CAN_CHANGE_TASK_STATUS",
     name: "Tapşırıq Statusunu Dəyiş",
-    description: "Tapşırığın statusunu dəyişə bilər (TODO, IN_PROGRESS, DONE, vb.)",
+    description: "Tapşırığın statusunu dəyişə bilər (NOT_PLANNED, IN_PROGRESS, REVIEW, DONE)",
     category: "TASK",
   },
   {
@@ -607,8 +607,8 @@ async function main() {
     { title: "Authentication sistemini qur", status: "DONE" as const, priority: "HIGH" as const },
     { title: "Prisma sxemini yaz", status: "DONE" as const, priority: "URGENT" as const },
     { title: "Dashboard UI-nı yarat", status: "IN_PROGRESS" as const, priority: "HIGH" as const },
-    { title: "RBAC icazə sistemini tətbiq et", status: "TODO" as const, priority: "HIGH" as const },
-    { title: "API endpoint-lərini yaz", status: "TODO" as const, priority: "MEDIUM" as const },
+    { title: "RBAC icazə sistemini tətbiq et", status: "NOT_PLANNED" as const, priority: "HIGH" as const },
+    { title: "API endpoint-lərini yaz", status: "NOT_PLANNED" as const, priority: "MEDIUM" as const },
   ];
 
   for (let i = 0; i < tasks.length; i++) {

@@ -2,8 +2,22 @@
 // Kanban shared types
 // =============================================================================
 
-export type TaskStatus = "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELLED";
+export type TaskStatus =
+  | "NOT_PLANNED"
+  | "IN_PROGRESS"
+  | "REVIEW"
+  | "DONE"
+  | "BACKLOG"
+  | "TODO"
+  | "IN_REVIEW"
+  | "CANCELLED";
 export type TaskPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
+
+export interface TaskPerson {
+  id: string;
+  name: string | null;
+  avatar?: string | null;
+}
 
 export interface KanbanTask {
   id: string;
@@ -16,11 +30,8 @@ export interface KanbanTask {
   estimatedHours?: number | null;
   isArchived?: boolean;
   projectId: string;
-  assignee?: {
-    id: string;
-    name: string | null;
-    avatar?: string | null;
-  } | null;
+  assignee?: TaskPerson | null;
+  observers?: TaskPerson[];
   labels: {
     label: KanbanLabel;
   }[];
@@ -37,6 +48,8 @@ export interface KanbanColumn {
   label: string;
   color: string;
   bgColor: string;
+  headerClassName?: string;
+  bodyClassName?: string;
 }
 
 export interface TaskMember {

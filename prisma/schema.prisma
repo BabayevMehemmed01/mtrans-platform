@@ -51,6 +51,9 @@ enum TaskStatus {
   IN_REVIEW
   DONE
   CANCELLED
+  // Planner (Bitrix24) — yeni dəyərlər mövcud enum-un sonuna əlavə olunur
+  NOT_PLANNED
+  REVIEW
 }
 
 enum TaskPriority {
@@ -217,8 +220,9 @@ model Company {
   crmDeals      CrmDeal[]
   chatChannels  ChatChannel[]
   notifications Notification[]
-  invites       Invitation[]
-  customers     Customer[]
+  invites        Invitation[]
+  customers      Customer[]
+  taskTemplates  TaskTemplate[]
 
   @@map("companies")
 }
@@ -248,10 +252,11 @@ model Department {
   head       User?   @relation("DepartmentHead", fields: [headUserId], references: [id], onDelete: SetNull)
 
   // Relations
-  users        User[]
-  projects     Project[]
-  chatChannels ChatChannel[]
-  invites      Invitation[]
+  users         User[]
+  projects      Project[]
+  chatChannels  ChatChannel[]
+  invites       Invitation[]
+  taskTemplates TaskTemplate[]
 
   @@unique([companyId, name]) // Eyni şirkətdə eyni adlı şöbə olmaz
   @@map("departments")
@@ -386,6 +391,7 @@ model User {
   ownedProjects          Project[]        @relation("ProjectOwner")
   assignedTasks          Task[]           @relation("TaskAssignee")
   createdTasks           Task[]           @relation("TaskCreator")
+  observedTasks          Task[]           @relation("TaskObservers")
   comments               Comment[]
   attachments            Attachment[]
   auditLogs              AuditLog[]
@@ -467,7 +473,7 @@ model Task {
   id             String       @id @default(cuid())
   title          String
   description    String? // Rich text (markdown supported)
-  status         TaskStatus   @default(BACKLOG)
+  status         TaskStatus   @default(NOT_PLANNED)
   priority       TaskPriority @default(MEDIUM)
   position       Int          @default(0) // Kanban sıralama üçün
   dueDate        DateTime?
@@ -486,6 +492,9 @@ model Task {
   // İcraçı (nullable — hənuz kimsəyə verilməmiş ola bilər)
   assigneeId String?
   assignee   User?   @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  // Müşahidəçilər (çox-çoxa — 1 assignee, çoxlu observer)
+  observers User[] @relation("TaskObservers")
 
   // Yaradan
   createdById String
@@ -506,6 +515,27 @@ model Task {
   @@index([parentId])
   @@index([status])
   @@map("tasks")
+}
+
+// =============================================================================
+// MODEL: TaskTemplate (Tapşırıq şablonu)
+// =============================================================================
+
+model TaskTemplate {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  createdAt    DateTime    @default(now())
+
+  // Multi-tenant (şirkət sərhədi — şablonlar qarışmasın)
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId])
+  @@index([departmentId])
+  @@map("task_templates")
 }
 
 // =============================================================================

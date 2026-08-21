@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
+import { format, addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
@@ -30,13 +30,16 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
+  const [viewMode, setViewMode] = useState<"month" | "week">("month");
   
   const [addingDate, setAddingDate] = useState<Date | null>(null);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [loadingDay, setLoadingDay] = useState<Date | null>(null);
 
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-  const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
+  const nextPeriod = () =>
+    setCurrentDate(viewMode === "week" ? addWeeks(currentDate, 1) : addMonths(currentDate, 1));
+  const prevPeriod = () =>
+    setCurrentDate(viewMode === "week" ? subWeeks(currentDate, 1) : subMonths(currentDate, 1));
   const today = () => {
     const now = new Date();
     setCurrentDate(now);
@@ -45,8 +48,10 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(monthStart);
-  const startDate = startOfWeek(monthStart, { weekStartsOn: 1 });
-  const endDate = endOfWeek(monthEnd, { weekStartsOn: 1 });
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
+  const startDate = viewMode === "week" ? weekStart : startOfWeek(monthStart, { weekStartsOn: 1 });
+  const endDate = viewMode === "week" ? weekEnd : endOfWeek(monthEnd, { weekStartsOn: 1 });
 
   const days = eachDayOfInterval({ start: startDate, end: endDate });
   
@@ -74,7 +79,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
         body: JSON.stringify({
           title: newTaskTitle.trim(),
           projectId,
-          status: "TODO",
+          status: "NOT_PLANNED",
           dueDate: day.toISOString()
         }),
       });
@@ -100,19 +105,43 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
         <div className="flex items-center gap-4">
           <div className="flex bg-slate-100 rounded-lg p-1 border border-gray-200">
-            <button onClick={prevMonth} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
+            <button onClick={prevPeriod} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
               <ChevronLeft className="w-5 h-5" />
             </button>
             <button onClick={today} className="px-4 py-1.5 text-sm font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all rounded-md">
               {t("projectCalendar.today") || "Bu gün"}
             </button>
-            <button onClick={nextMonth} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
+            <button onClick={nextPeriod} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
           <h2 className="text-xl font-black text-slate-800 capitalize tracking-tight">
-            {format(currentDate, "MMMM yyyy")}
+            {viewMode === "week"
+              ? `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`
+              : format(currentDate, "MMMM yyyy")}
           </h2>
+        </div>
+        <div className="flex rounded-lg border border-gray-200 bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("month")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-bold transition-all",
+              viewMode === "month" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            {t("projectCalendar.viewMonth") || "Ay"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("week")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-bold transition-all",
+              viewMode === "week" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            {t("projectCalendar.viewWeek") || "Həftə"}
+          </button>
         </div>
       </div>
 
@@ -170,7 +199,10 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
             ))}
           </div>
 
-          <div className="flex-1 grid grid-cols-7 auto-rows-[minmax(120px,1fr)]">
+          <div className={cn(
+            "flex-1 grid grid-cols-7",
+            viewMode === "week" ? "auto-rows-[minmax(280px,1fr)]" : "auto-rows-[minmax(120px,1fr)]"
+          )}>
             {days.map((day, i) => {
               const dayTasks = tasks.filter(t => t.dueDate && isSameDay(new Date(t.dueDate), day) && !t.isArchived);
               const isAdding = addingDate && isSameDay(addingDate, day);
@@ -182,7 +214,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                   onClick={() => setSelectedDate(day)}
                   className={cn(
                     "group relative p-2 border-r border-b border-gray-100 transition-colors hover:bg-slate-50/80 flex flex-col",
-                    !isSameMonth(day, monthStart) && "bg-gray-50/50 text-gray-400 opacity-60",
+                    !isSameMonth(day, monthStart) && viewMode === "month" && "bg-gray-50/50 text-gray-400 opacity-60",
                     isToday(day) && "bg-blue-50/20",
                     isSameDay(day, selectedDate) && "bg-blue-50/60"
                   )}

@@ -7,7 +7,7 @@ import { getTranslation } from "@/lib/i18n";
 import { DashboardClient } from "./DashboardClient";
 
 const TREND_DAYS = 14;
-const STATUS_ORDER = ["BACKLOG", "TODO", "IN_PROGRESS", "IN_REVIEW", "DONE", "CANCELLED"];
+const STATUS_ORDER = ["NOT_PLANNED", "IN_PROGRESS", "REVIEW", "DONE", "BACKLOG", "TODO", "IN_REVIEW", "CANCELLED"];
 
 export const metadata: Metadata = { title: "Ana Səhifə | WorkSpace ERP" };
 

@@ -47,14 +47,19 @@ export function getPriorityColor(priority: string) {
 
 export function getStatusColor(status: string) {
   switch (status) {
+    case 'NOT_PLANNED':
+    case 'BACKLOG':
     case 'TODO':
       return 'text-slate-600 bg-slate-100 border-slate-200';
     case 'IN_PROGRESS':
       return 'text-blue-600 bg-blue-50 border-blue-200';
     case 'REVIEW':
+    case 'IN_REVIEW':
       return 'text-purple-600 bg-purple-50 border-purple-200';
     case 'DONE':
       return 'text-green-600 bg-green-50 border-green-200';
+    case 'CANCELLED':
+      return 'text-red-600 bg-red-50 border-red-200';
     default:
       return 'text-slate-600 bg-slate-100 border-slate-200';
   }

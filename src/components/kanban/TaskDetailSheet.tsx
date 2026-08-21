@@ -8,7 +8,7 @@ import {
   MessageSquare, Paperclip, CheckSquare, AlertTriangle,
   Edit2, Check, Plus, FileText, Timer, Send,
   Reply, Pencil, Archive, ArchiveRestore, MoreVertical,
-  Download, File as FileIcon, Image as ImageIcon,
+  Download, File as FileIcon, Image as ImageIcon, Eye,
 } from "lucide-react";
 import { cn, getPriorityColor, getStatusColor, timeAgo, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,16 +25,26 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { UploadButton } from "@/utils/uploadthing";
 import type { KanbanTask, TaskMember, KanbanLabel } from "./types";
+import { ObserverMultiSelect } from "./ObserverMultiSelect";
 
 // ─── Constants (Dynamic) ───────────────────────────────────────────────────
-const getStatusOptions = (t: any) => [
-  { value: "TODO",        label: t("taskDetailSheet.statusTodo") || "To Do",         color: "#6366f1" },
-  { value: "IN_PROGRESS", label: t("taskDetailSheet.statusInProgress") || "İcra Edilir", color: "#f59e0b" },
-  { value: "DONE",        label: t("taskDetailSheet.statusDone") || "Tamamlandı",      color: "#22c55e" },
-  { value: "BACKLOG",     label: t("taskDetailSheet.statusBacklog") || "Backlog",       color: "#94a3b8" },
-  { value: "IN_REVIEW",   label: t("taskDetailSheet.statusInReview") || "Yoxlanılır",    color: "#8b5cf6" },
-  { value: "CANCELLED",   label: t("taskDetailSheet.statusCancelled") || "Ləğv Edildi",   color: "#ef4444" },
-];
+const getStatusOptions = (t: any, current?: string) => {
+  const options = [
+    { value: "NOT_PLANNED", label: t("taskDetailSheet.statusNotPlanned") || "Not Planned", color: "#94a3b8" },
+    { value: "IN_PROGRESS", label: t("taskDetailSheet.statusInProgress") || "İcra Edilir", color: "#f59e0b" },
+    { value: "REVIEW",      label: t("taskDetailSheet.statusReview") || "Yoxlanılır",    color: "#8b5cf6" },
+    { value: "DONE",        label: t("taskDetailSheet.statusDone") || "Tamamlandı",      color: "#22c55e" },
+    { value: "CANCELLED",   label: t("taskDetailSheet.statusCancelled") || "Ləğv Edildi",   color: "#ef4444" },
+  ];
+  if (current && !options.some((o) => o.value === current)) {
+    options.unshift({
+      value: current,
+      label: t(`status.${current}`) || current,
+      color: "#94a3b8",
+    });
+  }
+  return options;
+};
 
 const getPriorityOptions = (t: any) => [
   { value: "LOW",    label: t("taskDetailSheet.priorityLow") || "Aşağı",    color: "#94a3b8" },
@@ -113,10 +123,6 @@ export function TaskDetailSheet({
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
 
-  const STATUS_OPTIONS = getStatusOptions(t);
-  const PRIORITY_OPTIONS = getPriorityOptions(t);
-  const SHEET_TABS = getSheetTabs(t);
-
   const [activeTab, setActiveTab] = useState<TabId>("details");
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -130,10 +136,15 @@ export function TaskDetailSheet({
     status: task.status,
     priority: task.priority,
     assigneeId: task.assignee?.id ?? "",
+    observerIds: (task.observers ?? []).map((o) => o.id),
     dueDate: formatDate(task.dueDate),
     estimatedHours: task.estimatedHours ?? null,
     labelIds: task.labels.map((l) => l.label.id),
   });
+
+  const STATUS_OPTIONS = getStatusOptions(t, form.status);
+  const PRIORITY_OPTIONS = getPriorityOptions(t);
+  const SHEET_TABS = getSheetTabs(t);
 
   // Tab-level count overrides
   const [counts, setCounts] = useState(task._count);
@@ -228,7 +239,7 @@ export function TaskDetailSheet({
             <button
               className="mt-1.5 flex-shrink-0"
               onClick={async () => {
-                const next = form.status === "DONE" ? "TODO" : "DONE";
+                const next = form.status === "DONE" ? "NOT_PLANNED" : "DONE";
                 setForm((p) => ({ ...p, status: next }));
                 await patchField("status", next);
               }}
@@ -413,7 +424,7 @@ function DetailsTab({
   form, setForm, members, labels, currentStatus, currentPriority,
   handleChange, patchField, toggleLabel, task, t
 }: any) {
-  const STATUS_OPTIONS = getStatusOptions(t);
+  const STATUS_OPTIONS = getStatusOptions(t, form.status);
   const PRIORITY_OPTIONS = getPriorityOptions(t);
 
   return (
@@ -464,6 +475,22 @@ function DetailsTab({
               ))}
             </select>
           </PropertyField>
+
+          {/* Observers */}
+          <div className="col-span-2">
+          <PropertyField label={t("taskDetailSheet.observersLabel") || "Müşahidəçilər"} icon={<Eye className="w-3.5 h-3.5" />}>
+            <ObserverMultiSelect
+              members={members}
+              selectedIds={form.observerIds}
+              excludeId={form.assigneeId || undefined}
+              onChange={async (ids) => {
+                setForm((p: any) => ({ ...p, observerIds: ids }));
+                await patchField("observerIds", ids);
+              }}
+              placeholder={t("taskDetailSheet.observersPlaceholder") || "Müşahidəçi seçin"}
+            />
+          </PropertyField>
+          </div>
 
           {/* Due date */}
           <PropertyField label={t("taskDetailSheet.dueDateLabel") || "Son Tarix"} icon={<Calendar className="w-3.5 h-3.5" />}>
@@ -589,7 +616,7 @@ function SubtasksTab({
 
     const tempId = `temp-${Date.now()}`;
     setSubtasks((prev) => {
-      const next = [...prev, { id: tempId, title, status: "TODO" }];
+      const next = [...prev, { id: tempId, title, status: "NOT_PLANNED" }];
       onCountChange(next.length);
       return next;
     });
@@ -621,7 +648,7 @@ function SubtasksTab({
   };
 
   const toggleSubtask = async (sub: SubtaskItem) => {
-    const newStatus = sub.status === "DONE" ? "TODO" : "DONE";
+    const newStatus = sub.status === "DONE" ? "NOT_PLANNED" : "DONE";
     setSubtasks((prev) => prev.map((s) => (s.id === sub.id ? { ...s, status: newStatus } : s)));
     try {
       const res = await fetch(`/api/tasks/${sub.id}`, {

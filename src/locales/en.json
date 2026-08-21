@@ -165,8 +165,10 @@
   "status": {
     "BACKLOG": "Backlog",
     "TODO": "To Do",
+    "NOT_PLANNED": "Not Planned",
     "IN_PROGRESS": "In Progress",
     "IN_REVIEW": "In Review",
+    "REVIEW": "Review",
     "DONE": "Done",
     "CANCELLED": "Cancelled"
   },
@@ -294,7 +296,9 @@
       "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat", "sun": "Sun"
     },
     "pickerTitle": "Calendar",
-    "noTasksForDay": "No tasks for this day"
+    "noTasksForDay": "No tasks for this day",
+    "viewMonth": "Month",
+    "viewWeek": "Week"
   },
   "projectChat": {
     "generalChat": "General Project Chat",
@@ -356,7 +360,9 @@
     "alertError": "An error occurred"
   },
   "projectViews": {
-    "tabList": "Tasks (List)",
+    "tabList": "List",
+    "tabDeadline": "Deadline",
+    "tabPlanner": "Planner",
     "tabBoard": "Board",
     "tabCalendar": "Calendar",
     "tabMembers": "People",
@@ -971,16 +977,31 @@
     "labels": "Labels",
     "cancel": "Cancel",
     "creating": "Creating...",
-    "create": "Create"
+    "create": "Create",
+    "templates": "Templates",
+    "templatesPlaceholder": "Select a template (optional)",
+    "saveAsTemplate": "Save as template",
+    "templateSaved": "Template saved",
+    "observers": "Observers",
+    "observersPlaceholder": "Select observers",
+    "observersSearch": "Search...",
+    "observersEmpty": "No results"
   },
   "kanbanBoard": {
     "colBacklog": "Backlog",
-    "colTodo": "İcra Edilməli",
-    "colInProgress": "İcra Edilir",
-    "colInReview": "Yoxlanılır",
-    "colDone": "Tamamlandı",
-    "colCancelled": "Ləğv Edildi",
-    "errorStatusUpdate": "Tapşırıq statusu yenilənmədi"
+    "colTodo": "To Do",
+    "colNotPlanned": "Not Planned",
+    "colInProgress": "In Progress",
+    "colInReview": "In Review",
+    "colReview": "Review",
+    "colDone": "Done",
+    "colCancelled": "Cancelled",
+    "colOverdue": "Overdue",
+    "colDueToday": "Due today",
+    "colDueThisWeek": "Due this week",
+    "colDueNextWeek": "Due next week",
+    "colNoDeadline": "No deadline",
+    "errorStatusUpdate": "Task status was not updated"
   },
   "kanbanColumn": {
     "addTaskTitle": "Tapşırıq əlavə et",
@@ -996,10 +1017,12 @@
   },
   "taskDetailSheet": {
     "statusTodo": "To Do",
+    "statusNotPlanned": "Not Planned",
     "statusInProgress": "In Progress",
     "statusDone": "Done",
     "statusBacklog": "Backlog",
     "statusInReview": "In Review",
+    "statusReview": "Review",
     "statusCancelled": "Cancelled",
     "priorityLow": "Low",
     "priorityMedium": "Medium",
@@ -1021,6 +1044,8 @@
     "statusLabel": "Status",
     "priorityLabel": "Priority",
     "assigneeLabel": "Assignee",
+    "observersLabel": "Observers",
+    "observersPlaceholder": "Select observers",
     "notSelected": "Not selected",
     "dueDateLabel": "Due Date",
     "description": "Description",

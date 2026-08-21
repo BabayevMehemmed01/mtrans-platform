@@ -165,8 +165,10 @@
   "status": {
     "BACKLOG": "Бэклог",
     "TODO": "К выполнению",
+    "NOT_PLANNED": "Не запланировано",
     "IN_PROGRESS": "В процессе",
     "IN_REVIEW": "На проверке",
+    "REVIEW": "Проверка",
     "DONE": "Готово",
     "CANCELLED": "Отменено"
   },
@@ -294,7 +296,9 @@
       "mon": "Пн", "tue": "Вт", "wed": "Ср", "thu": "Чт", "fri": "Пт", "sat": "Сб", "sun": "Вс"
     },
     "pickerTitle": "Календарь",
-    "noTasksForDay": "На этот день задач нет"
+    "noTasksForDay": "На этот день задач нет",
+    "viewMonth": "Месяц",
+    "viewWeek": "Неделя"
   },
   "projectChat": {
     "generalChat": "Общий чат проекта",
@@ -356,7 +360,9 @@
     "alertError": "Произошла ошибка"
   },
   "projectViews": {
-    "tabList": "Задачи (Список)",
+    "tabList": "List",
+    "tabDeadline": "Deadline",
+    "tabPlanner": "Planner",
     "tabBoard": "Доска",
     "tabCalendar": "Календарь",
     "tabMembers": "Люди",
@@ -971,15 +977,30 @@
     "labels": "Метки",
     "cancel": "Отмена",
     "creating": "Создание...",
-    "create": "Создать"
+    "create": "Создать",
+    "templates": "Шаблоны",
+    "templatesPlaceholder": "Выберите шаблон (необязательно)",
+    "saveAsTemplate": "Сохранить как шаблон",
+    "templateSaved": "Шаблон сохранён",
+    "observers": "Наблюдатели",
+    "observersPlaceholder": "Выберите наблюдателей",
+    "observersSearch": "Поиск...",
+    "observersEmpty": "Нет результатов"
   },
   "kanbanBoard": {
     "colBacklog": "Бэклог",
     "colTodo": "Сделать",
-    "colInProgress": "В процессе",
+    "colNotPlanned": "Not Planned",
+    "colInProgress": "In Progress",
     "colInReview": "На проверке",
-    "colDone": "Готово",
+    "colReview": "Review",
+    "colDone": "Done",
     "colCancelled": "Отменено",
+    "colOverdue": "Overdue",
+    "colDueToday": "Due today",
+    "colDueThisWeek": "Due this week",
+    "colDueNextWeek": "Due next week",
+    "colNoDeadline": "No deadline",
     "errorStatusUpdate": "Не удалось обновить статус задачи"
   },
   "kanbanColumn": {
@@ -996,10 +1017,12 @@
   },
   "taskDetailSheet": {
     "statusTodo": "Сделать",
+    "statusNotPlanned": "Not Planned",
     "statusInProgress": "В процессе",
     "statusDone": "Готово",
     "statusBacklog": "Бэклог",
     "statusInReview": "На проверке",
+    "statusReview": "Review",
     "statusCancelled": "Отменено",
     "priorityLow": "Низкий",
     "priorityMedium": "Средний",
@@ -1021,6 +1044,9 @@
     "statusLabel": "Статус",
     "priorityLabel": "Приоритет",
     "assigneeLabel": "Исполнитель",
+    "observersLabel": "Наблюдатели",
+    "observersPlaceholder": "Выберите наблюдателей",
+    "notSelected": "Не выбрано",
     "notSelected": "Не выбрано",
     "dueDateLabel": "Срок сдачи",
     "description": "Описание",

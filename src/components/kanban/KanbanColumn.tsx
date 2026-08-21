@@ -33,7 +33,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
             style={{ backgroundColor: column.color }}
           />
-          <span className="text-sm font-semibold">{column.label}</span>
+          <span className={cn("text-sm font-semibold", column.headerClassName)}>{column.label}</span>
           <span className="text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-1.5 py-0.5 rounded-full font-medium">
             {tasks.length}
           </span>
@@ -56,7 +56,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
           "flex-1 flex flex-col gap-2 overflow-y-auto rounded-xl p-2 transition-colors min-h-20",
           isOver
             ? "bg-[hsl(var(--primary)/0.06)] ring-2 ring-[hsl(var(--primary)/0.3)] ring-dashed"
-            : "bg-[hsl(var(--muted)/0.5)]"
+            : column.bodyClassName || "bg-[hsl(var(--muted)/0.5)]"
         )}
       >
         <SortableContext

@@ -165,8 +165,10 @@
   "status": {
     "BACKLOG": "Növbəti",
     "TODO": "Gözləyir",
+    "NOT_PLANNED": "Planlaşdırılmayıb",
     "IN_PROGRESS": "Davam edir",
     "IN_REVIEW": "Nəzərdən keç.",
+    "REVIEW": "Yoxlanılır",
     "DONE": "Tamamlandı",
     "CANCELLED": "Ləğv edildi"
   },
@@ -294,7 +296,9 @@
       "mon": "B.e", "tue": "Ç.a", "wed": "Çər", "thu": "C.a", "fri": "Cüm", "sat": "Şən", "sun": "Baz"
     },
     "pickerTitle": "Təqvim",
-    "noTasksForDay": "Bu günə tapşırıq yoxdur"
+    "noTasksForDay": "Bu günə tapşırıq yoxdur",
+    "viewMonth": "Ay",
+    "viewWeek": "Həftə"
   },
   "projectChat": {
     "generalChat": "Ümumi Layihə Çatı",
@@ -356,7 +360,9 @@
     "alertError": "Xəta baş verdi"
   },
   "projectViews": {
-    "tabList": "Tasklar (Siyahı)",
+    "tabList": "List",
+    "tabDeadline": "Deadline",
+    "tabPlanner": "Planner",
     "tabBoard": "Lövhə",
     "tabCalendar": "Təqvim",
     "tabMembers": "İnsanlar",
@@ -971,15 +977,30 @@
     "labels": "Etiketlər",
     "cancel": "Ləğv Et",
     "creating": "Yaradılır...",
-    "create": "Yarat"
+    "create": "Yarat",
+    "templates": "Şablonlar",
+    "templatesPlaceholder": "Şablon seçin (istəyə bağlı)",
+    "saveAsTemplate": "Şablon kimi yadda saxla",
+    "templateSaved": "Şablon yadda saxlanıldı",
+    "observers": "Müşahidəçilər",
+    "observersPlaceholder": "Müşahidəçi seçin",
+    "observersSearch": "Axtar...",
+    "observersEmpty": "Nəticə yoxdur"
   },
   "kanbanBoard": {
     "colBacklog": "Backlog",
     "colTodo": "İcra Edilməli",
-    "colInProgress": "İcra Edilir",
+    "colNotPlanned": "Not Planned",
+    "colInProgress": "In Progress",
     "colInReview": "Yoxlanılır",
-    "colDone": "Tamamlandı",
+    "colReview": "Review",
+    "colDone": "Done",
     "colCancelled": "Ləğv Edildi",
+    "colOverdue": "Overdue",
+    "colDueToday": "Due today",
+    "colDueThisWeek": "Due this week",
+    "colDueNextWeek": "Due next week",
+    "colNoDeadline": "No deadline",
     "errorStatusUpdate": "Tapşırıq statusu yenilənmədi"
   },
   "kanbanColumn": {
@@ -996,10 +1017,12 @@
   },
   "taskDetailSheet": {
     "statusTodo": "To Do",
+    "statusNotPlanned": "Not Planned",
     "statusInProgress": "İcra Edilir",
     "statusDone": "Tamamlandı",
     "statusBacklog": "Backlog",
     "statusInReview": "Yoxlanılır",
+    "statusReview": "Review",
     "statusCancelled": "Ləğv Edildi",
     "priorityLow": "Aşağı",
     "priorityMedium": "Orta",
@@ -1021,6 +1044,8 @@
     "statusLabel": "Status",
     "priorityLabel": "Prioritet",
     "assigneeLabel": "İcraçı",
+    "observersLabel": "Müşahidəçilər",
+    "observersPlaceholder": "Müşahidəçi seçin",
     "notSelected": "Seçilməyib",
     "dueDateLabel": "Son Tarix",
     "description": "Təsvir",

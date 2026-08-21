@@ -22,6 +22,7 @@ import { TaskDetailSheet } from "@/components/kanban/TaskDetailSheet";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 import { useSession } from "next-auth/react"; // YENİ: Tərcümə üçün
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
+import { toPlannerStatus } from "@/lib/task-status";
 
 // ── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_MAP = {
@@ -32,12 +33,14 @@ const PRIORITY_MAP = {
 } as const;
 
 const STATUS_MAP = {
-  TODO:        { label: "To Do",       color: "#6366f1", dot: "border-[#6366f1]" },
+  NOT_PLANNED: { label: "Not Planned", color: "#94a3b8", dot: "border-[#94a3b8]" },
   IN_PROGRESS: { label: "In Progress", color: "#f59e0b", dot: "border-[#f59e0b] bg-[#f59e0b]" },
+  REVIEW:      { label: "Review",      color: "#8b5cf6", dot: "border-[#8b5cf6] bg-[#8b5cf6]" },
   DONE:        { label: "Done",        color: "#22c55e", dot: "border-[#22c55e] bg-[#22c55e]" },
+  CANCELLED:   { label: "Cancelled",   color: "#ef4444", dot: "border-[#ef4444]" },
+  TODO:        { label: "To Do",       color: "#6366f1", dot: "border-[#6366f1]" },
   BACKLOG:     { label: "Backlog",     color: "#94a3b8", dot: "border-[#94a3b8]" },
   IN_REVIEW:   { label: "In Review",   color: "#8b5cf6", dot: "border-[#8b5cf6] bg-[#8b5cf6]" },
-  CANCELLED:   { label: "Cancelled",   color: "#ef4444", dot: "border-[#ef4444]" },
 } as const;
 
 type GroupBy = "status" | "priority" | "assignee";
@@ -258,7 +261,9 @@ function StatusBadge({
       </button>
       {open && (
         <div className="absolute left-0 top-7 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-36">
-          {Object.entries(STATUS_MAP).map(([key, val]) => (
+          {(["NOT_PLANNED", "IN_PROGRESS", "REVIEW", "DONE", "CANCELLED"] as const).map((key) => {
+            const val = STATUS_MAP[key];
+            return (
             <button
               key={key}
               onClick={() => changeStatus(key)}
@@ -270,7 +275,8 @@ function StatusBadge({
               />
               {t(`status.${key}`) || val.label}
             </button>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -866,11 +872,10 @@ export function TaskListView({
   }, [initialTaskId, tasks]);
 
   const GROUPS = [
-    { status: "TODO",        ...STATUS_MAP.TODO,        label: t("status.TODO") || "To Do" },
+    { status: "NOT_PLANNED", ...STATUS_MAP.NOT_PLANNED, label: t("status.NOT_PLANNED") || "Not Planned" },
     { status: "IN_PROGRESS", ...STATUS_MAP.IN_PROGRESS, label: t("status.IN_PROGRESS") || "In Progress" },
-    { status: "IN_REVIEW",   ...STATUS_MAP.IN_REVIEW,   label: t("status.IN_REVIEW") || "In Review" },
+    { status: "REVIEW",      ...STATUS_MAP.REVIEW,      label: t("status.REVIEW") || "Review" },
     { status: "DONE",        ...STATUS_MAP.DONE,        label: t("status.DONE") || "Done" },
-    { status: "BACKLOG",     ...STATUS_MAP.BACKLOG,     label: t("status.BACKLOG") || "Backlog" },
     { status: "CANCELLED",   ...STATUS_MAP.CANCELLED,   label: t("status.CANCELLED") || "Cancelled" },
   ];
 
@@ -915,8 +920,12 @@ export function TaskListView({
         {/* Groups */}
         <div className="p-6 max-w-[1600px] mx-auto space-y-2">
           {GROUPS.map((group) => {
-            const groupTasks = tasks.filter((t) => t.status === group.status && !t.isArchived);
-            if (groupTasks.length === 0 && group.status !== "TODO" && group.status !== "IN_PROGRESS") return null;
+            const groupTasks = tasks.filter((item) => {
+              if (item.isArchived) return false;
+              if (group.status === "CANCELLED") return item.status === "CANCELLED";
+              return item.status !== "CANCELLED" && toPlannerStatus(item.status) === group.status;
+            });
+            if (groupTasks.length === 0 && group.status !== "NOT_PLANNED" && group.status !== "IN_PROGRESS") return null;
 
             return (
               <GroupSection

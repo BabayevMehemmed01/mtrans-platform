@@ -411,10 +411,12 @@ function statusLabel(s: string, t: (k: string) => string) {
   const translated = t(`status.${s}`);
   if (translated && translated !== `status.${s}`) return translated;
   const map: Record<string, string> = {
+    NOT_PLANNED: "Planlaşdırılmayıb",
     BACKLOG: "Növbəti",
     TODO: "Gözləyir",
     IN_PROGRESS: "Davam edir",
     IN_REVIEW: "Nəzərdən keç.",
+    REVIEW: "Yoxlanılır",
     DONE: "Tamamlandı",
     CANCELLED: "Ləğv edildi",
   };

@@ -78,7 +78,11 @@ export async function ProjectDetailScreen({ id, tab, task, kind }: ProjectDetail
     ...(isManagerOrOwner
       ? {}
       : {
-          OR: [{ assigneeId: session.user.id }, { createdById: session.user.id }],
+          OR: [
+            { assigneeId: session.user.id },
+            { createdById: session.user.id },
+            { observers: { some: { id: session.user.id } } },
+          ],
         }),
   };
 
@@ -88,6 +92,7 @@ export async function ProjectDetailScreen({ id, tab, task, kind }: ProjectDetail
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
       include: {
         assignee: { select: { id: true, name: true, avatar: true } },
+        observers: { select: { id: true, name: true, avatar: true } },
         labels: { include: { label: true } },
         _count: { select: { subtasks: true, comments: true, attachments: true } },
       },

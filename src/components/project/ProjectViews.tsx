@@ -10,7 +10,8 @@ import {
   Paperclip,
   Users,
   Calendar,
-  MessageCircle
+  MessageCircle,
+  CalendarClock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KanbanBoard } from "@/components/kanban/KanbanBoard";
@@ -22,7 +23,7 @@ import { ProjectChat } from "./ProjectChat";
 import { ProjectFiles } from "./ProjectFiles";
 import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
 
-type TabId = "list" | "board" | "calendar" | "members" | "chat" | "dashboard" | "files";
+type TabId = "list" | "deadline" | "planner" | "calendar" | "members" | "chat" | "dashboard" | "files";
 
 interface ProjectViewsProps {
   projectId: string;
@@ -64,9 +65,10 @@ export function ProjectViews({
   // Tabları lüğətlə (useMemo içində, hər renderdə yenilənməsin deyə) qururuq
   const TABS = useMemo(() => {
     const tabs = [
-      { id: "list" as TabId,      label: t("projectViews.tabList") || "Tasklar (Siyahı)", icon: List },
-      { id: "board" as TabId,     label: t("projectViews.tabBoard") || "Lövhə",           icon: LayoutGrid },
-      { id: "calendar" as TabId,  label: t("projectViews.tabCalendar") || "Təqvim",       icon: Calendar },
+      { id: "list" as TabId,      label: t("projectViews.tabList") || "List", icon: List },
+      { id: "deadline" as TabId,  label: t("projectViews.tabDeadline") || "Deadline", icon: CalendarClock },
+      { id: "planner" as TabId,   label: t("projectViews.tabPlanner") || "Planner", icon: LayoutGrid },
+      { id: "calendar" as TabId,  label: t("projectViews.tabCalendar") || "Calendar", icon: Calendar },
       { id: "members" as TabId,   label: t("projectViews.tabMembers") || "İnsanlar",      icon: Users },
       { id: "chat" as TabId,      label: t("projectViews.tabChat") || "Mesajlar",         icon: MessageCircle },
       { id: "dashboard" as TabId, label: t("projectViews.tabDashboard") || "Analitika",   icon: LayoutDashboard },
@@ -76,7 +78,12 @@ export function ProjectViews({
   }, [t, isCollab]);
 
   const resolvedInitialTab = useMemo<TabId>(() => {
-    const mapped = initialTab === "tasks" ? "list" : initialTab;
+    const mapped =
+      initialTab === "board"
+        ? "planner"
+        : initialTab === "tasks"
+          ? "list"
+          : initialTab;
     if (mapped && TABS.some((tab) => tab.id === mapped)) return mapped as TabId;
     return "list";
   }, [initialTab, TABS]);
@@ -127,7 +134,7 @@ export function ProjectViews({
       <div
         className={cn(
           "flex-1 bg-[hsl(var(--background))]",
-          activeTab === "list" || activeTab === "board" || activeTab === "chat"
+          activeTab === "list" || activeTab === "planner" || activeTab === "deadline" || activeTab === "chat"
             ? "overflow-hidden"
             : "overflow-auto"
         )}
@@ -145,12 +152,29 @@ export function ProjectViews({
           />
         )}
 
-        {activeTab === "board" && (
+        {activeTab === "deadline" && (
           <KanbanBoard
             projectId={projectId}
             initialTasks={tasks}
             members={members}
             labels={labels}
+            variant="deadline"
+            onTaskCreated={handleTaskCreated}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
+          />
+        )}
+
+        {activeTab === "planner" && (
+          <KanbanBoard
+            projectId={projectId}
+            initialTasks={tasks}
+            members={members}
+            labels={labels}
+            variant="planner"
+            onTaskCreated={handleTaskCreated}
+            onTaskUpdated={handleTaskUpdated}
+            onTaskDeleted={handleTaskDeleted}
           />
         )}
 
