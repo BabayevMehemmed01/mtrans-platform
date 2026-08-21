@@ -87,10 +87,10 @@ export function getDealPhone(deal: {
   return phone || null;
 }
 
-/** wa.me requires digits; strip spaces (and other separators) from the phone. */
+/** wa.me requires digits only; strip spaces, parentheses, dashes and the leading "+". */
 export function toWhatsAppHref(phone: string): string | null {
-  const digits = phone.replace(/\s+/g, "").replace(/[^\d]/g, "");
-  return digits ? `https://wa.me/${digits}` : null;
+  const cleanedPhone = phone.replace(/\D/g, "");
+  return cleanedPhone ? `https://wa.me/${cleanedPhone}` : null;
 }
 
 export const CRM_TRASH_ID = "__crm_trash__";

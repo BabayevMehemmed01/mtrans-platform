@@ -101,7 +101,7 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
           </span>
         </div>
 
-        <div className="flex items-center gap-0.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-0.5 flex-shrink-0">
           <QuickAction
             icon={Mail}
             label={t("crmDealCard.mail") || "Mail"}
@@ -146,6 +146,8 @@ function QuickAction({
   href?: string;
   external?: boolean;
 }) {
+  // Disabled whenever there is no valid phone/email — greyed out and fully unclickable,
+  // so a missing contact detail can never open the deal's edit modal by accident.
   const enabled = Boolean(href);
 
   return (
@@ -160,9 +162,10 @@ function QuickAction({
         "p-1 rounded-md transition-colors",
         enabled
           ? "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))]"
-          : "text-[hsl(var(--muted-foreground)/0.3)] cursor-not-allowed pointer-events-none"
+          : "opacity-50 cursor-not-allowed pointer-events-none"
       )}
       onClick={(e) => {
+        // Prevent the click from bubbling up to the card and opening the edit modal.
         e.stopPropagation();
         if (!enabled) e.preventDefault();
       }}
