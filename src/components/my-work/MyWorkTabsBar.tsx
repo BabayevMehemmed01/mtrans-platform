@@ -1,0 +1,135 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Plus,
+  Check,
+  ListTodo,
+  Calendar,
+  Clock,
+  FolderKanban,
+  Activity,
+  LayoutDashboard,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+// =============================================================================
+// My Work — Top tab navigation (Teamwork "My Work" style)
+// Real Next.js routes under /dashboard/my-work/* — Link-based for fast nav.
+// =============================================================================
+
+export const MY_WORK_TABS = [
+  { id: "tasks", label: "My tasks", href: "/dashboard/my-work/tasks", icon: ListTodo },
+  { id: "calendar", label: "My calendar", href: "/dashboard/my-work/calendar", icon: Calendar },
+  { id: "timesheet", label: "My timesheet", href: "/dashboard/my-work/timesheet", icon: Clock },
+  { id: "projects", label: "My projects", href: "/dashboard/my-work/projects", icon: FolderKanban },
+  { id: "activity", label: "Activity", href: "/dashboard/my-work/activity", icon: Activity },
+  { id: "dashboards", label: "Dashboards", href: "/dashboard/my-work/dashboards", icon: LayoutDashboard },
+] as const;
+
+export type MyWorkStats = { late: number; today: number; upcoming: number };
+
+export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
+  const pathname = usePathname();
+
+  return (
+    <div className="flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-border bg-white px-4 dark:bg-card">
+      <div className="flex flex-1 items-center gap-1 overflow-x-auto">
+        {MY_WORK_TABS.map((tab) => {
+          const isActive = pathname?.startsWith(tab.href) ?? false;
+          const Icon = tab.icon;
+          return (
+            <Link
+              key={tab.id}
+              href={tab.href}
+              className={cn(
+                "inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-all",
+                isActive
+                  ? "border-blue-600 text-blue-600"
+                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+              )}
+            >
+              <Icon className="size-3.5" />
+              {tab.label}
+            </Link>
+          );
+        })}
+
+        <Popover>
+          <PopoverTrigger
+            className="ml-1 flex size-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            title="Add / remove tabs"
+          >
+            <Plus className="size-4" />
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-64">
+            <PopoverHeader>
+              <PopoverTitle>Add / remove tabs</PopoverTitle>
+              <PopoverDescription>Choose which tabs appear in My Work.</PopoverDescription>
+            </PopoverHeader>
+            <div className="flex flex-col gap-0.5">
+              {MY_WORK_TABS.map((tab) => (
+                <div
+                  key={tab.id}
+                  className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground"
+                >
+                  <Check className="size-3.5 text-emerald-600" />
+                  <span>{tab.label}</span>
+                </div>
+              ))}
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <div className="flex flex-shrink-0 items-center gap-2 py-2">
+        <StatBadge
+          count={stats.late}
+          label="Late"
+          className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
+        />
+        <StatBadge
+          count={stats.today}
+          label="Today"
+          className="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
+        />
+        <StatBadge
+          count={stats.upcoming}
+          label="Upcoming"
+          className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+        />
+      </div>
+    </div>
+  );
+}
+
+function StatBadge({
+  count,
+  label,
+  className,
+}: {
+  count: number;
+  label: string;
+  className: string;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold",
+        className
+      )}
+    >
+      <span className="tabular-nums">{count}</span>
+      {label}
+    </span>
+  );
+}

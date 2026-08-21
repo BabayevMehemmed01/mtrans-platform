@@ -311,7 +311,7 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
                   {(!summaryData?.tasks || summaryData.tasks.length === 0) && (
                     <div className="text-center py-10 bg-slate-50 rounded-2xl border border-gray-200/50 text-slate-500 font-medium">Hal-hazırda aktiv tapşırığınız yoxdur.</div>
                   )}
-                  <button onClick={() => handleNavigation('/dashboard/my-work')} className="w-full mt-4 flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 px-6 py-3 rounded-xl font-bold transition-colors">
+                  <button onClick={() => handleNavigation('/dashboard/my-work/tasks')} className="w-full mt-4 flex items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-700 px-6 py-3 rounded-xl font-bold transition-colors">
                     Mənim İşlərimə Keçid <ArrowRight className="w-4 h-4" />
                   </button>
                 </>

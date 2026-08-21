@@ -34,7 +34,7 @@ import {
 
 const navItems = [
   { title: "Ana Səhifə", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Mənim İşlərim", href: "/dashboard/my-work", icon: CircleUser },
+  { title: "Mənim İşlərim", href: "/dashboard/my-work/tasks", icon: CircleUser },
   { title: "Layihələr", href: "/dashboard/projects", icon: FolderKanban },
   { title: "Komanda", href: "/dashboard/members", icon: Users },
   { title: "Şöbələr", href: "/dashboard/departments", icon: Building2 },

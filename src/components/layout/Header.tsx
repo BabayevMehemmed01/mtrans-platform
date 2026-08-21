@@ -26,15 +26,33 @@ interface NotificationItem {
 // =============================================================================
 // Breadcrumb helper — URL path-i oxunaqlı ada çevirir (Tərcümə ilə)
 // =============================================================================
+// My Work alt-tabları üçün Teamwork-stili sabit adlar (ayrıca tərcümə açarı tələb etmir)
+const MY_WORK_TAB_LABELS: Record<string, string> = {
+  tasks: "My tasks",
+  calendar: "My calendar",
+  timesheet: "My timesheet",
+  projects: "My projects",
+  activity: "Activity",
+  dashboards: "Dashboards",
+};
+
 function useBreadcrumbs(t: (key: string) => string) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
   return segments.map((seg, i) => {
-    // Əgər seqment "my-work" isə t("menu.myWork") oxunacaq. 
+    // Əgər seqment "my-work" isə t("menu.myWork") oxunacaq.
     // Tapılmazsa seqmentin özünü böyük hərflə yazacaq.
+    if (segments[i - 1] === "my-work" && MY_WORK_TAB_LABELS[seg]) {
+      return {
+        label: MY_WORK_TAB_LABELS[seg],
+        href: "/" + segments.slice(0, i + 1).join("/"),
+        isLast: i === segments.length - 1,
+      };
+    }
+
     const transKey = seg === "my-work" ? "myWork" : seg;
     const label = t(`menu.${transKey}`) !== `menu.${transKey}` ? t(`menu.${transKey}`) : seg;
-    
+
     return {
       label,
       href: "/" + segments.slice(0, i + 1).join("/"),

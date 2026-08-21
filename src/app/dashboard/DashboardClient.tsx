@@ -116,7 +116,7 @@ export function DashboardClient({
             "{percentage}",
             String(stats.overallProgress)
           )}
-          href="/dashboard/my-work"
+          href="/dashboard/my-work/tasks"
         />
         <StatCard
           title={t("dashboard.inProgress") || "Davam edən"}
@@ -124,7 +124,7 @@ export function DashboardClient({
           subtext={t("dashboard.taskActive") || "tapşırıq aktivdir"}
           icon={Clock}
           iconClass="bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-          href="/dashboard/my-work"
+          href="/dashboard/my-work/tasks"
         />
         <StatCard
           title={t("dashboard.teamMembers") || "Komanda Üzvləri"}
@@ -206,7 +206,7 @@ export function DashboardClient({
             <CardTitle>{t("dashboard.recentTasks") || "Son Tapşırıqlar"}</CardTitle>
             <CardAction>
               <Link
-                href="/dashboard/my-work"
+                href="/dashboard/my-work/tasks"
                 className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground transition-all hover:text-foreground"
               >
                 {t("dashboard.viewAll") || "Hamısı"}
