@@ -218,8 +218,13 @@ export async function sendDealWelcomeNotification(params: {
   customerPhone?: string | null;
   dealId?: string | null;
   customerId?: string | null;
+  trackingToken?: string | null;
 }): Promise<void> {
-  const message = `Hörmətli ${params.customerName}, Sizinlə ${params.dealTitle} üzrə yeni müraciət qeydə alındı. Təşəkkür edirik! - WorkSpace ERP`;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const trackingLine = params.trackingToken
+    ? ` Sifarişinizin cari statusunu canlı izləmək üçün bu linkə daxil olun: ${appUrl}/track/${params.trackingToken}`
+    : "";
+  const message = `Hörmətli ${params.customerName}, Sizinlə ${params.dealTitle} üzrə yeni müraciət qeydə alındı. Təşəkkür edirik! - WorkSpace ERP${trackingLine}`;
   const meta: MessageMeta = { dealId: params.dealId, customerId: params.customerId };
 
   const tasks: Promise<IntegrationResult>[] = [];

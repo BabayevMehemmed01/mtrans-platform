@@ -7,9 +7,22 @@ import type { NextRequest } from "next/server";
 // Route Protection — NextAuth v5
 // =============================================================================
 
+// Tamamilə açıq (public) route-lar — heç bir session yoxlaması aparılmır,
+// nə giriş edən, nə də etməyən istifadəçi bu yollardan yönləndirilmir.
+// Bu route-lar öz daxilində (token/secret key ilə) təhlükəsizliyi təmin edir.
+const ALWAYS_PUBLIC_ROUTES = ["/api/crm/1c-sync", "/track"];
+
 export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
   const session = req.auth;
+
+  // Kənar API-lər və müştəri izləmə paneli — auth middleware-dən tamamilə azaddır
+  const isAlwaysPublicRoute = ALWAYS_PUBLIC_ROUTES.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`)
+  );
+  if (isAlwaysPublicRoute) {
+    return NextResponse.next();
+  }
 
   // Public route-lar — auth tələb olunmur
   const publicRoutes = ["/login", "/register", "/invite", "/api/invites/accept", "/api/invites/verify"];
@@ -34,6 +47,6 @@ export default auth((req: NextRequest & { auth: any }) => {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)",
+    "/((?!api/auth|api/crm/1c-sync|track|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)",
   ],
 };

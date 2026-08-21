@@ -707,6 +707,8 @@ model CrmDeal {
   clientCompany     String?
   clientPhone       String?
   clientEmail       String?
+  // Şifrəsiz, unikal müştəri izləmə linki üçün token (məsələn: /track/{trackingToken})
+  trackingToken     String?   @unique
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 

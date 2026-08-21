@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendDealWelcomeNotification } from "@/lib/integrationService";
@@ -94,6 +95,9 @@ export async function POST(req: Request) {
       }
     }
 
+    // Hər əqd üçün unikal, şifrəsiz izləmə linki (Magic Link) tokeni
+    const trackingToken = randomBytes(16).toString("hex");
+
     const deal = await prisma.crmDeal.create({
       data: {
         title,
@@ -106,6 +110,7 @@ export async function POST(req: Request) {
         clientCompany: trimmedCompany,
         clientPhone: trimmedPhone,
         clientEmail: trimmedEmail,
+        trackingToken,
         companyId,
         stageId,
         crmContactId: crmContactId || null,
@@ -132,6 +137,7 @@ export async function POST(req: Request) {
         customerPhone: customer.phone,
         dealId: deal.id,
         customerId: customer.id,
+        trackingToken: deal.trackingToken,
       }).catch((err) => {
         console.error("[CRM_DEAL_WELCOME_NOTIFY_FAILED]", err);
       });
