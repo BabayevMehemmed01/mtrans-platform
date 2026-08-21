@@ -16,7 +16,7 @@ interface RouteParams {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const { id, commentId } = await params;
     const companyId = (session.user as any).companyId;
     const userId = session.user.id as string;
@@ -77,7 +77,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 export async function DELETE(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const { id, commentId } = await params;
     const companyId = (session.user as any).companyId;
     const userId = session.user.id as string;

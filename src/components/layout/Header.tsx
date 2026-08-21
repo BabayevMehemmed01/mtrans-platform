@@ -26,25 +26,26 @@ interface NotificationItem {
 // =============================================================================
 // Breadcrumb helper — URL path-i oxunaqlı ada çevirir (Tərcümə ilə)
 // =============================================================================
-// My Work alt-tabları üçün Teamwork-stili sabit adlar (ayrıca tərcümə açarı tələb etmir)
-const MY_WORK_TAB_LABELS: Record<string, string> = {
-  tasks: "My tasks",
-  calendar: "My calendar",
-  timesheet: "My timesheet",
-  projects: "My projects",
-  activity: "Activity",
-  dashboards: "Dashboards",
+// "Mənim İşlərim" alt-tablarının seqment adından tərcümə açarına uyğunlaşdırılması
+const MY_WORK_TAB_KEYS: Record<string, string> = {
+  tasks: "menu.myWorkTasks",
+  calendar: "menu.myWorkCalendar",
+  timesheet: "menu.myWorkTimesheet",
+  projects: "menu.myWorkProjects",
+  activity: "menu.myWorkActivity",
+  dashboards: "menu.myWorkDashboards",
 };
 
 function useBreadcrumbs(t: (key: string) => string) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
   return segments.map((seg, i) => {
-    // Əgər seqment "my-work" isə t("menu.myWork") oxunacaq.
+    // Əgər seqment "my-work" alt-tabıdırsa, uyğun tərcümə açarından oxunur.
     // Tapılmazsa seqmentin özünü böyük hərflə yazacaq.
-    if (segments[i - 1] === "my-work" && MY_WORK_TAB_LABELS[seg]) {
+    if (segments[i - 1] === "my-work" && MY_WORK_TAB_KEYS[seg]) {
+      const tabKey = MY_WORK_TAB_KEYS[seg];
       return {
-        label: MY_WORK_TAB_LABELS[seg],
+        label: t(tabKey) !== tabKey ? t(tabKey) : seg,
         href: "/" + segments.slice(0, i + 1).join("/"),
         isLast: i === segments.length - 1,
       };

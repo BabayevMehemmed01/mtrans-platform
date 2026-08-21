@@ -190,18 +190,18 @@ export function CallOverlay() {
       {/* Gələn zəng modalı */}
       {incomingCall && !activeCall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 w-80 flex flex-col items-center gap-4 animate-in fade-in zoom-in-95">
+          <div className="bg-card text-card-foreground rounded-2xl shadow-2xl p-8 w-80 flex flex-col items-center gap-4 animate-in fade-in zoom-in-95">
             <Avatar className="w-20 h-20 border shadow-sm" size="lg">
               <AvatarImage src={incomingCall.peerAvatar ?? undefined} />
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-xl font-medium">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground text-xl font-medium">
                 {initials(incomingCall.peerName)}
               </AvatarFallback>
             </Avatar>
             <div className="text-center">
-              <p className="font-semibold text-lg text-gray-900">
+              <p className="font-semibold text-lg text-foreground">
                 {incomingCall.peerName || (t("callOverlay.unknown") || "Naməlum")}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-muted-foreground">
                 {incomingCall.type === "VIDEO" 
                   ? (t("callOverlay.incomingVideo") || "Video zəng edir...") 
                   : (t("callOverlay.incomingAudio") || "Səsli zəng edir...")}

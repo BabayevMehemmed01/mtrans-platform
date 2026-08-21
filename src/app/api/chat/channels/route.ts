@@ -48,12 +48,12 @@ async function getVisibleCompanyUsers(userId: string, companyId: string, admin: 
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
     
     const userId = session.user.id;
     const companyId = (session.user as any).companyId;
 
-    if (!companyId) return new NextResponse("Company Required", { status: 400 });
+    if (!companyId) return new NextResponse("Şirkət tələb olunur", { status: 400 });
 
     // Ensure user has their project/department groups
     // In a real system, you'd trigger this on project/department creation, 
@@ -156,29 +156,29 @@ export async function GET() {
     return NextResponse.json({ channels, companyUsers });
   } catch (error) {
     console.error("[CHAT_CHANNELS_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
     
     const userId = session.user.id;
     const companyId = (session.user as any).companyId;
-    if (!companyId) return new NextResponse("Company Required", { status: 400 });
+    if (!companyId) return new NextResponse("Şirkət tələb olunur", { status: 400 });
 
     const { targetUserId } = await req.json();
 
     if (!targetUserId) {
-      return new NextResponse("targetUserId required", { status: 400 });
+      return new NextResponse("targetUserId tələb olunur", { status: 400 });
     }
 
     const admin = await isSuperAdmin(userId);
     const visiblePeers = await getVisibleCompanyUsers(userId, companyId, admin);
     if (!visiblePeers.some((user) => user.id === targetUserId)) {
-      return new NextResponse("Forbidden", { status: 403 });
+      return new NextResponse("Qadağandır", { status: 403 });
     }
 
     // Check if direct channel already exists
@@ -219,6 +219,6 @@ export async function POST(req: Request) {
     return NextResponse.json(channel);
   } catch (error) {
     console.error("[CHAT_CHANNELS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }

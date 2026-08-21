@@ -13,7 +13,7 @@ interface RouteParams {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const userId = session.user.id as string;
     const { id } = await params;
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
     if (!call) return NextResponse.json({ error: "Zəng tapılmadı" }, { status: 404 });
 
     const isMember = call.channel.members.some((m) => m.userId === userId);
-    if (!isMember) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!isMember) return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
 
     return NextResponse.json(call);
   } catch (error) {
@@ -51,7 +51,7 @@ const ALLOWED_STATUSES = ["ACTIVE", "ENDED", "DECLINED", "MISSED"];
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const userId = session.user.id as string;
     const { id } = await params;
@@ -72,11 +72,11 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     if (!call) return NextResponse.json({ error: "Zəng tapılmadı" }, { status: 404 });
 
     const isMember = call.channel.members.some((m) => m.userId === userId);
-    if (!isMember) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!isMember) return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
 
     // Yalnız zəng edən özü zəngi ACTIVE edə bilməz — bunu yalnız qəbul edən edə bilər
     if (status === "ACTIVE" && call.callerId === userId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
     }
 
     const updated = await prisma.call.update({

@@ -17,16 +17,16 @@ import {
 } from "@/components/my-work/TaskCells";
 
 export const metadata = {
-  title: "My tasks | My Work | ERP",
+  title: "Tapşırıqlarım | Mənim İşim | ERP",
 };
 
 type Bucket = "late" | "today" | "upcoming" | "noDueDate";
 
-const GROUP_META: Record<Bucket, { label: string; sub: string; dot: string }> = {
-  late: { label: "Late", sub: "Gecikənlər", dot: "bg-red-500" },
-  today: { label: "Today", sub: "Bugün", dot: "bg-blue-500" },
-  upcoming: { label: "Upcoming", sub: "Gələcək", dot: "bg-amber-500" },
-  noDueDate: { label: "No due date", sub: "Tarixi olmayanlar", dot: "bg-gray-400" },
+const GROUP_META: Record<Bucket, { label: string; dot: string }> = {
+  late: { label: "Gecikənlər", dot: "bg-red-500" },
+  today: { label: "Bugün", dot: "bg-blue-500" },
+  upcoming: { label: "Gələcək", dot: "bg-amber-500" },
+  noDueDate: { label: "Tarixi olmayanlar", dot: "bg-gray-400" },
 };
 
 const GROUP_ORDER: Bucket[] = ["late", "today", "upcoming", "noDueDate"];
@@ -87,10 +87,10 @@ export default async function MyWorkTasksPage() {
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 py-20 text-center">
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-20 text-center">
         <PartyPopper className="size-10 text-emerald-500" />
-        <p className="text-sm font-medium text-slate-700">Bütün işləri bitirmisiniz! 🎉</p>
-        <p className="text-xs text-slate-500">Sizə hələ aktiv tapşırıq təyin edilməyib.</p>
+        <p className="text-sm font-medium text-foreground">Bütün işləri bitirmisiniz! 🎉</p>
+        <p className="text-xs text-muted-foreground">Sizə hələ aktiv tapşırıq təyin edilməyib.</p>
       </div>
     );
   }
@@ -104,14 +104,13 @@ export default async function MyWorkTasksPage() {
           <AccordionItem
             key={key}
             value={key}
-            className="overflow-hidden rounded-xl border border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-border"
+            className="overflow-hidden rounded-xl border border-border shadow-sm transition-all hover:shadow-md"
           >
-            <AccordionTrigger className="px-4 py-3.5 hover:bg-slate-50/80">
+            <AccordionTrigger className="px-4 py-3.5 hover:bg-accent">
               <span className="inline-flex items-center gap-2">
                 <span className={`size-2 rounded-full ${meta.dot}`} />
-                <span className="text-slate-800">{meta.label}</span>
-                <span className="font-normal text-slate-500">({meta.sub})</span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                <span className="text-foreground">{meta.label}</span>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-semibold text-muted-foreground">
                   {groupTasks.length}
                 </span>
               </span>
@@ -120,27 +119,27 @@ export default async function MyWorkTasksPage() {
               <div className="overflow-hidden">
                 <table className="w-full caption-bottom text-sm">
                   <thead>
-                    <tr className="border-b border-slate-200">
-                      <th className="h-11 bg-slate-50 px-4 text-left align-middle text-xs font-medium text-slate-600">
-                        Task Name
+                    <tr className="border-b border-border">
+                      <th className="h-11 bg-muted/50 px-4 text-left align-middle text-xs font-medium text-muted-foreground">
+                        Tapşırıq
                       </th>
-                      <th className="h-11 bg-slate-50 px-4 text-left align-middle text-xs font-medium text-slate-600">
-                        Assignee
+                      <th className="h-11 bg-muted/50 px-4 text-left align-middle text-xs font-medium text-muted-foreground">
+                        Məsul şəxs
                       </th>
-                      <th className="h-11 bg-slate-50 px-4 text-left align-middle text-xs font-medium text-slate-600">
-                        Due Date
+                      <th className="h-11 bg-muted/50 px-4 text-left align-middle text-xs font-medium text-muted-foreground">
+                        Son tarix
                       </th>
-                      <th className="h-11 bg-slate-50 px-4 text-left align-middle text-xs font-medium text-slate-600">
-                        Priority
+                      <th className="h-11 bg-muted/50 px-4 text-left align-middle text-xs font-medium text-muted-foreground">
+                        Prioritet
                       </th>
-                      <th className="h-11 bg-slate-50 px-4 text-left align-middle text-xs font-medium text-slate-600">
-                        Project
+                      <th className="h-11 bg-muted/50 px-4 text-left align-middle text-xs font-medium text-muted-foreground">
+                        Layihə
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-border">
                     {groupTasks.map((task) => (
-                      <tr key={task.id} className="transition-colors hover:bg-slate-50">
+                      <tr key={task.id} className="transition-colors hover:bg-accent/50">
                         <td className="px-4 py-3 align-middle">
                           <TaskNameCell
                             title={task.title}

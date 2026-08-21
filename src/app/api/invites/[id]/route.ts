@@ -28,7 +28,7 @@ export async function PATCH(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
@@ -106,7 +106,7 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });

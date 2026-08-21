@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
     if (!token || token !== secretKey) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     }
 
     const body = await req.json().catch(() => null);
@@ -65,6 +65,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, customer });
   } catch (error) {
     console.error("[CRM_1C_SYNC_POST]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

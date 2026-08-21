@@ -15,7 +15,7 @@ import { logAudit } from "@/lib/audit";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id: departmentId } = await params;
     const companyId = (session.user as any).companyId;
@@ -81,6 +81,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[PATCH /api/departments/[id]/permissions]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

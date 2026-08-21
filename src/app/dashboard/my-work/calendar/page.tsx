@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata = {
-  title: "My calendar | My Work | ERP",
+  title: "Təqvimim | Mənim İşim | ERP",
 };
 
 // =============================================================================
@@ -61,15 +61,15 @@ export default async function MyWorkCalendarPage({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold tracking-tight text-slate-800">
+        <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {format(weekStart, "d MMM", { locale: az })} –{" "}
           {format(addDays(weekStart, 4), "d MMM yyyy", { locale: az })}
         </h2>
         <div className="flex items-center gap-1">
           <Link
             href={prevWeekHref}
-            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "text-slate-500")}
-            aria-label="Previous week"
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "text-muted-foreground")}
+            aria-label="Əvvəlki həftə"
           >
             <ChevronLeft className="size-4" />
           </Link>
@@ -81,16 +81,16 @@ export default async function MyWorkCalendarPage({
           </Link>
           <Link
             href={nextWeekHref}
-            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "text-slate-500")}
-            aria-label="Next week"
+            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "text-muted-foreground")}
+            aria-label="Növbəti həftə"
           >
             <ChevronRight className="size-4" />
           </Link>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-border dark:bg-card">
-        <div className="grid grid-cols-1 divide-y divide-slate-200 md:grid-cols-5 md:divide-x md:divide-y-0">
+      <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="grid grid-cols-1 divide-y divide-border md:grid-cols-5 md:divide-x md:divide-y-0">
           {days.map((day) => {
             const key = format(day, "yyyy-MM-dd");
             const dayTasks = tasksByDay.get(key) ?? [];
@@ -99,16 +99,16 @@ export default async function MyWorkCalendarPage({
             return (
               <div
                 key={key}
-                className={cn("flex min-h-0 flex-col", isToday && "bg-blue-50/40")}
+                className={cn("flex min-h-0 flex-col", isToday && "bg-primary/5")}
               >
-                <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-3 py-2.5">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <div className="flex items-center justify-between gap-2 border-b border-border px-3 py-2.5">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     {format(day, "EEE", { locale: az })}
                   </span>
                   <span
                     className={cn(
                       "flex size-7 items-center justify-center rounded-full text-sm font-semibold tabular-nums",
-                      isToday ? "bg-blue-600 text-white shadow-sm" : "text-slate-800"
+                      isToday ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground"
                     )}
                   >
                     {format(day, "d")}
@@ -116,17 +116,17 @@ export default async function MyWorkCalendarPage({
                 </div>
                 <div className="flex flex-col gap-1.5 p-2.5">
                   {dayTasks.length === 0 ? (
-                    <p className="px-1 py-3 text-center text-[11px] text-slate-400">No tasks</p>
+                    <p className="px-1 py-3 text-center text-[11px] text-muted-foreground/70">Tapşırıq yoxdur</p>
                   ) : (
                     dayTasks.map((task) => (
                       <Link
                         key={task.id}
                         href={`/dashboard/projects/${task.project.id}?task=${task.id}`}
-                        className="rounded-lg border border-slate-100 bg-white px-2.5 py-2 text-[11px] shadow-sm transition-all hover:border-slate-200 hover:shadow-md"
+                        className="rounded-lg border border-border bg-card px-2.5 py-2 text-[11px] shadow-sm transition-all hover:border-muted-foreground/30 hover:shadow-md"
                         style={{ borderLeftWidth: 3, borderLeftColor: task.project.color }}
                       >
-                        <p className="truncate font-medium text-slate-800">{task.title}</p>
-                        <p className="mt-0.5 truncate text-[10px] text-slate-500">{task.project.name}</p>
+                        <p className="truncate font-medium text-foreground">{task.title}</p>
+                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{task.project.name}</p>
                       </Link>
                     ))
                   )}

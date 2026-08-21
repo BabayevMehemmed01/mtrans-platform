@@ -13,9 +13,9 @@ export function MyLoggedTimeChart({ data }: { data: TimeSlice[] }) {
 
   if (!hasData) {
     return (
-      <div className="flex h-[180px] flex-col items-center justify-center gap-1 text-center text-sm text-slate-500">
+      <div className="flex h-[180px] flex-col items-center justify-center gap-1 text-center text-sm text-muted-foreground">
         <p>Hələ vaxt qeydə alınmayıb</p>
-        <p className="text-xs text-slate-400">No logged time yet</p>
+        <p className="text-xs text-muted-foreground/70">Qeydə alınmış vaxt yoxdur</p>
       </div>
     );
   }

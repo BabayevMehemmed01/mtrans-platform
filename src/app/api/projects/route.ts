@@ -14,7 +14,7 @@ import { z } from "zod";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
 
     const { searchParams } = new URL(req.url);
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as any).companyId;
     const userId = session.user.id;

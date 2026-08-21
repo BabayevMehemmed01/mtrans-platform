@@ -16,10 +16,18 @@ import { getInitials, timeAgo } from "@/lib/utils";
 import { ProjectMiniTabs } from "@/components/my-work/ProjectMiniTabs";
 
 export const metadata = {
-  title: "My projects | My Work | ERP",
+  title: "Layihələrim | Mənim İşim | ERP",
 };
 
 const MAX_AVATARS = 5;
+
+const PROJECT_STATUS_LABEL: Record<string, string> = {
+  PLANNING: "Planlanır",
+  ACTIVE: "Aktiv",
+  ON_HOLD: "Dayandırılıb",
+  COMPLETED: "Tamamlandı",
+  CANCELLED: "Ləğv edildi",
+};
 
 // =============================================================================
 // My Work → My projects
@@ -65,10 +73,10 @@ export default async function MyWorkProjectsPage() {
 
   if (projects.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 py-20 text-center">
-        <FolderKanban className="size-10 text-slate-400" />
-        <p className="text-sm font-medium text-slate-500">Hələ heç bir layihəyə daxil deyilsiniz.</p>
-        <p className="text-xs text-slate-400">Üzv olduğunuz layihələr burada görünəcək.</p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-20 text-center">
+        <FolderKanban className="size-10 text-muted-foreground/60" />
+        <p className="text-sm font-medium text-muted-foreground">Hələ heç bir layihəyə daxil deyilsiniz.</p>
+        <p className="text-xs text-muted-foreground/70">Üzv olduğunuz layihələr burada görünəcək.</p>
       </div>
     );
   }
@@ -83,7 +91,7 @@ export default async function MyWorkProjectsPage() {
         return (
           <article
             key={project.id}
-            className="flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md dark:border-border dark:bg-card"
+            className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all hover:shadow-md"
           >
             <div
               className="relative h-16 w-full"
@@ -99,16 +107,16 @@ export default async function MyWorkProjectsPage() {
                 <div className="min-w-0">
                   <Link
                     href={`/dashboard/projects/${project.id}`}
-                    className="block truncate text-base font-semibold tracking-tight text-slate-900 hover:text-blue-600 dark:text-foreground"
+                    className="block truncate text-base font-semibold tracking-tight text-foreground hover:text-primary"
                   >
                     {project.name}
                   </Link>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    {hasRecentUpdate ? `Updated ${timeAgo(project.updatedAt)}` : "No recent update"}
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {hasRecentUpdate ? `Yeniləndi: ${timeAgo(project.updatedAt)}` : "Son yeniləmə yoxdur"}
                   </p>
                 </div>
                 <Badge variant="outline" className="flex-shrink-0 text-[10px] uppercase">
-                  {project.status.replace("_", " ")}
+                  {PROJECT_STATUS_LABEL[project.status] ?? project.status}
                 </Badge>
               </div>
 
@@ -119,7 +127,7 @@ export default async function MyWorkProjectsPage() {
                 status={project.status}
               />
 
-              <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4 dark:border-border">
+              <div className="mt-auto flex items-center justify-between border-t border-border pt-4">
                 <AvatarGroup>
                   {project.members.map(({ user }) => (
                     <Avatar key={user.id} size="sm">
@@ -138,7 +146,7 @@ export default async function MyWorkProjectsPage() {
                   render={<Link href={`/dashboard/projects/${project.id}`} />}
                   className="gap-1.5"
                 >
-                  View project
+                  Layihəyə keç
                   <ArrowRight className="size-3.5" />
                 </Button>
               </div>

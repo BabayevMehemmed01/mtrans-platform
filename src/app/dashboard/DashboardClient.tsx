@@ -24,7 +24,7 @@ import { TasksTrendChart } from "@/components/dashboard/TasksTrendChart";
 import { TasksByStatusChart } from "@/components/dashboard/TasksByStatusChart";
 
 const cardSurface =
-  "bg-white ring-0 border border-border shadow-sm transition-all duration-300 hover:shadow-md hover:border-gray-300 dark:bg-card dark:hover:border-gray-700";
+  "bg-card ring-0 border border-border shadow-sm transition-all duration-300 hover:shadow-md hover:border-muted-foreground/30";
 
 export type DashboardClientProps = {
   lang: string;
@@ -223,14 +223,14 @@ export function DashboardClient({
                   <li key={task.id}>
                     <Link
                       href={`/dashboard/projects/${task.project.id}`}
-                      className="flex items-start gap-3 rounded-lg px-2 py-2.5 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                      className="flex items-start gap-3 rounded-lg px-2 py-2.5 transition-all duration-300 hover:bg-accent"
                     >
                       <div
                         className="mt-1.5 size-2 shrink-0 rounded-full"
                         style={{ backgroundColor: task.project.color }}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="truncate text-sm font-medium text-foreground">
                           {task.title}
                         </p>
                         <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -279,7 +279,7 @@ export function DashboardClient({
                   <li key={proj.id}>
                     <Link
                       href={`/dashboard/projects/${proj.id}`}
-                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-all duration-300 hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                      className="flex items-center gap-3 rounded-lg px-2 py-2.5 transition-all duration-300 hover:bg-accent"
                     >
                       <div
                         className="flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-semibold text-white"
@@ -288,7 +288,7 @@ export function DashboardClient({
                         {proj.name.substring(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="truncate text-sm font-medium text-foreground">
                           {proj.name}
                         </p>
                         <p className="mt-0.5 text-xs text-muted-foreground">
@@ -323,7 +323,7 @@ export function DashboardClient({
                 {topLabels.map((label) => (
                   <li
                     key={label.id}
-                    className="flex items-center justify-between rounded-lg border border-transparent px-2 py-2 transition-all duration-300 hover:border-gray-300 hover:bg-gray-50 dark:hover:border-gray-700 dark:hover:bg-gray-800/40"
+                    className="flex items-center justify-between rounded-lg border border-transparent px-2 py-2 transition-all duration-300 hover:border-border hover:bg-accent"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
                       <div
@@ -332,7 +332,7 @@ export function DashboardClient({
                       >
                         <Tag className="size-3.5" />
                       </div>
-                      <span className="truncate text-sm font-medium text-gray-900 dark:text-white">
+                      <span className="truncate text-sm font-medium text-foreground">
                         {label.name}
                       </span>
                     </div>
@@ -382,7 +382,7 @@ function StatCard({
           </div>
         </CardHeader>
         <CardContent>
-          <p className="text-3xl font-bold tracking-tight tabular-nums text-gray-900 dark:text-white">
+          <p className="text-3xl font-bold tracking-tight tabular-nums text-foreground">
             {value}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>

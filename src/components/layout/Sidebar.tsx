@@ -74,38 +74,38 @@ const navItems: NavItem[] = [
     icon: CircleUser,
     children: [
       {
-        title: "My tasks",
-        tKey: "",
+        title: "Tapşırıqlarım",
+        tKey: "menu.myWorkTasks",
         href: "/dashboard/my-work/tasks",
         icon: ListTodo,
       },
       {
-        title: "My calendar",
-        tKey: "",
+        title: "Təqvimim",
+        tKey: "menu.myWorkCalendar",
         href: "/dashboard/my-work/calendar",
         icon: CalendarIcon,
       },
       {
-        title: "My timesheet",
-        tKey: "",
+        title: "Vaxt Cədvəlim",
+        tKey: "menu.myWorkTimesheet",
         href: "/dashboard/my-work/timesheet",
         icon: Clock,
       },
       {
-        title: "My projects",
-        tKey: "",
+        title: "Layihələrim",
+        tKey: "menu.myWorkProjects",
         href: "/dashboard/my-work/projects",
         icon: FolderKanban,
       },
       {
-        title: "Activity",
-        tKey: "",
+        title: "Fəaliyyət",
+        tKey: "menu.myWorkActivity",
         href: "/dashboard/my-work/activity",
         icon: Archive,
       },
       {
-        title: "Dashboards",
-        tKey: "",
+        title: "Dashboardlar",
+        tKey: "menu.myWorkDashboards",
         href: "/dashboard/my-work/dashboards",
         icon: BarChart3,
       },
@@ -194,8 +194,8 @@ function itemClassName(active: boolean, collapsed: boolean) {
     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
     collapsed && "justify-center px-0",
     active
-      ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
-      : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+      ? "bg-sidebar-accent text-sidebar-primary"
+      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
   );
 }
 
@@ -204,7 +204,7 @@ function itemClassName(active: boolean, collapsed: boolean) {
 // =============================================================================
 export function Sidebar() {
   return (
-    <Suspense fallback={<aside className="h-screen w-64 flex-shrink-0 border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-zinc-950" />}>
+    <Suspense fallback={<aside className="h-screen w-64 flex-shrink-0 border-r border-sidebar-border bg-sidebar" />}>
       <SidebarInner />
     </Suspense>
   );
@@ -242,27 +242,27 @@ function SidebarInner() {
   return (
     <aside
       className={cn(
-        "flex h-screen flex-shrink-0 flex-col bg-white text-gray-900 dark:bg-zinc-950 dark:text-gray-100",
-        "border-r border-gray-200 dark:border-gray-800",
+        "flex h-screen flex-shrink-0 flex-col bg-sidebar text-sidebar-foreground",
+        "border-r border-sidebar-border",
         "transition-all duration-300 ease-in-out",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
       <div
         className={cn(
-          "flex items-center gap-3 border-b border-gray-200 px-4 py-5 transition-all dark:border-gray-800",
+          "flex items-center gap-3 border-b border-sidebar-border px-4 py-5 transition-all",
           isCollapsed && "justify-center px-0"
         )}
       >
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gray-900 shadow-sm dark:bg-white">
-          <Briefcase className="h-4 w-4 text-white dark:text-gray-900" />
+        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-sidebar-primary shadow-sm">
+          <Briefcase className="h-4 w-4 text-sidebar-primary-foreground" />
         </div>
         {!isCollapsed && (
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold tracking-tight">
               {t("menu.workspace") || "WorkSpace"}
             </p>
-            <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+            <p className="truncate text-xs text-sidebar-foreground/60">
               {t("menu.platform") || "ERP Platform"}
             </p>
           </div>
@@ -278,7 +278,7 @@ function SidebarInner() {
           t={t}
         />
 
-        <div className="mx-2 my-3 border-t border-gray-200 dark:border-gray-800" />
+        <div className="mx-2 my-3 border-t border-sidebar-border" />
 
         <NavGroup
           items={visibleAdminItems}
@@ -289,13 +289,12 @@ function SidebarInner() {
         />
       </nav>
 
-      <div className="border-t border-gray-200 p-2 pb-16 dark:border-gray-800">
+      <div className="border-t border-sidebar-border p-2 pb-16">
         <button
           onClick={() => (isCollapsed ? expand() : collapse())}
           className={cn(
             "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
-            "text-gray-500 hover:bg-gray-100 hover:text-gray-900",
-            "dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+            "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
             isCollapsed && "justify-center"
           )}
           title={isCollapsed ? t("menu.expand") || "Genişlət" : t("menu.collapse") || "Daralt"}
@@ -333,7 +332,7 @@ function NavGroup({
   return (
     <div>
       {!isCollapsed && (
-        <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-gray-400">
+        <p className="mb-1 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
           {label}
         </p>
       )}
@@ -415,7 +414,7 @@ function CollapsibleNavItem({
         <DropdownMenuContent side="right" align="start" className="w-52">
           <DropdownMenuItem asChild>
             <Link href={item.href} className="flex cursor-pointer items-center gap-2">
-              <Icon className="h-4 w-4 text-gray-500" />
+              <Icon className="h-4 w-4 text-muted-foreground" />
               {displayTitle}
             </Link>
           </DropdownMenuItem>
@@ -439,8 +438,8 @@ function CollapsibleNavItem({
         className={cn(
           "flex items-center rounded-md text-sm font-medium transition-all duration-200",
           groupActive
-            ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
-            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            ? "bg-sidebar-accent text-sidebar-primary"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
         )}
       >
         <Link
@@ -452,8 +451,8 @@ function CollapsibleNavItem({
         </Link>
         <Collapsible.Trigger
           type="button"
-          aria-label="Toggle submenu"
-          className="flex h-9 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          aria-label={t("menu.toggleSubmenu") || "Alt menyunu aç/bağla"}
+          className="flex h-9 w-8 flex-shrink-0 cursor-pointer items-center justify-center rounded-md text-sidebar-foreground/40 hover:text-sidebar-foreground"
         >
           <ChevronDown
             className={cn(
@@ -464,7 +463,7 @@ function CollapsibleNavItem({
         </Collapsible.Trigger>
       </div>
       <Collapsible.Content className="overflow-hidden data-[state=closed]:animate-out data-[state=open]:animate-in">
-        <ul className="ml-4 mt-1 space-y-0.5 border-l border-gray-200 pl-2 dark:border-gray-800">
+        <ul className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">
           {item.children?.map((child) => (
             <li key={child.href}>
               <SubNavLink child={child} isActive={isActive} t={t} />
@@ -495,7 +494,7 @@ function SubNavLink({
     return (
       <DropdownMenuItem asChild>
         <Link href={child.href} className="flex cursor-pointer items-center gap-2">
-          <ChildIcon className="h-4 w-4 text-gray-500" />
+          <ChildIcon className="h-4 w-4 text-muted-foreground" />
           {childTitle}
         </Link>
       </DropdownMenuItem>
@@ -508,8 +507,8 @@ function SubNavLink({
       className={cn(
         "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
         active
-          ? "bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white"
-          : "text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+          ? "bg-sidebar-accent text-sidebar-primary"
+          : "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground"
       )}
     >
       <ChildIcon className="h-3.5 w-3.5 flex-shrink-0" />

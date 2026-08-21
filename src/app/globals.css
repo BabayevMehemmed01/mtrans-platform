@@ -114,6 +114,116 @@
 }
 
 /* =============================================================================
+   Rəng Temaları (Color Themes) — Parametrlər > Görünüş bölməsindən idarə olunur
+   `data-color-theme` atributu <html> elementinə tətbiq olunur.
+   "default" üçün əlavə override lazım deyil (:root/.dark dəyərləri kifayətdir).
+   ============================================================================= */
+[data-color-theme="blue"] {
+  --primary: oklch(0.546 0.245 262.881);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.623 0.214 259.815);
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  --sidebar-ring: oklch(0.623 0.214 259.815);
+}
+.dark[data-color-theme="blue"] {
+  --primary: oklch(0.623 0.214 259.815);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.546 0.245 262.881);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-ring: oklch(0.546 0.245 262.881);
+}
+
+[data-color-theme="purple"] {
+  --primary: oklch(0.541 0.281 293.009);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.606 0.25 292.717);
+  --sidebar-primary: oklch(0.541 0.281 293.009);
+  --sidebar-ring: oklch(0.606 0.25 292.717);
+}
+.dark[data-color-theme="purple"] {
+  --primary: oklch(0.606 0.25 292.717);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.541 0.281 293.009);
+  --sidebar-primary: oklch(0.606 0.25 292.717);
+  --sidebar-ring: oklch(0.541 0.281 293.009);
+}
+
+[data-color-theme="green"] {
+  --primary: oklch(0.596 0.145 163.225);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.696 0.17 162.48);
+  --sidebar-primary: oklch(0.596 0.145 163.225);
+  --sidebar-ring: oklch(0.696 0.17 162.48);
+}
+.dark[data-color-theme="green"] {
+  --primary: oklch(0.696 0.17 162.48);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.596 0.145 163.225);
+  --sidebar-primary: oklch(0.696 0.17 162.48);
+  --sidebar-ring: oklch(0.596 0.145 163.225);
+}
+
+[data-color-theme="rose"] {
+  --primary: oklch(0.586 0.253 17.585);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.645 0.246 16.439);
+  --sidebar-primary: oklch(0.586 0.253 17.585);
+  --sidebar-ring: oklch(0.645 0.246 16.439);
+}
+.dark[data-color-theme="rose"] {
+  --primary: oklch(0.645 0.246 16.439);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.586 0.253 17.585);
+  --sidebar-primary: oklch(0.645 0.246 16.439);
+  --sidebar-ring: oklch(0.586 0.253 17.585);
+}
+
+[data-color-theme="orange"] {
+  --primary: oklch(0.646 0.222 41.116);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.705 0.213 47.604);
+  --sidebar-primary: oklch(0.646 0.222 41.116);
+  --sidebar-ring: oklch(0.705 0.213 47.604);
+}
+.dark[data-color-theme="orange"] {
+  --primary: oklch(0.705 0.213 47.604);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.646 0.222 41.116);
+  --sidebar-primary: oklch(0.705 0.213 47.604);
+  --sidebar-ring: oklch(0.646 0.222 41.116);
+}
+
+[data-color-theme="slate"] {
+  --primary: oklch(0.446 0.043 257.281);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.554 0.046 257.417);
+  --sidebar-primary: oklch(0.446 0.043 257.281);
+  --sidebar-ring: oklch(0.554 0.046 257.417);
+}
+.dark[data-color-theme="slate"] {
+  --primary: oklch(0.704 0.04 256.788);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.554 0.046 257.417);
+  --sidebar-primary: oklch(0.704 0.04 256.788);
+  --sidebar-ring: oklch(0.554 0.046 257.417);
+}
+
+[data-color-theme="zinc"] {
+  --primary: oklch(0.371 0.013 285.805);
+  --primary-foreground: oklch(0.985 0 0);
+  --ring: oklch(0.552 0.014 285.938);
+  --sidebar-primary: oklch(0.371 0.013 285.805);
+  --sidebar-ring: oklch(0.552 0.014 285.938);
+}
+.dark[data-color-theme="zinc"] {
+  --primary: oklch(0.705 0.015 286.067);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.552 0.014 285.938);
+  --sidebar-primary: oklch(0.705 0.015 286.067);
+  --sidebar-ring: oklch(0.552 0.014 285.938);
+}
+
+/* =============================================================================
    Tailwind v4 Theme Tokens
    ============================================================================= */
 @theme inline {

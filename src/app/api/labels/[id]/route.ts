@@ -11,7 +11,7 @@ export async function PATCH(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     }
 
     const companyId = (session.user as any).companyId;
@@ -33,7 +33,7 @@ export async function PATCH(
     });
 
     if (!existing || existing.companyId !== companyId) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Tapılmadı" }, { status: 404 });
     }
 
     // Check for name conflict
@@ -75,7 +75,7 @@ export async function PATCH(
   } catch (error) {
     console.error("[LABEL_PATCH]", error);
     return NextResponse.json(
-      { error: "Internal Error" },
+      { error: "Server xətası" },
       { status: 500 }
     );
   }
@@ -88,7 +88,7 @@ export async function DELETE(
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     }
 
     const companyId = (session.user as any).companyId;
@@ -100,7 +100,7 @@ export async function DELETE(
     });
 
     if (!existing || existing.companyId !== companyId) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Tapılmadı" }, { status: 404 });
     }
 
     await prisma.label.delete({
@@ -120,7 +120,7 @@ export async function DELETE(
   } catch (error) {
     console.error("[LABEL_DELETE]", error);
     return NextResponse.json(
-      { error: "Internal Error" },
+      { error: "Server xətası" },
       { status: 500 }
     );
   }

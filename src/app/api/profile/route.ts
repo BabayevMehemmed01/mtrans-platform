@@ -15,7 +15,7 @@ const updateProfileSchema = z.object({
 export async function PATCH(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const body = await req.json();
     const parsed = updateProfileSchema.safeParse(body);

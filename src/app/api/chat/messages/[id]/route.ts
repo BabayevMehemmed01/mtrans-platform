@@ -16,7 +16,7 @@ function pinExpiryFromDuration(duration?: string | null) {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
 
     const { id } = await params;
     const body = await req.json().catch(() => ({}));
@@ -24,12 +24,12 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const pinDuration = typeof body.pinDuration === "string" ? body.pinDuration : null;
 
     const message = await prisma.message.findUnique({ where: { id } });
-    if (!message) return new NextResponse("Not found", { status: 404 });
+    if (!message) return new NextResponse("Tapılmadı", { status: 404 });
 
     const membership = await prisma.channelMember.findUnique({
       where: { channelId_userId: { channelId: message.channelId, userId: session.user.id } },
     });
-    if (!membership) return new NextResponse("Forbidden", { status: 403 });
+    if (!membership) return new NextResponse("Qadağandır", { status: 403 });
 
     if (isPinned) {
       await prisma.$transaction([
@@ -59,32 +59,32 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json(updated);
   } catch (error) {
     console.error("[CHAT_MESSAGE_PATCH]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }
 
 export async function DELETE(_req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
 
     const { id } = await params;
     const message = await prisma.message.findUnique({ where: { id } });
-    if (!message) return new NextResponse("Not found", { status: 404 });
+    if (!message) return new NextResponse("Tapılmadı", { status: 404 });
 
     const membership = await prisma.channelMember.findUnique({
       where: { channelId_userId: { channelId: message.channelId, userId: session.user.id } },
     });
-    if (!membership) return new NextResponse("Forbidden", { status: 403 });
+    if (!membership) return new NextResponse("Qadağandır", { status: 403 });
 
     const isOwner = message.senderId === session.user.id;
     const isAdmin = await isChatGroupAdmin(session.user.id, message.channelId);
-    if (!isOwner && !isAdmin) return new NextResponse("Forbidden", { status: 403 });
+    if (!isOwner && !isAdmin) return new NextResponse("Qadağandır", { status: 403 });
 
     await prisma.message.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[CHAT_MESSAGE_DELETE]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }

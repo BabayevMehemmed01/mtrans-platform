@@ -21,7 +21,14 @@
     "collapse": "Daralt",
     "expand": "Genişlət",
     "workspace": "WorkSpace",
-    "platform": "ERP Platform"
+    "platform": "ERP Platform",
+    "toggleSubmenu": "Alt menyunu aç/bağla",
+    "myWorkTasks": "Tapşırıqlarım",
+    "myWorkCalendar": "Təqvimim",
+    "myWorkTimesheet": "Vaxt Cədvəlim",
+    "myWorkProjects": "Layihələrim",
+    "myWorkActivity": "Fəaliyyət",
+    "myWorkDashboards": "Dashboardlar"
   },
   "header": {
     "search": "Axtar...",
@@ -48,9 +55,22 @@
       "dark": "Gecə",
       "system": "Sistem",
       "wallpaper": "Divar Kağızı (Wallpaper)",
+      "colorTheme": "Rəng Teması (Color Theme)",
+      "colorThemeDesc": "Tətbiqin əsas vurğu rəngini seçin. Seçdiyiniz kart dərhal aktivləşəcək, lakin dəyişiklik yalnız aşağıdakı düymə ilə tətbiq olunacaq.",
+      "colorThemes": {
+        "default": "Standart",
+        "blue": "Mavi",
+        "purple": "Bənövşəyi",
+        "green": "Yaşıl",
+        "rose": "Çəhrayı",
+        "orange": "Narıncı",
+        "slate": "Boz-mavi (Slate)",
+        "zinc": "Antrasit (Zinc)"
+      },
       "language": "Sistem Dili",
       "apply": "Dəyişiklikləri Tətbiq Et",
       "saving": "Yadda saxlanılır...",
+      "unsaved": "Yadda saxlanılmamış dəyişikliklər var",
       "success": "Görünüş və dil tənzimləmələri yadda saxlanıldı."
     },
     "defaults": {

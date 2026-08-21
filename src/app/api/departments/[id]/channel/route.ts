@@ -13,7 +13,7 @@ import { isSuperAdmin } from "@/lib/permissions";
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
 
     const { id: departmentId } = await params;
     const userId = session.user.id;
@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       where: { id: userId, departmentId },
     });
     if (!isMemberOfDept && department.headUserId !== userId && !(await isSuperAdmin(userId))) {
-      return new NextResponse("Forbidden", { status: 403 });
+      return new NextResponse("Qadağandır", { status: 403 });
     }
 
     let channel = await prisma.chatChannel.findFirst({
@@ -63,6 +63,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json(fullChannel);
   } catch (error) {
     console.error("[DEPARTMENT_CHANNEL_GET]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }

@@ -27,7 +27,7 @@ import { logAudit } from "@/lib/audit";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as { companyId?: string }).companyId;
     if (!companyId) return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });

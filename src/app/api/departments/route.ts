@@ -8,7 +8,7 @@ import { logAudit } from "@/lib/audit";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as any).companyId;
 
@@ -26,14 +26,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(departments);
   } catch (error) {
     console.error("[GET /api/departments]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const companyId = (session.user as any).companyId;
 
@@ -95,6 +95,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[POST /api/departments]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

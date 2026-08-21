@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useSession } from "next-auth/react"; // YENİ: Sessiya üçün
 import { getTranslation } from "@/lib/i18n";  // YENİ: Tərcümə mühərriki
+import {
+  useColorTheme,
+  COLOR_THEME_IDS,
+  type ColorThemeId,
+} from "@/components/providers/ColorThemeProvider";
 import { 
   Building2, 
   Users, 
@@ -87,12 +91,19 @@ const CATEGORY_LABELS: Record<string, string> = {
   REPORTING: "📊 Hesabatlar",
 };
 
-// Divar kağızı önizləmələri üçün (Wallpaper Previews)
-const WALLPAPER_PREVIEWS = [
-  { id: 'default', class: 'bg-slate-100 dark:bg-slate-800' },
-  { id: 'gradient-1', class: 'bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-700 dark:to-indigo-900' },
-  { id: 'mesh', class: 'bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-blue-100 via-slate-100 to-white dark:from-slate-700 dark:via-slate-800 dark:to-black' },
-  { id: 'abstract', class: 'bg-gradient-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800' }
+// --- RƏNG TEMALARI (Color Themes) ---
+// 8 premium rəng teması: hər biri üçün önizləmə rəngi (swatch) və tərcümə açarı.
+// Faktiki tətbiq globals.css-dəki `[data-color-theme="..."]` CSS dəyişənləri
+// vasitəsilə ColorThemeProvider tərəfindən idarə olunur.
+const COLOR_THEMES: { id: ColorThemeId; swatch: string; labelKey: string }[] = [
+  { id: "default", swatch: "#0f172a", labelKey: "default" },
+  { id: "blue", swatch: "#2563eb", labelKey: "blue" },
+  { id: "purple", swatch: "#7c3aed", labelKey: "purple" },
+  { id: "green", swatch: "#059669", labelKey: "green" },
+  { id: "rose", swatch: "#e11d48", labelKey: "rose" },
+  { id: "orange", swatch: "#ea580c", labelKey: "orange" },
+  { id: "slate", swatch: "#475569", labelKey: "slate" },
+  { id: "zinc", swatch: "#3f3f46", labelKey: "zinc" },
 ];
 
 // --- ALT KOMPONENTLƏR ---
@@ -187,9 +198,9 @@ export function SettingsClient({
   projects: ProjectOption[];
   userRole: any;
 }) {
-  const router = useRouter();
-  const { setTheme: setSystemTheme } = useTheme(); 
-  
+  const { setTheme: setSystemTheme } = useTheme();
+  const { setColorTheme } = useColorTheme();
+
   // YENİ: Tərcümə mühərrikini səhifəyə daxil edirik
   const { data: session, update } = useSession();
   const currentLang = (session?.user as any)?.language || "az";
@@ -197,10 +208,30 @@ export function SettingsClient({
 
   const isSuperAdmin = typeof userRole === "string" ? userRole.includes("ADMIN") : (userRole?.name?.toUpperCase().includes("ADMIN") || userRole?.name?.toUpperCase().includes("OWNER"));
 
-  // 1. Görünüş (Appearance) States
-  const [theme, setTheme] = useState(currentUserSettings?.theme || "light");
-  const [language, setLanguage] = useState(currentUserSettings?.language || "az");
-  const [wallpaper, setWallpaper] = useState(currentUserSettings?.wallpaper || "default");
+  // 1. Görünüş (Appearance) States — bunlar "qaralama" (draft) state-lərdir.
+  // "Dəyişiklikləri Tətbiq Et" düyməsi basılana qədər faktiki tema/rəng dəyişmir,
+  // yalnız seçilmiş kart vizual olaraq aktivləşir.
+  const initialAppearance = useMemo(
+    () => ({
+      theme: currentUserSettings?.theme || "light",
+      language: currentUserSettings?.language || "az",
+      colorTheme: ((currentUserSettings?.wallpaper as ColorThemeId) &&
+      (COLOR_THEME_IDS as readonly string[]).includes(currentUserSettings?.wallpaper ?? "")
+        ? (currentUserSettings?.wallpaper as ColorThemeId)
+        : "default") as ColorThemeId,
+    }),
+    [currentUserSettings]
+  );
+
+  const [savedAppearance, setSavedAppearance] = useState(initialAppearance);
+  const [theme, setTheme] = useState(initialAppearance.theme);
+  const [language, setLanguage] = useState(initialAppearance.language);
+  const [colorTheme, setColorThemeDraft] = useState<ColorThemeId>(initialAppearance.colorTheme);
+
+  const isAppearanceDirty =
+    theme !== savedAppearance.theme ||
+    language !== savedAppearance.language ||
+    colorTheme !== savedAppearance.colorTheme;
 
   // 2. Şirkət (Company) States
   const [companyForm, setCompanyForm] = useState({
@@ -233,20 +264,27 @@ export function SettingsClient({
 
   // --- HANDLERS ---
   const handleSaveAppearance = async () => {
+    if (!isAppearanceDirty) return;
     setIsAppearanceLoading(true);
     try {
       const res = await fetch("/api/settings/user", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ theme, language, wallpaper }),
+        body: JSON.stringify({ theme, language, wallpaper: colorTheme }),
       });
       if (!res.ok) throw new Error(t("settings.error") || "Xəta baş verdi");
-      
+
+      // YENİ: Səhifəni yenidən yükləmədən (reload) — React state/context vasitəsilə
+      // dərhal bütün tətbiqə tətbiq edirik.
       setSystemTheme(theme);
-      
-      // YENİ: Dili seçən kimi anında bütün sayta tətbiq olunması üçün sessiyanı yeniləyirik!
+      setColorTheme(colorTheme);
+
+      // Dili seçən kimi anında bütün sayta tətbiq olunması üçün sessiyanı yeniləyirik!
       await update({ language });
-      router.refresh(); 
+
+      // Tətbiq olunan dəyərləri "saxlanılmış" olaraq qeyd edirik — bununla düymə
+      // yenidən disabled vəziyyətə düşür, çünki artıq gözləyən dəyişiklik yoxdur.
+      setSavedAppearance({ theme, language, colorTheme });
 
       toast.success(t("settings.appearance.success") || "Görünüş və dil tənzimləmələri yadda saxlanıldı.");
     } catch (err: any) {
@@ -349,7 +387,7 @@ export function SettingsClient({
         
         {/* 1. GÖRÜNÜŞ VƏ DİL */}
         <TabsContent value="appearance" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-slate-800 dark:text-white border-b border-gray-100 dark:border-slate-800 pb-4">
+          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
             {t("settings.appearance.title") || "Görünüş və İnterfeys"}
           </h3>
           <div className="space-y-8 max-w-2xl">
@@ -364,7 +402,13 @@ export function SettingsClient({
                   { id: 'dark', icon: Moon, label: t("settings.appearance.dark") || 'Gecə' }, 
                   { id: 'system', icon: Smartphone, label: t("settings.appearance.system") || 'Sistem' } 
                 ].map(tObj => (
-                  <button key={tObj.id} onClick={() => setTheme(tObj.id)} className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${theme === tObj.id ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'}`}>
+                  <button
+                    key={tObj.id}
+                    type="button"
+                    onClick={() => setTheme(tObj.id)}
+                    aria-pressed={theme === tObj.id}
+                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${theme === tObj.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5 text-primary' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'}`}
+                  >
                     <tObj.icon className="w-6 h-6" />
                     <span className="text-[13px] font-bold">{tObj.label}</span>
                   </button>
@@ -374,14 +418,38 @@ export function SettingsClient({
 
             <div className="space-y-3">
               <Label className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                {t("settings.appearance.wallpaper") || "Divar Kağızı (Wallpaper)"}
+                {t("settings.appearance.colorTheme") || "Rəng Teması (Color Theme)"}
               </Label>
+              <p className="text-xs font-medium text-muted-foreground -mt-1">
+                {t("settings.appearance.colorThemeDesc") ||
+                  "Tətbiqin əsas vurğu rəngini seçin. Seçdiyiniz kart dərhal aktivləşəcək, lakin dəyişiklik yalnız aşağıdakı düymə ilə tətbiq olunacaq."}
+              </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                {WALLPAPER_PREVIEWS.map(bg => (
-                  <button key={bg.id} onClick={() => setWallpaper(bg.id)} className={`h-24 rounded-xl border-2 transition-all flex items-center justify-center overflow-hidden p-1 ${wallpaper === bg.id ? 'border-blue-600 ring-4 ring-blue-50 dark:ring-blue-900/20' : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-500'} bg-white dark:bg-slate-900`}>
-                    <div className={`w-full h-full rounded-lg ${bg.class}`} />
-                  </button>
-                ))}
+                {COLOR_THEMES.map((ct) => {
+                  const isSelected = colorTheme === ct.id;
+                  return (
+                    <button
+                      key={ct.id}
+                      type="button"
+                      onClick={() => setColorThemeDraft(ct.id)}
+                      aria-pressed={isSelected}
+                      className={`relative flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 transition-all p-3 ${isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300 dark:hover:border-slate-500'}`}
+                    >
+                      {isSelected && (
+                        <span className="absolute top-1.5 right-1.5 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
+                          <Check className="w-3 h-3" strokeWidth={3} />
+                        </span>
+                      )}
+                      <span
+                        className="w-8 h-8 rounded-full shadow-sm ring-1 ring-black/5"
+                        style={{ backgroundColor: ct.swatch }}
+                      />
+                      <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                        {t(`settings.appearance.colorThemes.${ct.labelKey}`) || ct.labelKey}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -399,8 +467,17 @@ export function SettingsClient({
               </div>
             </div>
 
-            <div className="pt-6 flex justify-end">
-              <Button onClick={handleSaveAppearance} disabled={isAppearanceLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-6 rounded-xl">
+            <div className="pt-6 flex items-center justify-end gap-3">
+              {isAppearanceDirty && !isAppearanceLoading && (
+                <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                  {t("settings.appearance.unsaved") || "Yadda saxlanılmamış dəyişikliklər var"}
+                </span>
+              )}
+              <Button
+                onClick={handleSaveAppearance}
+                disabled={isAppearanceLoading || !isAppearanceDirty}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 py-6 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 {isAppearanceLoading ? (t("settings.appearance.saving") || "Yadda saxlanılır...") : (t("settings.appearance.apply") || "Dəyişiklikləri Tətbiq Et")}
               </Button>
             </div>
@@ -409,7 +486,7 @@ export function SettingsClient({
 
         {/* 2. DƏVƏTLƏR VƏ İCAZƏLƏR */}
         <TabsContent value="defaults" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-slate-800 dark:text-white border-b border-gray-100 dark:border-slate-800 pb-4">
+          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
             {t("settings.defaults.title") || "Onboarding & İcazələr"}
           </h3>
           
@@ -458,7 +535,7 @@ export function SettingsClient({
             <div className="pt-8 border-t border-gray-100 dark:border-slate-800">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h4 className="text-[16px] font-black text-slate-800 dark:text-white">
+                  <h4 className="text-[16px] font-black text-foreground">
                     {t("settings.defaults.permTemplate") || "İcazə Qəlibi (Permission Template)"}
                   </h4>
                   <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400 mt-1">
@@ -492,7 +569,7 @@ export function SettingsClient({
         {/* 3. ŞİRKƏT PROFİLİ (YALNIZ SUPER ADMIN) */}
         {isSuperAdmin && (
           <TabsContent value="company" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-black mb-6 text-slate-800 dark:text-white border-b border-gray-100 dark:border-slate-800 pb-4">
+            <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
               {t("settings.company.title") || "Şirkət Rəsmi Məlumatları"}
             </h3>
             <div className="space-y-6 max-w-2xl">
@@ -501,25 +578,25 @@ export function SettingsClient({
                   <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {t("settings.company.name") || "Şirkətin Adı *"}
                   </Label>
-                  <Input value={companyForm.name} onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold dark:text-white" />
+                  <Input value={companyForm.name} onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {t("settings.company.taxId") || "VÖEN / Qeydiyyat Kodu"}
                   </Label>
-                  <Input value={companyForm.taxId} onChange={(e) => setCompanyForm({...companyForm, taxId: e.target.value})} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold dark:text-white" />
+                  <Input value={companyForm.taxId} onChange={(e) => setCompanyForm({...companyForm, taxId: e.target.value})} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold" />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {t("settings.company.website") || "Veb-sayt"}
                   </Label>
-                  <Input value={companyForm.website} onChange={(e) => setCompanyForm({...companyForm, website: e.target.value})} placeholder="https://..." className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold dark:text-white" />
+                  <Input value={companyForm.website} onChange={(e) => setCompanyForm({...companyForm, website: e.target.value})} placeholder="https://..." className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold" />
                 </div>
                 <div className="col-span-1 sm:col-span-2 space-y-2">
                   <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {t("settings.company.desc") || "Fəaliyyət Sahəsi və Məqsəd"}
                   </Label>
-                  <textarea rows={4} value={companyForm.description} onChange={(e) => setCompanyForm({...companyForm, description: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[14px] font-medium outline-none focus:border-blue-500 dark:text-white resize-none" />
+                  <textarea rows={4} value={companyForm.description} onChange={(e) => setCompanyForm({...companyForm, description: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[14px] font-medium outline-none focus:border-blue-500 resize-none" />
                 </div>
               </div>
               <div className="pt-6 flex justify-end border-t border-gray-100 dark:border-slate-800">
@@ -533,7 +610,7 @@ export function SettingsClient({
 
         {/* 4. BİLDİRİŞLƏR (NOTIFICATIONS) */}
         <TabsContent value="notifications" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-slate-800 dark:text-white border-b border-gray-100 dark:border-slate-800 pb-4">
+          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
             {t("settings.notifications.title") || "Bildiriş Ayarları"}
           </h3>
           <div className="max-w-2xl py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
@@ -549,7 +626,7 @@ export function SettingsClient({
 
         {/* 5. TƏHLÜKƏSİZLİK (SECURITY) */}
         <TabsContent value="security" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-slate-800 dark:text-white border-b border-gray-100 dark:border-slate-800 pb-4">
+          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
             {t("settings.security.title") || "Hesab Təhlükəsizliyi"}
           </h3>
           <div className="space-y-6 max-w-2xl">

@@ -28,12 +28,12 @@ import {
 // =============================================================================
 
 export const MY_WORK_TABS = [
-  { id: "tasks", label: "My tasks", href: "/dashboard/my-work/tasks", icon: ListTodo },
-  { id: "calendar", label: "My calendar", href: "/dashboard/my-work/calendar", icon: Calendar },
-  { id: "timesheet", label: "My timesheet", href: "/dashboard/my-work/timesheet", icon: Clock },
-  { id: "projects", label: "My projects", href: "/dashboard/my-work/projects", icon: FolderKanban },
-  { id: "activity", label: "Activity", href: "/dashboard/my-work/activity", icon: Activity },
-  { id: "dashboards", label: "Dashboards", href: "/dashboard/my-work/dashboards", icon: LayoutDashboard },
+  { id: "tasks", label: "Tapşırıqlarım", href: "/dashboard/my-work/tasks", icon: ListTodo },
+  { id: "calendar", label: "Təqvimim", href: "/dashboard/my-work/calendar", icon: Calendar },
+  { id: "timesheet", label: "Vaxt Cədvəlim", href: "/dashboard/my-work/timesheet", icon: Clock },
+  { id: "projects", label: "Layihələrim", href: "/dashboard/my-work/projects", icon: FolderKanban },
+  { id: "activity", label: "Fəaliyyət", href: "/dashboard/my-work/activity", icon: Activity },
+  { id: "dashboards", label: "İdarə Panelləri", href: "/dashboard/my-work/dashboards", icon: LayoutDashboard },
 ] as const;
 
 export type MyWorkStats = { late: number; today: number; upcoming: number };
@@ -42,7 +42,7 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
   const pathname = usePathname();
 
   return (
-    <div className="relative z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-slate-200 bg-white px-4 dark:border-border dark:bg-card">
+    <div className="relative z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-4">
       <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
         {MY_WORK_TABS.map((tab) => {
           const isActive = pathname?.startsWith(tab.href) ?? false;
@@ -54,7 +54,7 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
               className={cn(
                 "inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-3 py-3 text-sm font-medium transition-all",
                 isActive
-                  ? "border-blue-600 text-blue-600"
+                  ? "border-primary text-primary"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
               )}
             >
@@ -69,7 +69,7 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
         <Popover>
           <PopoverTrigger
             className="flex size-7 flex-shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            title="Add / remove tabs"
+            title="Bölmələri əlavə et / sil"
           >
             <Plus className="size-4" />
           </PopoverTrigger>
@@ -77,11 +77,11 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
             align="end"
             side="bottom"
             sideOffset={8}
-            className="z-50 w-64 rounded-md bg-white shadow-xl"
+            className="z-50 w-64 rounded-md bg-card shadow-xl"
           >
             <PopoverHeader>
-              <PopoverTitle>Add / remove tabs</PopoverTitle>
-              <PopoverDescription>Choose which tabs appear in My Work.</PopoverDescription>
+              <PopoverTitle>Bölmələri əlavə et / sil</PopoverTitle>
+              <PopoverDescription>Mənim İşim bölməsində görünəcək bölmələri seçin.</PopoverDescription>
             </PopoverHeader>
             <div className="flex flex-col gap-0.5">
               {MY_WORK_TABS.map((tab) => (
@@ -99,17 +99,17 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
 
         <StatBadge
           count={stats.late}
-          label="Late"
+          label="Gecikən"
           className="bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300"
         />
         <StatBadge
           count={stats.today}
-          label="Today"
+          label="Bugün"
           className="bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
         />
         <StatBadge
           count={stats.upcoming}
-          label="Upcoming"
+          label="Gələcək"
           className="bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
         />
       </div>

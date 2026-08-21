@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET() {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const userId = session.user.id as string;
 
     const [notifications, unreadCount] = await Promise.all([
@@ -34,7 +34,7 @@ export async function GET() {
 export async function PATCH() {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const userId = session.user.id as string;
 
     await prisma.notification.updateMany({

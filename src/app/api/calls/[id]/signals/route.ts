@@ -25,7 +25,7 @@ async function assertMembership(callId: string, userId: string) {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const userId = session.user.id as string;
     const { id } = await params;
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 
     const { call, isMember } = await assertMembership(id, userId);
     if (!call) return NextResponse.json({ error: "Zəng tapılmadı" }, { status: 404 });
-    if (!isMember) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!isMember) return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
 
     const signal = await prisma.callSignal.create({
       data: {
@@ -64,14 +64,14 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
 export async function GET(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const userId = session.user.id as string;
     const { id } = await params;
 
     const { call, isMember } = await assertMembership(id, userId);
     if (!call) return NextResponse.json({ error: "Zəng tapılmadı" }, { status: 404 });
-    if (!isMember) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!isMember) return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
 
     const { searchParams } = new URL(req.url);
     const after = searchParams.get("after");

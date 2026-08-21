@@ -16,7 +16,7 @@ const changePasswordSchema = z
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const body = await req.json();
     const parsed = changePasswordSchema.safeParse(body);

@@ -80,11 +80,11 @@ export default async function SettingsPage() {
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 max-w-[1200px] mx-auto animate-in fade-in duration-300">
       <div className="flex flex-col items-start gap-1 mb-2">
         {/* YENİ: "Sistem Ayarları" yazısı tərcüməyə bağlandı */}
-        <h2 className="text-[28px] font-black tracking-tight text-slate-800 dark:text-white">
+        <h2 className="text-[28px] font-black tracking-tight text-foreground">
           {t("settings.title") || "Sistem Ayarları"}
         </h2>
         {/* YENİ: Açıqlama mətni tərcüməyə bağlandı */}
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="text-sm font-medium text-muted-foreground">
           {t("settings.description") || "Görünüş, təhlükəsizlik, icazələr və şirkət tənzimləmələrini buradan idarə edin."}
         </p>
       </div>

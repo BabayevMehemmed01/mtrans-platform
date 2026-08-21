@@ -7,9 +7,9 @@ import { sendDealWelcomeNotification } from "@/lib/integrationService";
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const deals = await prisma.crmDeal.findMany({
       where: { companyId },
@@ -25,16 +25,16 @@ export async function GET(req: Request) {
     return NextResponse.json(deals);
   } catch (error) {
     console.error("[CRM_DEALS_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const body = await req.json();
     const {
@@ -44,15 +44,15 @@ export async function POST(req: Request) {
     } = body;
 
     if (!title || !stageId) {
-      return NextResponse.json({ error: "Title and stage are required" }, { status: 400 });
+      return NextResponse.json({ error: "Başlıq və mərhələ tələb olunur" }, { status: 400 });
     }
 
     const stage = await prisma.crmStage.findFirst({ where: { id: stageId, companyId } });
-    if (!stage) return NextResponse.json({ error: "Stage not found" }, { status: 404 });
+    if (!stage) return NextResponse.json({ error: "Mərhələ tapılmadı" }, { status: 404 });
 
     if (assigneeId) {
       const assignee = await prisma.user.findFirst({ where: { id: assigneeId, companyId } });
-      if (!assignee) return NextResponse.json({ error: "Assignee not found" }, { status: 404 });
+      if (!assignee) return NextResponse.json({ error: "Təyin edilmiş şəxs tapılmadı" }, { status: 404 });
     }
 
     const trimmedPhone = clientPhone?.trim() || null;
@@ -146,6 +146,6 @@ export async function POST(req: Request) {
     return NextResponse.json(deal);
   } catch (error) {
     console.error("[CRM_DEALS_POST]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

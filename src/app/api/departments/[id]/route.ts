@@ -13,14 +13,14 @@ const HEAD_EDITABLE_FIELDS = ["description"] as const;
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id } = await params;
     const userId = session.user.id;
     const companyId = (session.user as any).companyId;
 
     const existing = await prisma.department.findFirst({ where: { id, companyId } });
-    if (!existing) return NextResponse.json({ error: "Department not found" }, { status: 404 });
+    if (!existing) return NextResponse.json({ error: "Şöbə tapılmadı" }, { status: 404 });
 
     const body = await req.json();
     const parsed = updateDepartmentSchema.safeParse(body);
@@ -75,7 +75,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     if (updateResult.count === 0) {
-      return NextResponse.json({ error: "Department not found" }, { status: 404 });
+      return NextResponse.json({ error: "Şöbə tapılmadı" }, { status: 404 });
     }
 
     const department = await prisma.department.findUnique({
@@ -101,14 +101,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[PATCH /api/departments/[id]]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id } = await params;
     const companyId = (session.user as any).companyId;
@@ -118,7 +118,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     });
 
     if (!department) {
-      return NextResponse.json({ error: "Department not found" }, { status: 404 });
+      return NextResponse.json({ error: "Şöbə tapılmadı" }, { status: 404 });
     }
 
     if (department.isDefault) {
@@ -146,6 +146,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[DELETE /api/departments/[id]]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

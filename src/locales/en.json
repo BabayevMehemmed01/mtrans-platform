@@ -21,7 +21,14 @@
     "collapse": "Collapse",
     "expand": "Expand",
     "workspace": "WorkSpace",
-    "platform": "ERP Platform"
+    "platform": "ERP Platform",
+    "toggleSubmenu": "Toggle submenu",
+    "myWorkTasks": "My Tasks",
+    "myWorkCalendar": "My Calendar",
+    "myWorkTimesheet": "My Timesheet",
+    "myWorkProjects": "My Projects",
+    "myWorkActivity": "Activity",
+    "myWorkDashboards": "Dashboards"
   },
   "header": {
     "search": "Search...",
@@ -48,9 +55,22 @@
       "dark": "Dark",
       "system": "System",
       "wallpaper": "Wallpaper",
+      "colorTheme": "Color Theme",
+      "colorThemeDesc": "Choose the app's main accent color. Your selected card activates instantly, but the change is only applied once you press the button below.",
+      "colorThemes": {
+        "default": "Default",
+        "blue": "Blue",
+        "purple": "Purple",
+        "green": "Green",
+        "rose": "Rose",
+        "orange": "Orange",
+        "slate": "Slate",
+        "zinc": "Zinc"
+      },
       "language": "System Language",
       "apply": "Apply Changes",
       "saving": "Saving...",
+      "unsaved": "You have unsaved changes",
       "success": "Appearance and language settings saved."
     },
     "defaults": {

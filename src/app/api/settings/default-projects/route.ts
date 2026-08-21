@@ -6,17 +6,17 @@ import { requirePermission, PermissionError } from "@/lib/permissions";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
 
     const companyId = (session.user as any).companyId;
-    if (!companyId) return new NextResponse("No company", { status: 400 });
+    if (!companyId) return new NextResponse("Şirkət yoxdur", { status: 400 });
 
     await requirePermission(session.user.id, "CAN_MANAGE_COMPANY");
 
     const { projectIds } = await req.json();
 
     if (!Array.isArray(projectIds)) {
-      return new NextResponse("projectIds array required", { status: 400 });
+      return new NextResponse("projectIds massivi tələb olunur", { status: 400 });
     }
 
     // Client-dən gələn id-ləri kor-koranə etibar etmirik — şirkətə aid olduğunu təsdiqləyirik
@@ -38,6 +38,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[DEFAULT_PROJECTS_POST]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }

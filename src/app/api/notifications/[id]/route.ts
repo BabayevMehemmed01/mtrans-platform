@@ -13,7 +13,7 @@ interface RouteParams {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const userId = session.user.id as string;
     const { id } = await params;
 

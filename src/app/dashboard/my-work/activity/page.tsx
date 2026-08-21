@@ -8,15 +8,15 @@ import { describeAuditLog } from "@/lib/audit-labels";
 import { getInitials, timeAgo } from "@/lib/utils";
 
 export const metadata = {
-  title: "Activity | My Work | ERP",
+  title: "Fəaliyyət | Mənim İşim | ERP",
 };
 
 type TimeBucket = "today" | "yesterday" | "older";
 
 const TIME_SECTIONS: { key: TimeBucket; label: string }[] = [
-  { key: "today", label: "Today" },
-  { key: "yesterday", label: "Yesterday" },
-  { key: "older", label: "Older" },
+  { key: "today", label: "Bugün" },
+  { key: "yesterday", label: "Dünən" },
+  { key: "older", label: "Daha əvvəl" },
 ];
 
 function bucketFor(date: Date): TimeBucket {
@@ -71,9 +71,9 @@ export default async function MyWorkActivityPage() {
 
   if (sections.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-200 py-20 text-center">
-        <Activity className="size-10 text-slate-400" />
-        <p className="text-sm font-medium text-slate-500">Hələ heç bir fəaliyyət qeydə alınmayıb.</p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-20 text-center">
+        <Activity className="size-10 text-muted-foreground/60" />
+        <p className="text-sm font-medium text-muted-foreground">Hələ heç bir fəaliyyət qeydə alınmayıb.</p>
       </div>
     );
   }
@@ -82,14 +82,14 @@ export default async function MyWorkActivityPage() {
     <div className="flex flex-col">
       {sections.map((section) => (
         <section key={section.key} className="mt-6 first:mt-0">
-          <h3 className="mb-4 font-semibold text-gray-700">{section.label}</h3>
-          <ul className="divide-y divide-slate-200 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:divide-border dark:border-border dark:bg-card">
+          <h3 className="mb-4 font-semibold text-foreground">{section.label}</h3>
+          <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             {groups[section.key].map((log) => {
               const userName = log.user?.name ?? "Naməlum istifadəçi";
               return (
                 <li
                   key={log.id}
-                  className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-slate-50"
+                  className="flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-accent/50"
                 >
                   {log.user?.avatar ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -99,17 +99,17 @@ export default async function MyWorkActivityPage() {
                       className="size-8 flex-shrink-0 rounded-full object-cover"
                     />
                   ) : (
-                    <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-500">
+                    <div className="flex size-8 flex-shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-muted-foreground">
                       {getInitials(userName)}
                     </div>
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="text-sm leading-relaxed">
                       <span className="font-medium text-foreground">{userName}</span>{" "}
-                      <span className="text-slate-500">{describeAuditLog(log)}</span>
+                      <span className="text-muted-foreground">{describeAuditLog(log)}</span>
                     </p>
                   </div>
-                  <span className="flex-shrink-0 whitespace-nowrap pt-0.5 text-[11px] text-slate-400">
+                  <span className="flex-shrink-0 whitespace-nowrap pt-0.5 text-[11px] text-muted-foreground/70">
                     {timeAgo(log.createdAt)}
                   </span>
                 </li>

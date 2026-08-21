@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const userId = session.user.id;
     const companyId = (session.user as any).companyId;
@@ -48,6 +48,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("[PROFILE_SUMMARY_ERROR]", error);
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

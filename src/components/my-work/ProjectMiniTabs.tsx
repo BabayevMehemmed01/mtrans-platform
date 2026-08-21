@@ -4,9 +4,17 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 // =============================================================================
-// My Work — Project card mini tabs ("About" / "Insights"), Teamwork-style.
+// My Work — Project card mini tabs ("Haqqında" / "Statistika"), Teamwork-style.
 // Purely local UI state; stopPropagation so it never triggers the card's link.
 // =============================================================================
+
+const PROJECT_STATUS_LABEL: Record<string, string> = {
+  PLANNING: "planlanır",
+  ACTIVE: "aktiv",
+  ON_HOLD: "dayandırılıb",
+  COMPLETED: "tamamlandı",
+  CANCELLED: "ləğv edildi",
+};
 
 export function ProjectMiniTabs({
   description,
@@ -36,24 +44,24 @@ export function ProjectMiniTabs({
             className={cn(
               "-mb-px border-b-2 px-0.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors",
               tab === id
-                ? "border-blue-600 text-blue-600"
+                ? "border-primary text-primary"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             )}
           >
-            {id === "about" ? "About" : "Insights"}
+            {id === "about" ? "Haqqında" : "Statistika"}
           </button>
         ))}
       </div>
-      <div className="min-h-[36px] pt-2 text-xs text-slate-500">
+      <div className="min-h-[36px] pt-2 text-xs text-muted-foreground">
         {tab === "about" ? (
-          <p className="line-clamp-2">{description || "No description provided."}</p>
+          <p className="line-clamp-2">{description || "Təsvir əlavə edilməyib."}</p>
         ) : (
           <div className="flex items-center gap-3">
-            <span>{taskCount} tasks</span>
+            <span>{taskCount} tapşırıq</span>
             <span>·</span>
-            <span>{memberCount} members</span>
+            <span>{memberCount} üzv</span>
             <span>·</span>
-            <span className="capitalize">{status.toLowerCase().replace("_", " ")}</span>
+            <span className="capitalize">{PROJECT_STATUS_LABEL[status] ?? status}</span>
           </div>
         )}
       </div>

@@ -10,6 +10,9 @@ export async function PATCH(req: NextRequest) {
     }
 
     const body = await req.json();
+    // Qeyd: "wallpaper" sahəsi indi divar kağızı şəkli deyil, seçilmiş
+    // Rəng Teması (Color Theme) id-sini saxlayır: default | blue | purple |
+    // green | rose | orange | slate | zinc
     const { theme, language, wallpaper } = body;
 
     // İstifadəçinin şəxsi ayarlarını bazada yeniləyirik

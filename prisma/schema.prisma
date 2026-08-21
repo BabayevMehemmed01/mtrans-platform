@@ -364,7 +364,7 @@ model User {
   // YENİ ƏLAVƏLƏR: Görünüş və Ayarlar
   theme     String @default("light") // "light", "dark", "system"
   language  String @default("az") // "az", "en", "ru"
-  wallpaper String @default("default")
+  wallpaper String @default("default") // Rəng Teması (Color Theme): default | blue | purple | green | rose | orange | slate | zinc
 
   timezone    String    @default("Asia/Baku")
   lastLoginAt DateTime?

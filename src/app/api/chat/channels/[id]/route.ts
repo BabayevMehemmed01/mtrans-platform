@@ -10,16 +10,16 @@ interface RouteParams {
 export async function PATCH(req: NextRequest, { params }: RouteParams) {
   try {
     const session = await auth();
-    if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
+    if (!session?.user) return new NextResponse("İcazə yoxdur", { status: 401 });
 
     const { id } = await params;
     const membership = await prisma.channelMember.findUnique({
       where: { channelId_userId: { channelId: id, userId: session.user.id } },
     });
-    if (!membership) return new NextResponse("Forbidden", { status: 403 });
+    if (!membership) return new NextResponse("Qadağandır", { status: 403 });
 
     const isAdmin = await isChatGroupAdmin(session.user.id, id);
-    if (!isAdmin) return new NextResponse("Forbidden", { status: 403 });
+    if (!isAdmin) return new NextResponse("Qadağandır", { status: 403 });
 
     const body = await req.json().catch(() => ({}));
     const data: { adminsOnly?: boolean; description?: string | null; avatar?: string | null } = {};
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
 
     if (Object.keys(data).length === 0) {
-      return new NextResponse("No fields to update", { status: 400 });
+      return new NextResponse("Yeniləmək üçün sahə yoxdur", { status: 400 });
     }
 
     const channel = await prisma.chatChannel.update({
@@ -44,6 +44,6 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     return NextResponse.json(channel);
   } catch (error) {
     console.error("[CHAT_CHANNEL_PATCH]", error);
-    return new NextResponse("Internal Error", { status: 500 });
+    return new NextResponse("Server xətası", { status: 500 });
   }
 }

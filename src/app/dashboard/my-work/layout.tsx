@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { MyWorkTabsBar } from "@/components/my-work/MyWorkTabsBar";
 
 export const metadata = {
-  title: "My Work | ERP",
+  title: "Mənim İşim | ERP",
 };
 
 function startOfToday() {

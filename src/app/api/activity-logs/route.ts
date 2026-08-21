@@ -21,16 +21,16 @@ export async function GET(req: Request) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     }
 
     const companyId = (session.user as any).companyId as string | undefined;
     if (!companyId) {
-      return NextResponse.json({ error: "Company required" }, { status: 400 });
+      return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
     }
 
     if (!(await isSuperAdmin(session.user.id))) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -102,6 +102,6 @@ export async function GET(req: Request) {
     });
   } catch (error) {
     console.error("[ACTIVITY_LOGS_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

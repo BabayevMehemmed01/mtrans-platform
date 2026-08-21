@@ -8,14 +8,14 @@ import { logAudit } from "@/lib/audit";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id } = await params;
     const companyId = (session.user as any).companyId;
 
     const existing = await prisma.role.findFirst({ where: { id, companyId } });
-    if (!existing) return NextResponse.json({ error: "Role not found" }, { status: 404 });
-    if (existing.isSystem) return NextResponse.json({ error: "System roles cannot be edited" }, { status: 403 });
+    if (!existing) return NextResponse.json({ error: "Rol tapılmadı" }, { status: 404 });
+    if (existing.isSystem) return NextResponse.json({ error: "Sistem rolları redaktə edilə bilməz" }, { status: 403 });
 
     await requirePermission(session.user.id, "CAN_EDIT_ROLE");
 
@@ -75,21 +75,21 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[PATCH /api/roles/[id]]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id } = await params;
     const companyId = (session.user as any).companyId;
 
     const role = await prisma.role.findFirst({ where: { id, companyId } });
-    if (!role) return NextResponse.json({ error: "Role not found" }, { status: 404 });
-    if (role.isSystem) return NextResponse.json({ error: "System roles cannot be deleted" }, { status: 403 });
+    if (!role) return NextResponse.json({ error: "Rol tapılmadı" }, { status: 404 });
+    if (role.isSystem) return NextResponse.json({ error: "Sistem rolları silinə bilməz" }, { status: 403 });
 
     await requirePermission(session.user.id, "CAN_DELETE_ROLE");
 
@@ -110,6 +110,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       return NextResponse.json({ error: error.message }, { status: error.statusCode });
     }
     console.error("[DELETE /api/roles/[id]]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

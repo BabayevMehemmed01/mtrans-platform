@@ -6,7 +6,7 @@ import { logAudit } from "@/lib/audit";
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id } = await params;
     const companyId = (session.user as any).companyId;
@@ -21,7 +21,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     });
 
     if (!userToUpdate) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      return NextResponse.json({ error: "Üzv tapılmadı" }, { status: 404 });
     }
 
     const updatedUser = await prisma.user.update({
@@ -51,20 +51,20 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("[PATCH /api/members/[id]]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const { id } = await params;
     const companyId = (session.user as any).companyId;
 
     if (id === session.user.id) {
-        return NextResponse.json({ error: "You cannot delete yourself" }, { status: 400 });
+        return NextResponse.json({ error: "Özünüzü silə bilməzsiniz" }, { status: 400 });
     }
 
     const member = await prisma.user.findFirst({
@@ -72,7 +72,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     });
 
     if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 });
+      return NextResponse.json({ error: "Üzv tapılmadı" }, { status: 404 });
     }
 
     // Şirkətdən kənarlaşdırmaq üçün companyId-ni null etmək və ya birbaşa silmək olar.
@@ -93,6 +93,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[DELETE /api/members/[id]]", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

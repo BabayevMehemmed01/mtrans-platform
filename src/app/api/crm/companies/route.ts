@@ -10,9 +10,9 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const companies = await prisma.crmCompany.findMany({
       where: { companyId },
@@ -22,20 +22,20 @@ export async function GET(req: Request) {
     return NextResponse.json(companies);
   } catch (error) {
     console.error("[CRM_COMPANIES_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const body = await req.json();
     const { name, industry, website, phone, email, address } = body;
-    if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    if (!name) return NextResponse.json({ error: "Ad tələb olunur" }, { status: 400 });
 
     const crmCompany = await prisma.crmCompany.create({
       data: {
@@ -52,6 +52,6 @@ export async function POST(req: Request) {
     return NextResponse.json(crmCompany, { status: 201 });
   } catch (error) {
     console.error("[CRM_COMPANIES_POST]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

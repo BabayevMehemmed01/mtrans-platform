@@ -20,10 +20,10 @@ const PRIORITY_STYLES: Record<string, string> = {
 };
 
 const PRIORITY_LABEL: Record<string, string> = {
-  URGENT: "Urgent",
-  HIGH: "High",
-  MEDIUM: "Medium",
-  LOW: "None",
+  URGENT: "Təcili",
+  HIGH: "Yüksək",
+  MEDIUM: "Orta",
+  LOW: "Aşağı",
 };
 
 export function PriorityBadge({ priority }: { priority: string }) {
@@ -93,7 +93,7 @@ export function TaskNameCell({
     <div className="min-w-0">
       <Link
         href={href}
-        className="block truncate text-sm font-medium text-foreground hover:text-blue-600 hover:underline"
+        className="block truncate text-sm font-medium text-foreground hover:text-primary hover:underline"
       >
         {title}
       </Link>

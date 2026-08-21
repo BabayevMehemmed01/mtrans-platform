@@ -8,12 +8,12 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     }
 
     const companyId = (session.user as any).companyId;
     if (!companyId) {
-      return NextResponse.json({ error: "No company found" }, { status: 400 });
+      return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
     }
 
     const labels = await prisma.label.findMany({
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error("[LABELS_GET]", error);
     return NextResponse.json(
-      { error: "Internal Error" },
+      { error: "Server xətası" },
       { status: 500 }
     );
   }
@@ -35,12 +35,12 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     }
 
     const companyId = (session.user as any).companyId;
     if (!companyId) {
-      return NextResponse.json({ error: "No company found" }, { status: 400 });
+      return NextResponse.json({ error: "Şirkət tapılmadı" }, { status: 400 });
     }
 
     const body = await req.json();
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("[LABELS_POST]", error);
     return NextResponse.json(
-      { error: "Internal Error" },
+      { error: "Server xətası" },
       { status: 500 }
     );
   }

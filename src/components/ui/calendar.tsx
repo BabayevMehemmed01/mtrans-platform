@@ -57,7 +57,7 @@ function Calendar({
           type="button"
           onClick={() => setMonth(subMonths(month, 1))}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
-          aria-label="Previous month"
+          aria-label="Əvvəlki ay"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -68,7 +68,7 @@ function Calendar({
           type="button"
           onClick={() => setMonth(addMonths(month, 1))}
           className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }))}
-          aria-label="Next month"
+          aria-label="Növbəti ay"
         >
           <ChevronRight className="h-4 w-4" />
         </button>

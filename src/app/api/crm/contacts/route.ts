@@ -5,9 +5,9 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const contacts = await prisma.crmContact.findMany({
       where: { companyId },
@@ -20,27 +20,27 @@ export async function GET(req: Request) {
     return NextResponse.json(contacts);
   } catch (error) {
     console.error("[CRM_CONTACTS_GET]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const body = await req.json();
     const { firstName, lastName, email, phone, position, crmCompanyId } = body;
 
     if (!firstName) {
-      return NextResponse.json({ error: "First name is required" }, { status: 400 });
+      return NextResponse.json({ error: "Ad tələb olunur" }, { status: 400 });
     }
 
     if (crmCompanyId) {
       const crmCompany = await prisma.crmCompany.findFirst({ where: { id: crmCompanyId, companyId } });
-      if (!crmCompany) return NextResponse.json({ error: "CRM company not found" }, { status: 404 });
+      if (!crmCompany) return NextResponse.json({ error: "CRM şirkəti tapılmadı" }, { status: 404 });
     }
 
     const contact = await prisma.crmContact.create({
@@ -61,6 +61,6 @@ export async function POST(req: Request) {
     return NextResponse.json(contact);
   } catch (error) {
     console.error("[CRM_CONTACTS_POST]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

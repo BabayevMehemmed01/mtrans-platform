@@ -5,9 +5,9 @@ import { prisma } from "@/lib/prisma";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const { id } = await params;
     const body = await req.json();
@@ -19,12 +19,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const existingDeal = await prisma.crmDeal.findFirst({ where: { id, companyId } });
     if (!existingDeal) {
-      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+      return NextResponse.json({ error: "Sövdələşmə tapılmadı" }, { status: 404 });
     }
 
     if (stageId) {
       const stage = await prisma.crmStage.findFirst({ where: { id: stageId, companyId } });
-      if (!stage) return NextResponse.json({ error: "Stage not found" }, { status: 404 });
+      if (!stage) return NextResponse.json({ error: "Mərhələ tapılmadı" }, { status: 404 });
     }
 
     const data: Record<string, unknown> = {};
@@ -58,22 +58,22 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json(deal);
   } catch (error) {
     console.error("[CRM_DEALS_PATCH]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
 
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const companyId = (session.user as any).companyId;
-    if (!companyId) return NextResponse.json({ error: "Company Required" }, { status: 400 });
+    if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const { id } = await params;
 
     const existingDeal = await prisma.crmDeal.findFirst({ where: { id, companyId } });
     if (!existingDeal) {
-      return NextResponse.json({ error: "Deal not found" }, { status: 404 });
+      return NextResponse.json({ error: "Sövdələşmə tapılmadı" }, { status: 404 });
     }
 
     await prisma.crmDeal.delete({
@@ -83,6 +83,6 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error("[CRM_DEALS_DELETE]", error);
-    return NextResponse.json({ error: "Internal Error" }, { status: 500 });
+    return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }

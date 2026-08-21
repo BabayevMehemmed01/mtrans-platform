@@ -42,7 +42,7 @@ export async function GET(req: Request) {
   const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
   if (!token || token !== cronSecret) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
   }
 
   let pool: ConnectionPool | null = null;

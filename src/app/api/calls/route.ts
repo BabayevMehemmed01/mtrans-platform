@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
 
     const userId = session.user.id as string;
     const body = await req.json();
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const membership = await prisma.channelMember.findUnique({
       where: { channelId_userId: { channelId, userId } },
     });
-    if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!membership) return NextResponse.json({ error: "Qadağandır" }, { status: 403 });
 
     // Yalnız 1:1 zəng dəstəklənir — kanalda tam 2 üzv olmalıdır
     const memberCount = await prisma.channelMember.count({ where: { channelId } });
