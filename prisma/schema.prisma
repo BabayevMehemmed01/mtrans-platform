@@ -93,6 +93,13 @@ enum EntityType {
   COMMENT
   ATTACHMENT
   LABEL
+  MARKETING_CAMPAIGN
+  MARKETING_SEGMENT
+  WAREHOUSE
+  PRODUCT
+  STOCK_MOVEMENT
+  SUPPLIER
+  PURCHASE_ORDER
 }
 
 // --- CRM İNTEQRASİYA ENUM-LARI (1C / Email / Twilio / Telegram) ---
@@ -107,6 +114,53 @@ enum MessageLogType {
 enum MessageLogStatus {
   SENT
   FAILED
+}
+
+// --- MARKETİNQ KAMPANİYALARI ENUM-LARI (Bitrix24 tərzi Marketing modulu) ---
+
+enum CampaignType {
+  EMAIL
+  SMS
+  WHATSAPP
+  INSTAGRAM
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+// --- ANBAR İDARƏETMƏ SİSTEMİ (WMS) ENUM-LARI — Bitrix24 / Odoo / SAP tərzi ---
+
+enum WarehouseType {
+  MAIN // Əsas anbar
+  TRANSIT // Tranzit (aralıq) anbar
+}
+
+enum StockMovementType {
+  INBOUND // Təchizatçıdan/xaricdən daxilolma
+  OUTBOUND // Müştəriyə/xaricə çıxış (satış sifarişi)
+  TRANSFER // Anbarlar/hüceyrələr arası daxili köçürmə
+  ADJUSTMENT // Stok tənzimləməsi (inventarlaşdırma, ilkin qalıq)
+  SCRAP // Yararsız/zay silinməsi (write-off)
+}
+
+enum StockMovementStatus {
+  DRAFT // Sənəd yaradılıb, qalıqlara təsir etməyib
+  PENDING // Təsdiq gözləyir
+  COMPLETED // İcra olunub, qalıqlar yenilənib
+  CANCELLED // Ləğv edilib
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  CONFIRMED
+  PARTIALLY_RECEIVED
+  RECEIVED
+  CANCELLED
 }
 
 // =============================================================================
@@ -208,21 +262,30 @@ model Company {
   owner   User   @relation("CompanyOwner", fields: [ownerId], references: [id])
 
   // Relations
-  users         User[]         @relation("CompanyUsers")
-  departments   Department[]
-  roles         Role[]
-  projects      Project[]
-  labels        Label[]
-  auditLogs     AuditLog[]
-  crmCompanies  CrmCompany[]
-  crmContacts   CrmContact[]
-  crmStages     CrmStage[]
-  crmDeals      CrmDeal[]
-  chatChannels  ChatChannel[]
-  notifications Notification[]
-  invites        Invitation[]
-  customers      Customer[]
-  taskTemplates  TaskTemplate[]
+  users              User[]              @relation("CompanyUsers")
+  departments        Department[]
+  roles              Role[]
+  projects           Project[]
+  labels             Label[]
+  auditLogs          AuditLog[]
+  crmCompanies       CrmCompany[]
+  crmContacts        CrmContact[]
+  crmStages          CrmStage[]
+  crmDeals           CrmDeal[]
+  chatChannels       ChatChannel[]
+  notifications      Notification[]
+  invites            Invitation[]
+  customers          Customer[]
+  taskTemplates      TaskTemplate[]
+  marketingCampaigns MarketingCampaign[]
+  marketingSegments  MarketingSegment[]
+
+  // WMS (Anbar İdarəetmə Sistemi)
+  warehouses     Warehouse[]
+  products       Product[]
+  stockMovements StockMovement[]
+  suppliers      Supplier[]
+  purchaseOrders PurchaseOrder[]
 
   @@map("companies")
 }
@@ -387,24 +450,29 @@ model User {
   role   Role?   @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   // Relations
-  projectMemberships     ProjectMember[]
-  ownedProjects          Project[]        @relation("ProjectOwner")
-  assignedTasks          Task[]           @relation("TaskAssignee")
-  createdTasks           Task[]           @relation("TaskCreator")
-  observedTasks          Task[]           @relation("TaskObservers")
-  comments               Comment[]
-  attachments            Attachment[]
-  auditLogs              AuditLog[]
-  assignedDeals          CrmDeal[]        @relation("CrmDealAssignee")
-  channelMemberships     ChannelMember[]
-  messagesSent           Message[]
-  notifications          Notification[]
-  invitesSent            Invitation[]     @relation("InviteSender")
-  headOfDepartments      Department[]     @relation("DepartmentHead")
-  callsInitiated         Call[]           @relation("CallCaller")
-  callSignalsSent        CallSignal[]     @relation("CallSignalSender")
-  extraPermissions       UserPermission[] @relation("UserPermissionGrants")
-  grantedUserPermissions UserPermission[] @relation("UserPermissionGrantedBy")
+  projectMemberships        ProjectMember[]
+  ownedProjects             Project[]           @relation("ProjectOwner")
+  assignedTasks             Task[]              @relation("TaskAssignee")
+  createdTasks              Task[]              @relation("TaskCreator")
+  observedTasks             Task[]              @relation("TaskObservers")
+  comments                  Comment[]
+  attachments               Attachment[]
+  auditLogs                 AuditLog[]
+  assignedDeals             CrmDeal[]           @relation("CrmDealAssignee")
+  channelMemberships        ChannelMember[]
+  messagesSent              Message[]
+  notifications             Notification[]
+  invitesSent               Invitation[]        @relation("InviteSender")
+  headOfDepartments         Department[]        @relation("DepartmentHead")
+  callsInitiated            Call[]              @relation("CallCaller")
+  callSignalsSent           CallSignal[]        @relation("CallSignalSender")
+  extraPermissions          UserPermission[]    @relation("UserPermissionGrants")
+  grantedUserPermissions    UserPermission[]    @relation("UserPermissionGrantedBy")
+  marketingCampaignsCreated MarketingCampaign[] @relation("MarketingCampaignCreator")
+
+  // WMS (Anbar İdarəetmə Sistemi)
+  stockMovementsCreated StockMovement[] @relation("StockMovementCreator")
+  purchaseOrdersCreated PurchaseOrder[] @relation("PurchaseOrderCreator")
 
   @@map("users")
 }
@@ -522,9 +590,9 @@ model Task {
 // =============================================================================
 
 model TaskTemplate {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
+  id           String      @id @default(cuid())
+  name         String
+  description  String?
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   createdAt    DateTime    @default(now())
@@ -825,6 +893,72 @@ model MessageLog {
 }
 
 // =============================================================================
+// MARKETİNQ MODELLƏRİ — Bitrix24 tərzi "Marketing" modulu
+// Çoxkanallı (Email/SMS/WhatsApp/Instagram) kampaniyalar və auditoriya
+// seqmentləri. Kanalların aktivliyi `src/lib/marketing-config.ts` tərəfindən
+// .env-dəki API açarlarına əsasən dinamik müəyyən olunur.
+// =============================================================================
+
+model MarketingSegment {
+  id   String @id @default(cuid())
+  name String
+
+  // Dinamik auditoriya filterləri (məs: { "source": "CRM", "hasEmail": true })
+  filters Json @default("{}")
+
+  // Mövcud Customer kartlarından seçilmiş ID-lər (Multi-select / Command palette)
+  customerIds String[] @default([])
+
+  // Statik siyahı (.csv / kopyala-yapışdır import) — [{ "name", "email", "phone" }]
+  customRecipients Json @default("[]")
+
+  useCount  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  campaigns MarketingCampaign[]
+
+  @@index([companyId])
+  @@map("marketing_segments")
+}
+
+model MarketingCampaign {
+  id     String         @id @default(cuid())
+  name   String
+  type   CampaignType
+  status CampaignStatus @default(DRAFT)
+
+  subject String? // Email üçün mövzu sətri
+  content String? // Text/HTML məzmun (email body / sms-whatsapp mətni / reklam mətni)
+
+  // { "recipientCount", "sentCount", "failedCount", "openRate", "clickRate" }
+  stats Json @default("{}")
+
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  segmentId String?
+  segment   MarketingSegment? @relation(fields: [segmentId], references: [id], onDelete: SetNull)
+
+  createdById String?
+  createdBy   User?   @relation("MarketingCampaignCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([segmentId])
+  @@index([status])
+  @@index([type])
+  @@map("marketing_campaigns")
+}
+
+// =============================================================================
 // CHAT MODELS
 // =============================================================================
 
@@ -1029,4 +1163,242 @@ model Invitation {
   @@index([companyId])
   @@index([email])
   @@map("invites")
+}
+
+// =============================================================================
+// WMS MODELLƏRİ — Anbar İdarəetmə Sistemi (Bitrix24 / Odoo / SAP tərzi)
+// Multi-tenant (companyId), tam iyerarxiya: Warehouse → Zone → Bin.
+// Bütün stok hərəkətləri StockMovement üzərindən $transaction ilə tətbiq
+// olunur və nəticə InventoryLevel-də real-time əks olunur.
+// =============================================================================
+
+model Warehouse {
+  id        String        @id @default(cuid())
+  name      String
+  location  String?
+  type      WarehouseType @default(MAIN)
+  isActive  Boolean       @default(true)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  zones           WarehouseZone[]
+  inventoryLevels InventoryLevel[]
+  purchaseOrders  PurchaseOrder[]
+
+  movementsFrom StockMovement[] @relation("MovementFromWarehouse")
+  movementsTo   StockMovement[] @relation("MovementToWarehouse")
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@map("warehouses")
+}
+
+model WarehouseZone {
+  id        String   @id @default(cuid())
+  name      String
+  code      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  bins WarehouseBin[]
+
+  @@unique([warehouseId, name])
+  @@index([warehouseId])
+  @@map("warehouse_zones")
+}
+
+model WarehouseBin {
+  id        String   @id @default(cuid())
+  code      String // Rack/Bin kodu, məsələn: "A-01-03"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zoneId String
+  zone   WarehouseZone @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+
+  inventoryLevels InventoryLevel[]
+
+  movementsFromBin StockMovement[] @relation("MovementFromBin")
+  movementsToBin   StockMovement[] @relation("MovementToBin")
+
+  @@unique([zoneId, code])
+  @@index([zoneId])
+  @@map("warehouse_bins")
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  sku              String
+  barcode          String?
+  name             String
+  category         String?
+  unit             String   @default("pcs") // pcs, kg, m, l, box...
+  minStockLimit    Float    @default(0)
+  purchasePrice    Float    @default(0) // Default alış qiyməti (sənəd səviyyəsində əvəz oluna bilər)
+  salesPrice       Float    @default(0) // Default satış qiyməti
+  isTrackedByBatch Boolean  @default(false) // Partiya/Lot və son istifadə tarixi ilə izlənilir
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  inventoryLevels    InventoryLevel[]
+  stockMovements     StockMovement[]
+  purchaseOrderItems PurchaseOrderItem[]
+
+  @@unique([companyId, sku])
+  @@index([companyId])
+  @@index([barcode])
+  @@index([category])
+  @@map("products")
+}
+
+model InventoryLevel {
+  id         String    @id @default(cuid())
+  quantity   Float     @default(0)
+  lotNumber  String?
+  expiryDate DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  binId String?
+  bin   WarehouseBin? @relation(fields: [binId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, warehouseId, binId, lotNumber])
+  @@index([productId])
+  @@index([warehouseId])
+  @@index([binId])
+  @@map("inventory_levels")
+}
+
+model StockMovement {
+  id          String              @id @default(cuid())
+  type        StockMovementType
+  status      StockMovementStatus @default(DRAFT)
+  reference   String? // Sənəd adı/nömrəsi, məsələn: "Stock adjustment #1"
+  comment     String?
+  currency    String              @default("AZN")
+  quantity    Float
+  unitCost    Float               @default(0) // Purchase price (sətir səviyyəsində)
+  unitPrice   Float               @default(0) // Sales price (sətir səviyyəsində)
+  totalAmount Float               @default(0) // unitCost * quantity
+  lotNumber   String?
+  expiryDate  DateTime?
+  processedAt DateTime? // COMPLETED statusuna keçdiyi an (qalıqlara tətbiq olunduğu vaxt)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  fromWarehouseId String?
+  fromWarehouse   Warehouse? @relation("MovementFromWarehouse", fields: [fromWarehouseId], references: [id])
+
+  toWarehouseId String?
+  toWarehouse   Warehouse? @relation("MovementToWarehouse", fields: [toWarehouseId], references: [id])
+
+  fromBinId String?
+  fromBin   WarehouseBin? @relation("MovementFromBin", fields: [fromBinId], references: [id])
+
+  toBinId String?
+  toBin   WarehouseBin? @relation("MovementToBin", fields: [toBinId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("StockMovementCreator", fields: [createdById], references: [id])
+
+  @@index([companyId])
+  @@index([productId])
+  @@index([type])
+  @@index([status])
+  @@index([reference])
+  @@index([companyId, createdAt(sort: Desc)])
+  @@map("stock_movements")
+}
+
+model Supplier {
+  id          String   @id @default(cuid())
+  name        String
+  contactName String?
+  phone       String?
+  email       String?
+  address     String?
+  taxId       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  purchaseOrders PurchaseOrder[]
+
+  @@unique([companyId, name])
+  @@index([companyId])
+  @@map("suppliers")
+}
+
+model PurchaseOrder {
+  id          String              @id @default(cuid())
+  orderNumber String
+  status      PurchaseOrderStatus @default(DRAFT)
+  currency    String              @default("AZN")
+  totalAmount Float               @default(0)
+  expectedAt  DateTime?
+  receivedAt  DateTime?
+  notes       String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+
+  warehouseId String?
+  warehouse   Warehouse? @relation(fields: [warehouseId], references: [id], onDelete: SetNull)
+
+  createdById String
+  createdBy   User   @relation("PurchaseOrderCreator", fields: [createdById], references: [id])
+
+  items PurchaseOrderItem[]
+
+  @@unique([companyId, orderNumber])
+  @@index([companyId])
+  @@index([supplierId])
+  @@map("purchase_orders")
+}
+
+model PurchaseOrderItem {
+  id          String @id @default(cuid())
+  quantity    Float
+  receivedQty Float  @default(0)
+  unitCost    Float  @default(0)
+
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([purchaseOrderId])
+  @@index([productId])
+  @@map("purchase_order_items")
 }

@@ -36,6 +36,8 @@ import {
   Calendar as CalendarIcon,
   Archive,
   ScrollText,
+  Megaphone,
+  Boxes,
   type LucideIcon,
 } from "lucide-react";
 
@@ -140,6 +142,18 @@ const navItems: NavItem[] = [
     tKey: "menu.crm",
     href: "/dashboard/crm",
     icon: Contact,
+  },
+  {
+    title: "Marketinq",
+    tKey: "menu.marketing",
+    href: "/dashboard/marketing",
+    icon: Megaphone,
+  },
+  {
+    title: "Anbar (WMS)",
+    tKey: "menu.inventory",
+    href: "/dashboard/inventory",
+    icon: Boxes,
   },
   {
     title: "Mesajlar",

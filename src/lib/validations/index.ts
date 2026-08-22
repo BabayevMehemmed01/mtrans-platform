@@ -313,6 +313,147 @@ export type CreateLabelInput = z.infer<typeof createLabelSchema>;
 export type UpdateLabelInput = z.infer<typeof updateLabelSchema>;
 
 // =============================================================================
+// MARKETING Validations
+// =============================================================================
+
+export const campaignTypeEnum = z.enum(["EMAIL", "SMS", "WHATSAPP", "INSTAGRAM"]);
+export const campaignStatusEnum = z.enum(["DRAFT", "SCHEDULED", "IN_PROGRESS", "COMPLETED"]);
+
+const customRecipientSchema = z.object({
+  name: z.string().max(150).optional().or(z.literal("")),
+  email: z.string().max(200).optional().or(z.literal("")),
+  phone: z.string().max(50).optional().or(z.literal("")),
+});
+
+export const createMarketingSegmentSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Seqment adı ən az 2 simvol olmalıdır")
+    .max(150, "Seqment adı çox uzundur"),
+  filters: z.record(z.string(), z.any()).optional(),
+  customerIds: z.array(z.string()).optional(),
+  customRecipients: z.array(customRecipientSchema).optional(),
+});
+
+export const updateMarketingSegmentSchema = createMarketingSegmentSchema.partial();
+
+export type CreateMarketingSegmentInput = z.infer<typeof createMarketingSegmentSchema>;
+export type UpdateMarketingSegmentInput = z.infer<typeof updateMarketingSegmentSchema>;
+
+export const createMarketingCampaignSchema = z.object({
+  name: z
+    .string()
+    .min(2, "Kampaniya adı ən az 2 simvol olmalıdır")
+    .max(150, "Kampaniya adı çox uzundur"),
+  type: campaignTypeEnum,
+  status: campaignStatusEnum.optional(),
+  subject: z.string().max(300).optional().or(z.literal("")),
+  content: z.string().max(20000).optional().or(z.literal("")),
+  segmentId: z.string().optional().or(z.null()),
+  scheduledAt: flexibleDateString.optional().or(z.null()).or(z.literal("")),
+});
+
+export const updateMarketingCampaignSchema = createMarketingCampaignSchema.partial();
+
+export type CreateMarketingCampaignInput = z.infer<typeof createMarketingCampaignSchema>;
+export type UpdateMarketingCampaignInput = z.infer<typeof updateMarketingCampaignSchema>;
+
+// =============================================================================
+// WMS (Anbar İdarəetmə Sistemi) Validations
+// =============================================================================
+
+export const warehouseTypeEnum = z.enum(["MAIN", "TRANSIT"]);
+export const stockMovementTypeEnum = z.enum([
+  "INBOUND",
+  "OUTBOUND",
+  "TRANSFER",
+  "ADJUSTMENT",
+  "SCRAP",
+]);
+export const stockMovementStatusEnum = z.enum(["DRAFT", "PENDING", "COMPLETED", "CANCELLED"]);
+
+export const createWarehouseSchema = z.object({
+  name: z.string().min(2, "Anbar adı ən az 2 simvol olmalıdır").max(150),
+  location: z.string().max(300).optional().or(z.literal("")),
+  type: warehouseTypeEnum.optional(),
+});
+
+export const updateWarehouseSchema = createWarehouseSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export type CreateWarehouseInput = z.infer<typeof createWarehouseSchema>;
+export type UpdateWarehouseInput = z.infer<typeof updateWarehouseSchema>;
+
+export const createWarehouseZoneSchema = z.object({
+  warehouseId: z.string().min(1),
+  name: z.string().min(1).max(150),
+  code: z.string().max(50).optional().or(z.literal("")),
+});
+
+export const createWarehouseBinSchema = z.object({
+  zoneId: z.string().min(1),
+  code: z.string().min(1).max(50),
+});
+
+export const createProductSchema = z.object({
+  sku: z.string().min(1, "SKU tələb olunur").max(80),
+  barcode: z.string().max(80).optional().or(z.literal("")),
+  name: z.string().min(1, "Məhsul adı tələb olunur").max(200),
+  category: z.string().max(100).optional().or(z.literal("")),
+  unit: z.string().max(20).optional(),
+  minStockLimit: z.coerce.number().min(0).optional(),
+  purchasePrice: z.coerce.number().min(0).optional(),
+  salesPrice: z.coerce.number().min(0).optional(),
+  isTrackedByBatch: z.boolean().optional(),
+});
+
+export const updateProductSchema = createProductSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
+// Bir "sənəd" (Stock adjustment / Transfer / Write-off) eyni `reference` altında
+// birdən çox StockMovement sətrindən ibarət ola bilər — hamısı bir $transaction-da yaradılır.
+export const stockMovementLineSchema = z.object({
+  productId: z.string().min(1, "Məhsul seçilməlidir"),
+  quantity: z.coerce.number(),
+  unitCost: z.coerce.number().min(0).optional(),
+  unitPrice: z.coerce.number().min(0).optional(),
+  fromWarehouseId: z.string().optional().or(z.null()),
+  toWarehouseId: z.string().optional().or(z.null()),
+  fromBinId: z.string().optional().or(z.null()),
+  toBinId: z.string().optional().or(z.null()),
+  lotNumber: z.string().max(80).optional().or(z.literal("")).or(z.null()),
+  expiryDate: flexibleDateString.optional().or(z.null()).or(z.literal("")),
+});
+
+export const createStockMovementDocumentSchema = z.object({
+  type: stockMovementTypeEnum,
+  status: z.enum(["DRAFT", "COMPLETED"]).optional(),
+  reference: z.string().max(150).optional().or(z.literal("")),
+  comment: z.string().max(2000).optional().or(z.literal("")),
+  currency: z.string().max(10).optional(),
+  lines: z.array(stockMovementLineSchema).min(1, "Ən azı bir məhsul sətri əlavə edilməlidir"),
+});
+
+export type StockMovementLineInput = z.infer<typeof stockMovementLineSchema>;
+export type CreateStockMovementDocumentInput = z.infer<typeof createStockMovementDocumentSchema>;
+
+export const createSupplierSchema = z.object({
+  name: z.string().min(2, "Təchizatçı adı ən az 2 simvol olmalıdır").max(150),
+  contactName: z.string().max(150).optional().or(z.literal("")),
+  phone: z.string().max(50).optional().or(z.literal("")),
+  email: z.string().email().max(200).optional().or(z.literal("")),
+  address: z.string().max(300).optional().or(z.literal("")),
+  taxId: z.string().max(50).optional().or(z.literal("")),
+});
+
+export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
+
+// =============================================================================
 // PAGINATION
 // =============================================================================
 

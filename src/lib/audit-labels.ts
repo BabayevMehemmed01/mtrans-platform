@@ -16,6 +16,13 @@ const ENTITY_NOUN: Record<EntityType, string> = {
   COMMENT: "şərhi",
   ATTACHMENT: "faylı",
   LABEL: "etiketi",
+  MARKETING_CAMPAIGN: "marketinq kampaniyasını",
+  MARKETING_SEGMENT: "auditoriya seqmentini",
+  WAREHOUSE: "anbarı",
+  PRODUCT: "məhsulu",
+  STOCK_MOVEMENT: "stok hərəkətini",
+  SUPPLIER: "təchizatçını",
+  PURCHASE_ORDER: "satınalma sifarişini",
 };
 
 const ENTITY_NOUN_GENERIC: Record<EntityType, string> = {
@@ -28,6 +35,13 @@ const ENTITY_NOUN_GENERIC: Record<EntityType, string> = {
   COMMENT: "şərh",
   ATTACHMENT: "fayl",
   LABEL: "etiket",
+  MARKETING_CAMPAIGN: "marketinq kampaniyası",
+  MARKETING_SEGMENT: "auditoriya seqmenti",
+  WAREHOUSE: "anbar",
+  PRODUCT: "məhsul",
+  STOCK_MOVEMENT: "stok hərəkəti",
+  SUPPLIER: "təchizatçı",
+  PURCHASE_ORDER: "satınalma sifarişi",
 };
 
 // Xüsusi action+entityType kombinasiyaları üçün fel ifadələri.
@@ -44,6 +58,13 @@ const SPECIAL: Partial<Record<AuditAction, Partial<Record<EntityType, PhraseFn>>
     ROLE: (n) => `yeni rol yaratdı${quoted(n)}`,
     ATTACHMENT: (n) => `fayl əlavə etdi${quoted(n)}`,
     USER: (n) => `yeni istifadəçi yaratdı${quoted(n)}`,
+    MARKETING_CAMPAIGN: (n) => `yeni marketinq kampaniyası yaratdı${quoted(n)}`,
+    MARKETING_SEGMENT: (n) => `yeni auditoriya seqmenti yaratdı${quoted(n)}`,
+    WAREHOUSE: (n) => `yeni anbar yaratdı${quoted(n)}`,
+    PRODUCT: (n) => `yeni məhsul yaratdı${quoted(n)}`,
+    STOCK_MOVEMENT: (n) => `yeni stok hərəkəti sənədi yaratdı${quoted(n)}`,
+    SUPPLIER: (n) => `yeni təchizatçı yaratdı${quoted(n)}`,
+    PURCHASE_ORDER: (n) => `yeni satınalma sifarişi yaratdı${quoted(n)}`,
   },
   UPDATE: {
     TASK: (n) => `tapşırığı yenilədi${quoted(n)}`,
@@ -54,6 +75,12 @@ const SPECIAL: Partial<Record<AuditAction, Partial<Record<EntityType, PhraseFn>>
     LABEL: (n) => `etiketi yenilədi${quoted(n)}`,
     COMMENT: () => `şərhi redaktə etdi`,
     COMPANY: () => `şirkət məlumatlarını yenilədi`,
+    MARKETING_CAMPAIGN: (n) => `marketinq kampaniyasını yenilədi${quoted(n)}`,
+    MARKETING_SEGMENT: (n) => `auditoriya seqmentini yenilədi${quoted(n)}`,
+    WAREHOUSE: (n) => `anbarı yenilədi${quoted(n)}`,
+    PRODUCT: (n) => `məhsulu yenilədi${quoted(n)}`,
+    STOCK_MOVEMENT: (n) => `stok hərəkəti sənədini yenilədi${quoted(n)}`,
+    PURCHASE_ORDER: (n) => `satınalma sifarişini yenilədi${quoted(n)}`,
   },
   DELETE: {
     TASK: (n) => `tapşırığı sildi${quoted(n)}`,
@@ -64,6 +91,12 @@ const SPECIAL: Partial<Record<AuditAction, Partial<Record<EntityType, PhraseFn>>
     USER: (n) => `istifadəçini sildi${quoted(n)}`,
     DEPARTMENT: (n) => `departamenti sildi${quoted(n)}`,
     ROLE: (n) => `rolu sildi${quoted(n)}`,
+    MARKETING_CAMPAIGN: (n) => `marketinq kampaniyasını sildi${quoted(n)}`,
+    MARKETING_SEGMENT: (n) => `auditoriya seqmentini sildi${quoted(n)}`,
+    WAREHOUSE: (n) => `anbarı sildi${quoted(n)}`,
+    PRODUCT: (n) => `məhsulu sildi${quoted(n)}`,
+    STOCK_MOVEMENT: (n) => `stok hərəkəti sənədini sildi${quoted(n)}`,
+    SUPPLIER: (n) => `təchizatçını sildi${quoted(n)}`,
   },
   LOGIN: {
     USER: () => `sistemə daxil oldu`,
