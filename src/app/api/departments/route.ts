@@ -69,6 +69,7 @@ export async function POST(req: NextRequest) {
         color: data.color || "#6366f1",
         icon: data.icon,
         headUserId: data.headUserId || null,
+        parentId: data.parentId || null,
         isDefault: data.isDefault ?? false,
         companyId,
       },

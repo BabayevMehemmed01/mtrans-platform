@@ -62,6 +62,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
                   description: true,
                 },
               },
+              extraPermissions: {
+                select: {
+                  permission: { select: { key: true } },
+                },
+              },
+              isFounder: true,
               role: {
                 select: {
                   id: true,
@@ -107,11 +113,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           data: { lastLoginAt: new Date() },
         });
 
-        const permissionKeys = user.role
+        const roleKeys = user.role
           ? user.role.permissions.map((rp) => rp.permission.key)
           : [];
-        const isSuperAdmin =
+        const extraKeys = user.extraPermissions.map((up) => up.permission.key);
+        const permissionKeys = [...new Set([...roleKeys, ...extraKeys])];
+        const isFounderUser =
+          Boolean(user.isFounder) ||
           user.company?.ownerId === user.id ||
+          (user.role?.name ?? "").trim().toLowerCase() === "founder";
+        const isSuperAdmin =
+          isFounderUser ||
+          (user.role?.name ?? "").trim().toLowerCase() === "super admin" ||
           permissionKeys.includes("CAN_MANAGE_COMPANY");
 
         // 6. JWT token üçün istifadəçi məlumatını qaytar
@@ -128,6 +141,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           language: user.language,
           companyId: user.companyId,
           isSuperAdmin,
+          isFounder: isFounderUser,
           sessionStartedAt: Date.now(),
           company: user.company
             ? {
@@ -171,6 +185,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.company = (user as any).company;
         token.role = (user as any).role;
         token.isSuperAdmin = Boolean((user as any).isSuperAdmin);
+        token.isFounder = Boolean((user as any).isFounder);
         token.sessionStartedAt = (user as any).sessionStartedAt ?? Date.now();
       }
 
@@ -199,6 +214,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.company = token.company as any;
         session.user.role = token.role as any;
         (session.user as any).isSuperAdmin = Boolean(token.isSuperAdmin);
+        (session.user as any).isFounder = Boolean(token.isFounder);
       }
       return session;
     },

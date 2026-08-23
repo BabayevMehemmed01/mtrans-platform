@@ -241,6 +241,39 @@ enum PermissionKey {
   // --- REPORTING ---
   CAN_VIEW_REPORTS // Hesabatları görə bilər
   CAN_EXPORT_DATA // Məlumatları export edə bilər
+
+  // --- MODULE ACCESS (şöbə əsaslı RBAC) ---
+  CAN_MANAGE_MARKETING
+  CAN_VIEW_MARKETING
+  CAN_MANAGE_FINANCE
+  CAN_VIEW_FINANCE
+  CAN_MANAGE_WMS
+  CAN_VIEW_WMS
+  CAN_MANAGE_CRM
+  CAN_VIEW_CRM
+  CAN_MANAGE_HR
+  CAN_VIEW_HR
+  CAN_MANAGE_LEGAL
+  CAN_VIEW_LEGAL
+  CAN_MANAGE_IT
+  CAN_VIEW_IT
+  CAN_MANAGE_DATA
+  CAN_VIEW_DATA
+  CAN_MANAGE_LOGISTICS
+  CAN_VIEW_LOGISTICS
+  CAN_MANAGE_INTERNATIONAL
+  CAN_VIEW_INTERNATIONAL
+}
+
+// Təşkilati iyerarxiya (rəng kodlaması): Müşahidə Şurası → İdarə Heyəti →
+// Şöbə Müdiri → Bölmə Müdiri → Qrup rəhbəri → Mütəxəssis
+enum OrgLevel {
+  SUPERVISORY_BOARD
+  EXECUTIVE_BOARD
+  DEPARTMENT_HEAD
+  SECTION_HEAD
+  GROUP_LEAD
+  SPECIALIST
 }
 
 // =============================================================================
@@ -309,10 +342,12 @@ model Company {
 model Department {
   id          String   @id @default(cuid())
   name        String
-  code        String? // YENİ: Şöbə Kodu (Məsələn: IT-001)
+  code        String? // Şöbə Kodu (Məsələn: IT-001)
   description String?
   color       String   @default("#6366f1") // Hex color for UI
   icon        String? // Lucide icon name
+  orgLevel    OrgLevel @default(DEPARTMENT_HEAD)
+  sortOrder   Int      @default(0)
   isActive    Boolean  @default(true)
   isDefault   Boolean  @default(false) // Sancılmış şöbə — silinə bilməz (yalnız Super Admin təyin edə bilər)
   createdAt   DateTime @default(now())
@@ -321,6 +356,11 @@ model Department {
   // Multi-tenant
   companyId String
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  // Tabeçilik — yuxarı şöbə (Müşahidə Şurası → İdarə Heyəti → Şöbə → Bölmə)
+  parentId String?
+  parent   Department?  @relation("DepartmentTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children Department[] @relation("DepartmentTree")
 
   // Şöbə rəhbəri (Head of Department)
   headUserId String?
@@ -334,6 +374,7 @@ model Department {
   taskTemplates TaskTemplate[]
 
   @@unique([companyId, name]) // Eyni şirkətdə eyni adlı şöbə olmaz
+  @@index([parentId])
   @@map("departments")
 }
 
@@ -461,6 +502,13 @@ model User {
   // Department membership (nullable — hər istifadəçi şöbəyə aid olmaya bilər)
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  // Təşkilati tabeçilik (birbaşa rəhbər)
+  orgLevel    OrgLevel @default(SPECIALIST)
+  isFounder   Boolean  @default(false) // Təsisçi — SUPER_ADMIN silə/yetkisini ala bilməz
+  reportsToId String?
+  reportsTo   User?    @relation("UserReportsTo", fields: [reportsToId], references: [id], onDelete: SetNull)
+  reports     User[]   @relation("UserReportsTo")
 
   // Role (company-specific)
   roleId String?

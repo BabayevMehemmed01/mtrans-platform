@@ -102,6 +102,7 @@ export const createDepartmentSchema = z.object({
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Düzgün hex rəng daxil edin").optional(),
   icon: z.string().optional(),
   headUserId: z.string().optional().or(z.null()),
+  parentId: z.string().optional().or(z.null()),
   isDefault: z.boolean().optional(),
 });
 
@@ -126,6 +127,16 @@ export const permissionKeyEnum = z.enum([
   "CAN_COMMENT", "CAN_EDIT_OWN_COMMENT", "CAN_DELETE_OWN_COMMENT", "CAN_DELETE_ANY_COMMENT",
   "CAN_UPLOAD_FILE", "CAN_DELETE_OWN_FILE", "CAN_DELETE_ANY_FILE", "CAN_VIEW_FILES",
   "CAN_VIEW_REPORTS", "CAN_EXPORT_DATA",
+  "CAN_MANAGE_MARKETING", "CAN_VIEW_MARKETING",
+  "CAN_MANAGE_FINANCE", "CAN_VIEW_FINANCE",
+  "CAN_MANAGE_WMS", "CAN_VIEW_WMS",
+  "CAN_MANAGE_CRM", "CAN_VIEW_CRM",
+  "CAN_MANAGE_HR", "CAN_VIEW_HR",
+  "CAN_MANAGE_LEGAL", "CAN_VIEW_LEGAL",
+  "CAN_MANAGE_IT", "CAN_VIEW_IT",
+  "CAN_MANAGE_DATA", "CAN_VIEW_DATA",
+  "CAN_MANAGE_LOGISTICS", "CAN_VIEW_LOGISTICS",
+  "CAN_MANAGE_INTERNATIONAL", "CAN_VIEW_INTERNATIONAL",
 ]);
 
 export const grantDepartmentPermissionSchema = z.object({

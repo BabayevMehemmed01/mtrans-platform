@@ -136,18 +136,21 @@ const navItems: NavItem[] = [
     tKey: "menu.crm",
     href: "/dashboard/crm",
     icon: Contact,
+    requiresAnyPermission: ["CAN_VIEW_CRM", "CAN_MANAGE_CRM"],
   },
   {
     title: "Marketinq",
     tKey: "menu.marketing",
     href: "/dashboard/marketing",
     icon: Megaphone,
+    requiresAnyPermission: ["CAN_VIEW_MARKETING", "CAN_MANAGE_MARKETING"],
   },
   {
     title: "Anbar (WMS)",
     tKey: "menu.inventory",
     href: "/dashboard/inventory",
     icon: Boxes,
+    requiresAnyPermission: ["CAN_VIEW_WMS", "CAN_MANAGE_WMS"],
   },
   {
     title: "Mesajlar",
@@ -162,7 +165,7 @@ const navItems: NavItem[] = [
     icon: BarChart3,
     // TƏHLÜKƏSİZLİK: Real qorunma server-side-dır (bax: /dashboard/reports/page.tsx),
     // bu yalnız linkin lazımsız yerə göstərilməsinin qarşısını alan soft-gate-dir.
-    requiresAnyPermission: ["CAN_VIEW_REPORTS"],
+    requiresAnyPermission: ["CAN_VIEW_REPORTS", "CAN_VIEW_FINANCE"],
   },
 ];
 

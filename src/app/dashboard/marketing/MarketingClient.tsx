@@ -22,7 +22,13 @@ const TAB_TRIGGER_CLASS = cn(
   "text-muted-foreground hover:text-foreground"
 );
 
-export default function MarketingClient({ config }: { config: MarketingConfigClient }) {
+export default function MarketingClient({
+  config,
+  canManage = true,
+}: {
+  config: MarketingConfigClient;
+  canManage?: boolean;
+}) {
   const t = useT();
   const [activeTab, setActiveTab] = useState("start");
   const board = useMarketingData();
@@ -66,7 +72,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
             campaigns={board.campaigns}
             segments={board.segments}
             loading={board.loading}
-            onCreateCampaign={openCreateCampaign}
+            onCreateCampaign={canManage ? openCreateCampaign : () => {}}
             onGoToCampaigns={() => setActiveTab("campaigns")}
           />
         </TabsContent>
@@ -76,7 +82,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
             campaigns={board.campaigns}
             config={config}
             loading={board.loading}
-            onOpenCreate={openCreateCampaign}
+            onOpenCreate={canManage ? openCreateCampaign : () => {}}
             onCampaignUpdated={(c) =>
               board.setCampaigns((prev) => prev.map((x) => (x.id === c.id ? c : x)))
             }
@@ -89,7 +95,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
             campaigns={board.campaigns}
             config={config}
             loading={board.loading}
-            onOpenCreate={() => openCreateCampaign("INSTAGRAM")}
+            onOpenCreate={canManage ? () => openCreateCampaign("INSTAGRAM") : () => {}}
             onCampaignDeleted={(id) => board.setCampaigns((prev) => prev.filter((x) => x.id !== id))}
           />
         </TabsContent>
@@ -98,7 +104,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
           <MarketingSegmentsTab
             segments={board.segments}
             loading={board.loading}
-            onOpenCreate={() => setSegmentSheetOpen(true)}
+            onOpenCreate={canManage ? () => setSegmentSheetOpen(true) : () => {}}
             onSegmentDeleted={(id) => board.setSegments((prev) => prev.filter((x) => x.id !== id))}
           />
         </TabsContent>
@@ -115,7 +121,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
       </Tabs>
 
       <CreateCampaignDialog
-        open={campaignDialog.open}
+        open={canManage && campaignDialog.open}
         onOpenChange={(open) => setCampaignDialog((prev) => ({ ...prev, open }))}
         type={campaignDialog.type}
         segments={board.segments}
@@ -124,7 +130,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
       />
 
       <CreateSegmentSheet
-        open={segmentSheetOpen}
+        open={canManage && segmentSheetOpen}
         onOpenChange={setSegmentSheetOpen}
         customers={board.customers}
         onCreated={(s) => board.setSegments((prev) => [s, ...prev])}

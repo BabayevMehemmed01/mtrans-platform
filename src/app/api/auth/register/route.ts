@@ -157,6 +157,7 @@ export async function POST(req: NextRequest) {
           companyId: company.id,
           roleId: founderRole.id,
           jobTitle: "CEO / Founder",
+          isFounder: true,
         },
       });
 

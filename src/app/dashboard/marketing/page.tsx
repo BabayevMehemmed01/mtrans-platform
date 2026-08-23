@@ -4,6 +4,8 @@ import { Metadata } from "next";
 import MarketingClient from "./MarketingClient";
 import { getTranslation } from "@/lib/i18n";
 import { getMarketingConfig } from "@/lib/marketing-config";
+import { canAccessModule } from "@/lib/module-access";
+import { AccessDenied } from "@/components/ui/access-denied";
 
 export async function generateMetadata(): Promise<Metadata> {
   const session = await auth();
@@ -23,6 +25,18 @@ export default async function MarketingPage() {
   const lang = (session.user as any)?.language || "az";
   const t = getTranslation(lang);
 
+  const canView = await canAccessModule(session.user.id, "marketing", "view");
+  if (!canView) {
+    return (
+      <AccessDenied
+        title="Access Denied"
+        description="Marketinq moduluna giriş icazəniz yoxdur."
+      />
+    );
+  }
+
+  const canManage = await canAccessModule(session.user.id, "marketing", "manage");
+
   // Server tərəfindən .env-ə əsasən kanal aktivliyini hesabla və yalnız
   // hesablanmış boolean vəziyyəti (açarların özünü YOX) client-ə ötür.
   const { isEmailActive, isSmsActive, isWhatsappActive, isInstagramActive } = getMarketingConfig();
@@ -41,6 +55,7 @@ export default async function MarketingPage() {
       </div>
       <MarketingClient
         config={{ isEmailActive, isSmsActive, isWhatsappActive, isInstagramActive }}
+        canManage={canManage}
       />
     </div>
   );

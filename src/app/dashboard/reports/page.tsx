@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import type { Metadata } from "next";
 import { getTranslation } from "@/lib/i18n";
 import { hasPermission, isSuperAdmin } from "@/lib/permissions";
+import { canAccessModule } from "@/lib/module-access";
 import { AccessDenied } from "@/components/ui/access-denied";
 import { getRealtimeTotals } from "@/lib/inventoryService";
 import { ReportsClient } from "./ReportsClient";
@@ -50,7 +51,10 @@ export default async function ReportsPage() {
   // göstəricilərini (CRM pipeline dəyəri, anbar dəyəri və s.) əks etdirdiyi
   // üçün bu səhifə ən azı CAN_VIEW_REPORTS tələb edir.
   const superAdmin = await isSuperAdmin(session.user.id);
-  const canView = superAdmin || (await hasPermission(session.user.id, "CAN_VIEW_REPORTS"));
+  const canView =
+    superAdmin ||
+    (await canAccessModule(session.user.id, "finance", "view")) ||
+    (await hasPermission(session.user.id, "CAN_VIEW_REPORTS"));
 
   if (!canView) {
     return (

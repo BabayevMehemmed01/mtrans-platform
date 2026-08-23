@@ -31,7 +31,7 @@ const TAB_TRIGGER_CLASS = cn(
   "text-muted-foreground hover:text-foreground"
 );
 
-export default function InventoryClient() {
+export default function InventoryClient({ canManage = true }: { canManage?: boolean }) {
   const t = useT();
   const [activeTab, setActiveTab] = useState("inventory");
   const board = useInventoryData();
@@ -82,7 +82,7 @@ export default function InventoryClient() {
             products={board.products}
             loading={board.loading}
             hasAnyDocument={board.movements.length > 0}
-            onOpenAdjustment={() => setAdjustmentOpen(true)}
+            onOpenAdjustment={() => canManage && setAdjustmentOpen(true)}
           />
         </TabsContent>
 
@@ -90,7 +90,7 @@ export default function InventoryClient() {
           <ReceivingTab
             movements={board.movements}
             loading={board.loading}
-            onOpenCreate={() => setReceivingOpen(true)}
+            onOpenCreate={() => canManage && setReceivingOpen(true)}
             onChanged={() => {
               board.refetchMovements();
               board.refetchAnalytics();
@@ -102,7 +102,7 @@ export default function InventoryClient() {
           <SalesOrdersTab
             movements={board.movements}
             loading={board.loading}
-            onOpenCreate={() => setOutboundOpen(true)}
+            onOpenCreate={() => canManage && setOutboundOpen(true)}
             onChanged={() => {
               board.refetchMovements();
               board.refetchAnalytics();
@@ -114,7 +114,7 @@ export default function InventoryClient() {
           <TransfersTab
             movements={board.movements}
             loading={board.loading}
-            onOpenCreate={() => setTransferOpen(true)}
+            onOpenCreate={() => canManage && setTransferOpen(true)}
             onChanged={() => {
               board.refetchMovements();
               board.refetchAnalytics();
@@ -126,7 +126,7 @@ export default function InventoryClient() {
           <WriteOffsTab
             movements={board.movements}
             loading={board.loading}
-            onOpenCreate={() => setWriteOffOpen(true)}
+            onOpenCreate={() => canManage && setWriteOffOpen(true)}
             onChanged={() => {
               board.refetchMovements();
               board.refetchAnalytics();
@@ -148,6 +148,8 @@ export default function InventoryClient() {
         </TabsContent>
       </Tabs>
 
+      {canManage && (
+        <>
       <StockAdjustmentSheet
         open={adjustmentOpen}
         onOpenChange={setAdjustmentOpen}
@@ -199,6 +201,8 @@ export default function InventoryClient() {
         onWarehouseCreated={(w) => board.setWarehouses((prev) => [w, ...prev])}
         onCreated={handleDocumentCreated}
       />
+        </>
+      )}
     </>
   );
 }

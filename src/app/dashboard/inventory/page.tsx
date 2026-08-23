@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { Metadata } from "next";
 import InventoryClient from "./InventoryClient";
 import { getTranslation } from "@/lib/i18n";
+import { canAccessModule } from "@/lib/module-access";
+import { AccessDenied } from "@/components/ui/access-denied";
 
 export async function generateMetadata(): Promise<Metadata> {
   const session = await auth();
@@ -22,6 +24,18 @@ export default async function InventoryPage() {
   const lang = (session.user as any)?.language || "az";
   const t = getTranslation(lang);
 
+  const canView = await canAccessModule(session.user.id, "wms", "view");
+  if (!canView) {
+    return (
+      <AccessDenied
+        title="Access Denied"
+        description="Anbar (WMS) moduluna giriş icazəniz yoxdur."
+      />
+    );
+  }
+
+  const canManage = await canAccessModule(session.user.id, "wms", "manage");
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -34,7 +48,7 @@ export default async function InventoryPage() {
           </p>
         </div>
       </div>
-      <InventoryClient />
+      <InventoryClient canManage={canManage} />
     </div>
   );
 }

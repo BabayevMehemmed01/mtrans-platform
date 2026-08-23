@@ -28,6 +28,8 @@ declare module "next-auth" {
         color: string;
         permissions: string[];
       } | null;
+      isSuperAdmin?: boolean;
+      isFounder?: boolean;
     };
   }
 
@@ -48,6 +50,8 @@ declare module "next-auth" {
       color: string;
       permissions: string[];
     } | null;
+    isSuperAdmin?: boolean;
+    isFounder?: boolean;
   }
 }
 
@@ -69,5 +73,7 @@ declare module "next-auth/jwt" {
       color: string;
       permissions: string[];
     } | null;
+    isSuperAdmin?: boolean;
+    isFounder?: boolean;
   }
 }

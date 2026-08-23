@@ -7,16 +7,18 @@ import Link from "next/link";
 import { Briefcase, Mail, Lock, Loader2, Eye, EyeOff } from "lucide-react";
 import { loginSchema } from "@/lib/validations";
 import { getTranslation } from "@/lib/i18n";
+import { getLoginDirectory } from "@/lib/org-structure";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getInitials } from "@/lib/utils";
 
-const DEMO_USERS = [
-  { labelKey: "demoAdmin", email: "admin@demo.com", password: "Admin@1234" },
-  { labelKey: "demoFounder", email: "founder@mtrans.com", password: "Founder@1234" },
-  { labelKey: "demoSeniorDev", email: "ali@demo.com", password: "Member@1234" },
-  { labelKey: "demoFinance", email: "gunel@demo.com", password: "Member@1234" },
-  { labelKey: "demoFrontend", email: "leyla@demo.com", password: "Member@1234" },
-  { labelKey: "demoCeo", email: "m.babayev@m-trans.az", password: "Admin@1234" },
-  { labelKey: "demoLogistics", email: "nicat@demo.com", password: "Member@1234" },
-] as const;
+const LOGIN_DIRECTORY = getLoginDirectory();
 
 function LoginForm() {
   const router = useRouter();
@@ -29,6 +31,7 @@ function LoginForm() {
   const [serverError, setServerError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [loggingEmail, setLoggingEmail] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -37,18 +40,9 @@ function LoginForm() {
     }
   };
 
-  const fillDemo = (email: string, password: string) => {
-    setForm({ email, password });
-    setErrors({});
+  const submitCredentials = async (email: string, password: string) => {
     setServerError("");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setServerError("");
-
-    // Client-side validation
-    const result = loginSchema.safeParse(form);
+    const result = loginSchema.safeParse({ email, password });
     if (!result.success) {
       const fieldErrors: Record<string, string> = {};
       result.error.issues.forEach((issue) => {
@@ -61,10 +55,11 @@ function LoginForm() {
     }
 
     setLoading(true);
+    setLoggingEmail(email);
     try {
       const res = await signIn("credentials", {
-        email: form.email.toLowerCase().trim(),
-        password: form.password,
+        email: email.toLowerCase().trim(),
+        password,
         redirect: false,
       });
 
@@ -82,12 +77,23 @@ function LoginForm() {
       setServerError(t("auth.genericError"));
     } finally {
       setLoading(false);
+      setLoggingEmail(null);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitCredentials(form.email, form.password);
+  };
+
+  const loginAs = (email: string, password: string) => {
+    setForm({ email, password });
+    setErrors({});
+    void submitCredentials(email, password);
   };
 
   return (
     <div className="glass rounded-2xl p-8 shadow-2xl">
-      {/* Logo */}
       <div className="flex flex-col items-center mb-8">
         <div className="w-14 h-14 rounded-2xl bg-indigo-600 flex items-center justify-center shadow-lg mb-4">
           <Briefcase className="w-7 h-7 text-white" />
@@ -96,7 +102,6 @@ function LoginForm() {
         <p className="text-sm text-slate-400 mt-1">{t("auth.loginSubtitle")}</p>
       </div>
 
-      {/* Server Error */}
       {serverError && (
         <div className="mb-4 px-4 py-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-2">
           <span className="w-4 h-4 flex-shrink-0">⚠️</span>
@@ -104,9 +109,7 @@ function LoginForm() {
         </div>
       )}
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Email */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">
             {t("auth.email")}
@@ -128,7 +131,6 @@ function LoginForm() {
           )}
         </div>
 
-        {/* Password */}
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-1.5">
             {t("auth.password")}
@@ -157,7 +159,6 @@ function LoginForm() {
           )}
         </div>
 
-        {/* Submit */}
         <button
           type="submit"
           disabled={loading}
@@ -174,33 +175,77 @@ function LoginForm() {
         </button>
       </form>
 
-      {/* Demo credentials */}
-      <div className="mt-5 p-3 rounded-lg bg-white/5 border border-white/10">
-        <p className="text-xs text-slate-400 font-medium">{t("auth.demoTitle")}</p>
-        <p className="text-[11px] text-slate-500 mt-0.5 mb-2.5">{t("auth.demoHint")}</p>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-          {DEMO_USERS.map((user) => {
-            const selected = form.email === user.email;
-            return (
-              <button
-                key={user.email}
-                type="button"
-                title={user.email}
-                onClick={() => fillDemo(user.email, user.password)}
-                className={`w-full px-2.5 py-1.5 rounded-full text-xs font-medium border truncate transition-all duration-150 ${
-                  selected
-                    ? "bg-indigo-600/30 border-indigo-500/50 text-indigo-200 shadow-[0_0_0_1px_rgba(99,102,241,0.25)]"
-                    : "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20 hover:text-white"
-                }`}
+      <div className="mt-5 rounded-lg bg-white/5 border border-white/10 p-3">
+        <p className="text-xs text-slate-400 font-medium">Demo giriş — şöbə seçin</p>
+        <p className="text-[11px] text-slate-500 mt-0.5 mb-2.5">
+          İşçiyə klikləyin: email/şifrə doldurulur və daxil olunur (şifrə: password123)
+        </p>
+        <ScrollArea className="h-[280px] pr-2">
+          <Accordion type="single" collapsible className="space-y-2">
+            {LOGIN_DIRECTORY.map((dept) => (
+              <AccordionItem
+                key={dept.key}
+                value={dept.key}
+                className="rounded-lg border border-white/10 bg-white/5 overflow-hidden"
               >
-                {t(`auth.${user.labelKey}`)}
-              </button>
-            );
-          })}
-        </div>
+                <AccordionTrigger className="px-3 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-white/5">
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="size-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: dept.color }}
+                    />
+                    <span className="truncate">{dept.name}</span>
+                    <span className="text-[10px] font-normal text-slate-500">
+                      {dept.people.length}
+                    </span>
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="border-white/10">
+                  <ul className="p-1.5 space-y-0.5">
+                    {dept.people.map((person) => {
+                      const selected = form.email === person.email;
+                      const busy = loggingEmail === person.email;
+                      return (
+                        <li key={person.email}>
+                          <button
+                            type="button"
+                            disabled={loading}
+                            onClick={() => loginAs(person.email, person.password)}
+                            className={`w-full flex items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors ${
+                              selected
+                                ? "bg-indigo-600/30 text-indigo-100"
+                                : "hover:bg-white/10 text-slate-200"
+                            }`}
+                          >
+                            <Avatar size="sm" className="size-7">
+                              <AvatarFallback className="bg-indigo-500/30 text-[10px] text-indigo-100">
+                                {busy ? (
+                                  <Loader2 className="size-3 animate-spin" />
+                                ) : (
+                                  getInitials(person.name)
+                                )}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-medium">
+                                {person.name}
+                              </span>
+                              <span className="block truncate text-[10px] text-slate-400">
+                                {person.jobTitle}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </ScrollArea>
       </div>
 
-      {/* Register link */}
       <p className="mt-5 text-center text-sm text-slate-500">
         {t("auth.noAccount")}{" "}
         <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">

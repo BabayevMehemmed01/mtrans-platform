@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { logAudit } from "@/lib/audit";
-import { hasPermission, isSuperAdmin, isDepartmentHead, PermissionError } from "@/lib/permissions";
+import { hasPermission, isSuperAdmin, isDepartmentHead, PermissionError, assertCanMutatePrincipal } from "@/lib/permissions";
 import { isPrivilegedInviteRoleName } from "@/lib/invite-rbac";
 
 // =============================================================================
@@ -38,6 +38,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const isSelf = callerId === id;
     const callerIsSuperAdmin = await isSuperAdmin(callerId);
+
+    await assertCanMutatePrincipal(callerId, id, "privilege");
 
     // Şirkət sahibinin məlumatlarını yalnız özü və ya digər Super Admin dəyişə bilər
     if (userToUpdate.id === userToUpdate.company?.ownerId && !isSelf && !callerIsSuperAdmin) {
@@ -147,6 +149,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (id === callerId) {
       return NextResponse.json({ error: "Özünüzü silə bilməzsiniz" }, { status: 400 });
     }
+
+    await assertCanMutatePrincipal(callerId, id, "delete");
 
     const member = await prisma.user.findFirst({
       where: { id, companyId },

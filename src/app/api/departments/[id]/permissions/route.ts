@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { grantDepartmentPermissionSchema } from "@/lib/validations";
-import { requireDepartmentManage, PermissionError } from "@/lib/permissions";
+import { requireDepartmentManage, PermissionError, assertCanMutatePrincipal } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
 
 // =============================================================================
@@ -42,6 +42,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (!targetUser) {
       return NextResponse.json({ error: "İstifadəçi bu şöbəyə aid deyil" }, { status: 400 });
     }
+
+    await assertCanMutatePrincipal(session.user.id, userId, "privilege");
 
     const permission = await prisma.permission.findUnique({ where: { key: permissionKey } });
     if (!permission) return NextResponse.json({ error: "İcazə tapılmadı" }, { status: 400 });

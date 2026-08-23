@@ -55,6 +55,10 @@ export async function hasPermissions(
 export async function getUserPermissions(
   userId: string
 ): Promise<Set<PermissionKey>> {
+  if (await hasFullAccess(userId)) {
+    return new Set(Object.values(PermissionKey) as PermissionKey[]);
+  }
+
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -172,18 +176,75 @@ export async function canViewProject(userId: string, projectId: string): Promise
 }
 
 /**
+ * Təsisçi: isFounder bayrağı, şirkət sahibi və ya Founder sistemi rolu.
+ * Super Admin Təsisçini silə və ya yetkisini ala bilməz.
+ */
+export async function isFounder(userId: string): Promise<boolean> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      isFounder: true,
+      role: { select: { name: true } },
+      company: { select: { ownerId: true } },
+    },
+  });
+  if (!user) return false;
+  if (user.isFounder) return true;
+  if (user.company?.ownerId === userId) return true;
+  return (user.role?.name ?? "").trim().toLowerCase() === "founder";
+}
+
+/**
+ * FOUNDER və SUPER_ADMIN — modul səviyyəsində tam giriş.
+ * hasPermission-a müraciət etmir (rekursiyanın qarşısı).
+ */
+export async function hasFullAccess(userId: string): Promise<boolean> {
+  if (await isFounder(userId)) return true;
+  return isSuperAdmin(userId);
+}
+
+/**
+ * Super Admin Təsisçinin hesabını silə, rolunu/statusunu dəyişə
+ * və ya icazələrini geri ala bilməz.
+ */
+export async function assertCanMutatePrincipal(
+  actorId: string,
+  targetId: string,
+  kind: "delete" | "privilege" = "privilege"
+): Promise<void> {
+  if (actorId === targetId && kind !== "delete") return;
+  if (!(await isFounder(targetId))) return;
+  if (await isFounder(actorId)) return;
+  throw new PermissionError(
+    kind === "delete"
+      ? "Təsisçinin (Müşahidə Şurasının sədri) hesabını silmək mümkün deyil"
+      : "Təsisçinin yetkisini almaq və ya məlumatlarını dəyişmək mümkün deyil"
+  );
+}
+
+/**
  * İstifadəçinin şirkətin Super Admin-i olub-olmadığını yoxlayır.
- * Şirkət sahibi (owner) VƏ YA CAN_MANAGE_COMPANY icazəsinə sahib rolu olan
- * istifadəçilər Super Admin sayılır (seed-də bu icazə yalnız "Super Admin"
- * roluna verilir).
+ * Təsisçi, Super Admin rolu və ya CAN_MANAGE_COMPANY icazəsi.
  */
 export async function isSuperAdmin(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { companyId: true, company: { select: { ownerId: true } } },
+    select: {
+      isFounder: true,
+      company: { select: { ownerId: true } },
+      role: {
+        select: {
+          name: true,
+          permissions: { select: { permission: { select: { key: true } } } },
+        },
+      },
+    },
   });
-  if (user?.company?.ownerId === userId) return true;
-  return hasPermission(userId, "CAN_MANAGE_COMPANY");
+  if (!user) return false;
+  if (user.company?.ownerId === userId || user.isFounder) return true;
+  const roleName = (user.role?.name ?? "").trim().toLowerCase();
+  if (roleName === "super admin") return true;
+  return (user.role?.permissions ?? []).some((rp) => rp.permission.key === "CAN_MANAGE_COMPANY");
 }
 
 /**
@@ -308,6 +369,16 @@ export const PERMISSION_CATEGORIES = [
   "COMMENT",
   "FILE",
   "REPORT",
+  "MARKETING",
+  "FINANCE",
+  "WMS",
+  "CRM",
+  "HR",
+  "LEGAL",
+  "IT",
+  "DATA",
+  "LOGISTICS",
+  "INTERNATIONAL",
 ] as const;
 
 export type PermissionCategory = (typeof PERMISSION_CATEGORIES)[number];
