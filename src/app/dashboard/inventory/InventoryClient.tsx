@@ -51,7 +51,7 @@ export default function InventoryClient({ canManage = true }: { canManage?: bool
       <Toaster position="top-right" />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="flex justify-center overflow-x-auto border-b border-border">
+        <div className="flex justify-center overflow-x-auto scrollbar-hide border-b border-border">
           <TabsList className="h-auto w-full min-w-max justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="inventory" className={TAB_TRIGGER_CLASS}>
               <Boxes className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabInventory")}

@@ -158,7 +158,7 @@ export function CreateOutboundSheet({
 
           <ScrollArea className="flex-1">
             <TabsContent value="general" className="m-0 space-y-4 px-6 py-5">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
                   <Label htmlFor="out-name">{t("inventory.documentName")}</Label>
                   <Input

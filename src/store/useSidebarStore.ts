@@ -17,7 +17,7 @@ interface SidebarStore {
 export const useSidebarStore = create<SidebarStore>()(
   persist(
     (set) => ({
-      isOpen: true,
+      isOpen: false,
       isCollapsed: false,
 
       toggle: () => set((state) => ({ isOpen: !state.isOpen })),
@@ -30,6 +30,7 @@ export const useSidebarStore = create<SidebarStore>()(
     }),
     {
       name: "sidebar-state",
+      partialize: (state) => ({ isCollapsed: state.isCollapsed }),
     }
   )
 );

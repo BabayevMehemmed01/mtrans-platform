@@ -16,7 +16,7 @@ export default async function ChatPage() {
   if (!session?.user) redirect("/login");
 
   return (
-    <div className="-m-6 h-[calc(100vh-64px)] overflow-hidden">
+    <div className="-m-4 h-[calc(100vh-64px)] overflow-hidden md:-m-8">
       <ChatClient currentUser={session.user} />
     </div>
   );

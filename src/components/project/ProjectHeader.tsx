@@ -45,7 +45,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
   };
 
   return (
-    <div className="flex-shrink-0 px-6 py-5 border-b border-border bg-card">
+    <div className="flex-shrink-0 border-b border-border bg-card px-4 py-4 md:px-6 md:py-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         
         {/* Sol Tərəf: Geri düyməsi + Ad + Badgelər */}

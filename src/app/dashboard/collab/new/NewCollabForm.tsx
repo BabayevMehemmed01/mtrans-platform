@@ -121,7 +121,7 @@ export function NewCollabForm() {
         </div>
 
         {/* Status + Priority */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-[13px] font-bold text-foreground mb-1.5">{t("newCollab.statusLabel") || "Status"}</label>
             <Select value={form.status} onValueChange={(v) => v && setForm((prev) => ({ ...prev, status: v }))}>
@@ -151,7 +151,7 @@ export function NewCollabForm() {
         </div>
 
         {/* Start + End Date */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-[13px] font-bold text-foreground mb-1.5">{t("newCollab.startDate") || "Başlama Tarixi"}</label>
             <input

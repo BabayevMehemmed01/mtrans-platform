@@ -119,7 +119,7 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
               <Label htmlFor="sup-name">{t("inventory.name")}</Label>
               <Input id="sup-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("inventory.supplierNamePlaceholder")} autoFocus />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="sup-phone">{t("inventory.phoneOptional")}</Label>
                 <Input id="sup-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+994 50 000 00 00" />

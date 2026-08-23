@@ -60,7 +60,7 @@ export function MarketingStartTab({
   return (
     <div className="space-y-6">
       {/* Stat overview */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard icon={Megaphone} label={t("marketing.totalCampaigns")} value={stats.total} accent="text-blue-600" bg="bg-blue-50" />
         <StatCard icon={Send} label={t("marketing.activeScheduled")} value={stats.active} accent="text-amber-600" bg="bg-amber-50" />
         <StatCard icon={Users2} label={t("marketing.audienceSegments")} value={stats.segments} accent="text-purple-600" bg="bg-purple-50" />

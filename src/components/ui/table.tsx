@@ -2,8 +2,8 @@ import * as React from "react"
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-xl border border-border bg-card">
-      <table ref={ref} className={`w-full caption-bottom text-sm ${className}`} {...props} />
+    <div className="relative w-full overflow-x-auto scrollbar-hide rounded-xl border border-border bg-card">
+      <table ref={ref} className={`w-full min-w-[720px] caption-bottom text-sm ${className}`} {...props} />
     </div>
   )
 )

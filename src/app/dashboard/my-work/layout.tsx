@@ -64,11 +64,11 @@ export default async function MyWorkLayout({
   }
 
   return (
-    <div className="-m-6 flex h-full min-h-0 flex-col">
+    <div className="-m-4 flex h-full min-h-0 flex-col md:-m-8">
       <div className="relative z-20 flex-shrink-0">
         <MyWorkTabsBar stats={{ late, today, upcoming }} />
       </div>
-      <div className="relative z-0 min-h-0 flex-1 overflow-y-auto p-6">{children}</div>
+      <div className="relative z-0 min-h-0 flex-1 overflow-y-auto p-4 md:p-8">{children}</div>
     </div>
   );
 }

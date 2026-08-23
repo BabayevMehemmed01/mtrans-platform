@@ -108,7 +108,7 @@ export default async function DepartmentDetailPage({ params }: Props) {
   const canDelete = canDeleteFull && !department.isDefault;
 
   return (
-    <div className="flex flex-col h-full -m-6">
+    <div className="flex h-full flex-col -m-4 md:-m-8">
       <DepartmentHeader
         department={department}
         canEditDescription={canEditDescription}

@@ -478,7 +478,7 @@ export function MembersClient({
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="inviteName">{t("membersClient.firstName") || "Ad"}</Label>
                   <Input
@@ -513,7 +513,7 @@ export function MembersClient({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="dept">{t("membersClient.dept") || "Şöbə"}</Label>
                   <select
@@ -607,7 +607,7 @@ export function MembersClient({
               <Label htmlFor="editName">{t("membersClient.fullName") || "Ad və Soyad"}</Label>
               <Input id="editName" value={editName} onChange={(e) => setEditName(e.target.value)} required />
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="editDept">{t("membersClient.dept") || "Şöbə"}</Label>
                 <select

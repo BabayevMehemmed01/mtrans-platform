@@ -119,7 +119,7 @@ export async function ProjectDetailScreen({ id, tab, task, kind }: ProjectDetail
   }));
 
   return (
-    <div className="flex flex-col h-full -m-6">
+    <div className="flex h-full flex-col -m-4 md:-m-8">
       <ProjectHeader
         project={project}
         memberCount={project.members.length}

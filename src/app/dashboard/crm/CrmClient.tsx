@@ -32,8 +32,8 @@ export default function CrmClient() {
     <>
       <Toaster position="top-right" />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="flex justify-center border-b border-border">
-          <TabsList className="h-auto w-full justify-center gap-1 rounded-none bg-transparent p-0">
+        <div className="flex justify-center overflow-x-auto scrollbar-hide border-b border-border">
+          <TabsList className="h-auto w-max min-w-full justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="kanban" className={TAB_TRIGGER_CLASS}>
               <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> {t("crm.tabKanban") || t("crm.viewKanban") || "Kanban"}
             </TabsTrigger>

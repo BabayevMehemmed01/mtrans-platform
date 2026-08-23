@@ -209,7 +209,7 @@ function RegisterForm() {
         <form onSubmit={handleSubmit} className="space-y-3.5">
           {isInviteMode ? (
             <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field
                   label={t("auth.firstName")}
                   icon={User}
@@ -245,7 +245,7 @@ function RegisterForm() {
                 autoComplete="email"
                 readOnly
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <Field
                   label={t("auth.role")}
                   icon={Shield}

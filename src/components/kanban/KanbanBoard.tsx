@@ -219,7 +219,7 @@ export function KanbanBoard({
         onDragEnd={handleDragEnd}
         modifiers={[restrictToWindowEdges]}
       >
-        <div className="flex gap-4 h-full overflow-x-auto px-6 py-4">
+        <div className="flex h-full gap-4 overflow-x-auto scrollbar-hide px-4 py-4 md:px-6">
           {COLUMNS.map((col) => {
             const colTasks = tasks.filter(
               (item) =>

@@ -94,7 +94,7 @@ export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated 
                 autoFocus
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("crmCompanySelect.industry") || "Sahə"}</Label>
                 <Input
@@ -112,7 +112,7 @@ export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated 
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>{t("crmCompanySelect.phone") || "Telefon"}</Label>
                 <Input

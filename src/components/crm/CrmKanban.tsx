@@ -213,9 +213,9 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
 
   return (
     <div className="flex flex-col h-full space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-medium">{t("crmKanban.salesFunnel") || "Əqdlər"}</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" size="sm" onClick={openCreateStage}>
             <Plus className="mr-2 h-4 w-4" /> {t("crmKanban.newStageBtn") || "Yeni Mərhələ"}
           </Button>
@@ -235,8 +235,8 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
         onDragCancel={handleDragCancel}
         modifiers={[restrictToWindowEdges]}
       >
-        <div className={cn("h-[calc(100vh-250px)] overflow-x-auto pb-4", activeDeal && "pb-28")}>
-          <div className="flex gap-4 h-full">
+        <div className={cn("h-[calc(100vh-250px)] overflow-x-auto scrollbar-hide pb-4", activeDeal && "pb-28")}>
+          <div className="flex h-full min-w-max gap-4">
             {stages.map((stage, index) => {
               const stageDeals = deals.filter((d) => d.stageId === stage.id);
               return (

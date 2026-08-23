@@ -435,7 +435,7 @@ function DetailsTab({
           {t("taskDetailSheet.features") || "Xüsusiyyətlər"}
         </h3>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {/* Status */}
           <PropertyField label={t("taskDetailSheet.statusLabel") || "Status"} icon={<AlertTriangle className="w-3.5 h-3.5" />}>
             <Select value={form.status} onValueChange={handleSelectField("status")}>
@@ -1333,7 +1333,7 @@ function TimeTab({ estimatedHours, t }: { estimatedHours: number | null; t: any 
     <div className="p-6 space-y-6">
       <div className="bg-muted rounded-xl p-5 space-y-3">
         <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("taskDetailSheet.timeSummary") || "Vaxt Xülasəsi"}</h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="bg-card rounded-lg p-4 border border-border">
             <p className="text-2xl font-bold text-foreground">{estimatedHours ?? "—"}</p>
             <p className="text-xs text-muted-foreground mt-1">{t("taskDetailSheet.estHours") || "Təxmini saat"}</p>

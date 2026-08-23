@@ -113,7 +113,7 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-2 col-span-2">
               <Label>{t("inventory.companyNameRequired")}</Label>
               <Input

@@ -20,6 +20,7 @@ import {
   Plus,
   Mic,
   ChevronDown,
+  ChevronLeft,
   Image as ImageIcon,
   FileText,
   Download,
@@ -832,7 +833,13 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
   return (
     <div className="flex h-full overflow-hidden bg-white">
       {/* Left: 30% conversation list */}
-      <aside className="flex w-[30%] min-w-[260px] flex-col border-r border-[#e9edef] bg-white">
+      <aside
+        className={cn(
+          "flex min-w-0 flex-col border-r border-[#e9edef] bg-white",
+          "w-full md:w-[30%] md:min-w-[260px]",
+          activeChannelId ? "hidden md:flex" : "flex"
+        )}
+      >
         <div className="sticky top-0 z-10 space-y-2 bg-[#f0f2f5] px-3 py-2">
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
@@ -859,7 +866,7 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
               <SquarePen className="size-4" />
             </Button>
           </div>
-          <div className="flex gap-1.5 overflow-x-auto pb-1">
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -928,10 +935,24 @@ export function ChatClient({ currentUser }: { currentUser: any }) {
       </aside>
 
       {/* Right: 70% conversation */}
-      <section className="flex min-w-0 w-[70%] flex-col bg-[#efeae2]">
+      <section
+        className={cn(
+          "min-w-0 flex-col bg-[#efeae2]",
+          "w-full md:flex md:w-[70%]",
+          activeChannelId ? "flex" : "hidden md:flex"
+        )}
+      >
         {activeChannel ? (
           <>
             <header className="flex h-[60px] shrink-0 items-center gap-3 border-b border-[#d1d7db] bg-[#f0f2f5] px-4">
+              <button
+                type="button"
+                onClick={() => setActiveChannelId(null)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#54656f] hover:bg-[#d1d7db]/50 md:hidden"
+                aria-label={t("chatClient.back") || "Geri"}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
               <button
                 type="button"
                 className="flex min-w-0 flex-1 items-center gap-3 text-left"

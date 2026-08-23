@@ -327,8 +327,8 @@ export function RolesClient({
                 )}
               </div>
             )}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 space-y-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-2 space-y-2">
                 <Label htmlFor="roleName">{t("rolesClient.roleNameLabel") || "Rol adı"}</Label>
                 <Input
                   id="roleName"
@@ -381,8 +381,8 @@ export function RolesClient({
             <DialogTitle>{t("rolesClient.editRoleTitle") || "Rolu Redaktə Et"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleEdit} className="space-y-4 mt-2">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="col-span-2 space-y-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-2 space-y-2">
                 <Label htmlFor="editRoleName">{t("rolesClient.roleNameLabel") || "Rol adı"}</Label>
                 <Input
                   id="editRoleName"

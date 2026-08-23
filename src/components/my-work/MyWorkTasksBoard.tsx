@@ -148,8 +148,8 @@ export function MyWorkTasksBoard({ tasks }: { tasks: MyWorkTaskRow[] }) {
                 </span>
               </AccordionTrigger>
               <AccordionContent>
-                <div className="overflow-hidden">
-                  <table className="w-full caption-bottom text-sm">
+                <div className="w-full overflow-x-auto scrollbar-hide">
+                  <table className="w-full min-w-[640px] caption-bottom text-sm">
                     <thead>
                       <tr className="border-b border-border">
                         <th className="h-11 bg-muted/50 px-4 text-left align-middle text-xs font-medium text-muted-foreground">

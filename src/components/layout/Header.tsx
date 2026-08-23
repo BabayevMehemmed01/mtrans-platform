@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Bell, Search, CheckCheck, ListTodo, CalendarClock, MessageSquare, AtSign, UserPlus, PhoneIncoming } from "lucide-react";
+import { Bell, Menu, Search, CheckCheck, ListTodo, CalendarClock, MessageSquare, AtSign, UserPlus, PhoneIncoming } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import { useCommandPaletteStore } from "@/store/useCommandPaletteStore";
+import { useSidebarStore } from "@/store/useSidebarStore";
 import { UserProfileDropdown } from "./UserProfileDropdown";
 import { getTranslation } from "@/lib/i18n";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -110,6 +111,7 @@ export function Header() {
 
   const [notifOpen, setNotifOpen] = useState(false);
   const { setOpen: setPaletteOpen } = useCommandPaletteStore();
+  const { setOpen: setSidebarOpen } = useSidebarStore();
 
   // Real-time bildirişlərin SWR ilə çəkilməsi (hər 15 saniyədən bir)
   const { data: notifData, mutate: mutateNotifications } = useSWR<{
@@ -186,7 +188,17 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center h-14 px-4 gap-4 bg-card border-b border-border backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex items-center h-14 px-4 gap-3 md:gap-4 bg-card border-b border-border backdrop-blur-sm">
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(true)}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-accent transition-colors md:hidden"
+        aria-label={t("header.menu") || "Menyu"}
+        title={t("header.menu") || "Menyu"}
+      >
+        <Menu className="h-5 w-5 text-foreground" />
+      </button>
+
       {/* ─── Breadcrumb Naviqasiyası ─── */}
       <nav className="flex items-center gap-1 text-sm flex-1 min-w-0">
         {breadcrumbs.map((crumb, index) => (
@@ -210,10 +222,20 @@ export function Header() {
         ))}
       </nav>
 
+      <button
+        type="button"
+        onClick={() => setPaletteOpen(true)}
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg hover:bg-accent transition-colors md:hidden"
+        aria-label={t("header.search") || "Axtar..."}
+        title={t("header.search") || "Axtar..."}
+      >
+        <Search className="h-4 w-4 text-muted-foreground" />
+      </button>
+
       {/* ─── Qlobal Axtarış Düyməsi (Command Palette Trigger) ─── */}
       <button
         onClick={() => setPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-accent transition-colors min-w-[200px] hidden md:flex"
+        className="hidden items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-accent transition-colors min-w-[200px] md:flex"
       >
         <Search className="w-3.5 h-3.5" />
         <span className="flex-1 text-left">{t("header.search") || "Axtar..."}</span>
@@ -234,7 +256,7 @@ export function Header() {
             <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full ring-2 ring-card" />
           )}
         </PopoverTrigger>
-        <PopoverContent align="end" sideOffset={8} className="w-80 gap-0 p-0">
+        <PopoverContent align="end" sideOffset={8} className="w-[min(20rem,calc(100vw-2rem))] gap-0 p-0">
           <div className="flex items-center justify-between border-b border-border p-3">
             <p className="text-sm font-semibold">{t("header.notifications") || "Bildirişlər"}</p>
             {unreadNotifications.length > 0 && (

@@ -117,7 +117,7 @@ export function CreateWriteOffSheet({
 
         <ScrollArea className="flex-1">
           <div className="space-y-5 px-6 py-5">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="wof-name">{t("inventory.documentName")}</Label>
                 <Input

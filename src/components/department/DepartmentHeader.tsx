@@ -79,12 +79,12 @@ export function DepartmentHeader({
   return (
     <div className="flex-shrink-0">
       <div
-        className="relative flex flex-col justify-between overflow-hidden p-6"
+        className="relative flex flex-col justify-between overflow-hidden p-4 md:p-6"
         style={{ backgroundColor: department.color }}
       >
         <Building2 className="absolute -right-6 -bottom-10 h-40 w-40 text-white/10" />
 
-        <div className="relative flex items-center justify-between mb-4">
+        <div className="relative mb-4 flex flex-wrap items-center justify-between gap-2">
           <Link
             href="/dashboard/departments"
             className="inline-flex items-center gap-1.5 text-sm text-white/80 hover:text-white transition-colors"
@@ -134,7 +134,7 @@ export function DepartmentHeader({
       </div>
 
       {/* Editable description strip */}
-      <div className="border-b border-border bg-card px-6 py-4">
+      <div className="border-b border-border bg-card px-4 py-4 md:px-6">
         {editing ? (
           <div className="space-y-2">
             <textarea

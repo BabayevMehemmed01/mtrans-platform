@@ -95,9 +95,9 @@ export function FloatingChatbot() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+    <>
       {open && (
-        <Card className="w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-card shadow-xl ring-1 ring-foreground/10">
+        <Card className="fixed inset-0 z-50 flex h-full w-full flex-col overflow-hidden rounded-none border-0 bg-card shadow-xl ring-1 ring-foreground/10 md:inset-auto md:bottom-6 md:right-6 md:h-[600px] md:w-[400px] md:rounded-2xl md:border md:border-border">
           <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
             <div className="flex items-center gap-2.5">
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -112,15 +112,15 @@ export function FloatingChatbot() {
               type="button"
               variant="ghost"
               size="icon"
-              className="rounded-lg"
+              className="size-11 rounded-lg md:size-9"
               onClick={() => setOpen(false)}
               aria-label={t("aiAssistant.close")}
             >
-              <X className="size-4" />
+              <X className="size-5 md:size-4" />
             </Button>
           </CardHeader>
-          <CardContent className="p-0">
-            <ScrollArea className="h-80">
+          <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+            <ScrollArea className="min-h-0 flex-1">
               <div className="flex flex-col gap-3 p-4">
                 {messages.map((message) => (
                   <div
@@ -146,7 +146,7 @@ export function FloatingChatbot() {
               </div>
             </ScrollArea>
             <form
-              className="flex items-center gap-2 border-t border-border/60 p-3"
+              className="flex items-center gap-2 border-t border-border/60 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
               onSubmit={(e) => {
                 e.preventDefault();
                 void sendMessage();
@@ -156,13 +156,13 @@ export function FloatingChatbot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t("aiAssistant.placeholder")}
-                className="h-9 rounded-xl"
+                className="h-11 rounded-xl md:h-9"
                 disabled={sending}
               />
               <Button
                 type="submit"
                 size="icon"
-                className="size-9 rounded-xl shadow-sm"
+                className="size-11 rounded-xl shadow-sm md:size-9"
                 disabled={sending || !input.trim()}
                 aria-label={t("aiAssistant.send")}
               >
@@ -177,11 +177,14 @@ export function FloatingChatbot() {
         type="button"
         size="icon"
         onClick={() => setOpen((v) => !v)}
-        className="size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+        className={cn(
+          "fixed bottom-5 right-5 z-50 size-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 md:bottom-6 md:right-6",
+          open && "hidden md:inline-flex"
+        )}
         aria-label={open ? t("aiAssistant.close") : t("aiAssistant.open")}
       >
         {open ? <X className="size-6" /> : <Bot className="size-6" />}
       </Button>
-    </div>
+    </>
   );
 }

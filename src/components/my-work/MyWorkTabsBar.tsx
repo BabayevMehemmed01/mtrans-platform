@@ -43,7 +43,7 @@ export function MyWorkTabsBar({ stats }: { stats: MyWorkStats }) {
 
   return (
     <div className="relative z-20 flex flex-shrink-0 flex-wrap items-center gap-2 border-b border-border bg-card px-4">
-      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto scrollbar-hide">
         {MY_WORK_TABS.map((tab) => {
           const isActive = pathname?.startsWith(tab.href) ?? false;
           const Icon = tab.icon;

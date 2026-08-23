@@ -41,7 +41,7 @@ export function ReportsClient({
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
       <div className="flex items-center justify-between gap-3 border-b border-border">
-        <div className="flex-1 overflow-x-auto">
+        <div className="flex-1 overflow-x-auto scrollbar-hide">
           <TabsList className="h-auto w-max justify-start gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
               <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" /> {t("reportsPage.tabOverview")}

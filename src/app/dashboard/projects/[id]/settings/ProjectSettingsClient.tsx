@@ -134,7 +134,7 @@ export function ProjectSettingsClient({
               className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>{t("projectSettingsClient.status") || "Status"}</Label>
               <Select value={status} onValueChange={(v) => v && setStatus(v)} disabled={!canManage}>
@@ -165,7 +165,7 @@ export function ProjectSettingsClient({
               </Select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label>{t("projectSettingsClient.department") || "Şöbə"}</Label>
               <Select

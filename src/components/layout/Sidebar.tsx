@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -8,6 +8,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { cn } from "@/lib/utils";
 import { useSidebarStore } from "@/store/useSidebarStore";
 import { getTranslation } from "@/lib/i18n";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -222,7 +223,16 @@ export function Sidebar() {
 function SidebarInner() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isCollapsed, collapse, expand } = useSidebarStore();
+  const { isCollapsed, isOpen, setOpen, collapse, expand } = useSidebarStore();
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const closeOnDesktop = () => {
+      if (mq.matches) setOpen(false);
+    };
+    mq.addEventListener("change", closeOnDesktop);
+    return () => mq.removeEventListener("change", closeOnDesktop);
+  }, [setOpen]);
 
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
@@ -255,25 +265,18 @@ function SidebarInner() {
     return pathname.startsWith(path);
   };
 
-  return (
-    <aside
-      className={cn(
-        "flex h-screen flex-shrink-0 flex-col bg-sidebar text-sidebar-foreground",
-        "border-r border-sidebar-border",
-        "transition-all duration-300 ease-in-out",
-        isCollapsed ? "w-16" : "w-64"
-      )}
-    >
+  const chrome = (opts: { collapsed: boolean; onNavigate?: () => void; showToggle?: boolean }) => (
+    <>
       <div
         className={cn(
           "flex items-center gap-3 border-b border-sidebar-border px-4 py-5 transition-all",
-          isCollapsed && "justify-center px-0"
+          opts.collapsed && "justify-center px-0"
         )}
       >
         <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-sidebar-primary shadow-sm">
           <Briefcase className="h-4 w-4 text-sidebar-primary-foreground" />
         </div>
-        {!isCollapsed && (
+        {!opts.collapsed && (
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold tracking-tight">
               {t("menu.workspace") || "WorkSpace"}
@@ -288,44 +291,73 @@ function SidebarInner() {
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
         <NavGroup
           items={visibleNavItems}
-          isCollapsed={isCollapsed}
+          isCollapsed={opts.collapsed}
           isActive={isActive}
           label={t("menu.main") || "Əsas"}
           t={t}
+          onNavigate={opts.onNavigate}
         />
 
         <div className="mx-2 my-3 border-t border-sidebar-border" />
 
         <NavGroup
           items={visibleAdminItems}
-          isCollapsed={isCollapsed}
+          isCollapsed={opts.collapsed}
           isActive={isActive}
           label={t("menu.administration") || "Administrasiya"}
           t={t}
+          onNavigate={opts.onNavigate}
         />
       </nav>
 
-      <div className="border-t border-sidebar-border p-2 pb-16">
-        <button
-          onClick={() => (isCollapsed ? expand() : collapse())}
-          className={cn(
-            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
-            "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-            isCollapsed && "justify-center"
-          )}
-          title={isCollapsed ? t("menu.expand") || "Genişlət" : t("menu.collapse") || "Daralt"}
+      {opts.showToggle !== false && (
+        <div className="border-t border-sidebar-border p-2 pb-16">
+          <button
+            onClick={() => (isCollapsed ? expand() : collapse())}
+            className={cn(
+              "flex w-full items-center gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all",
+              "text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+              opts.collapsed && "justify-center"
+            )}
+            title={isCollapsed ? t("menu.expand") || "Genişlət" : t("menu.collapse") || "Daralt"}
+          >
+            {opts.collapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <>
+                <ChevronLeft className="h-4 w-4" />
+                <span>{t("menu.collapse") || "Daralt"}</span>
+              </>
+            )}
+          </button>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <>
+      <aside
+        className={cn(
+          "hidden h-screen flex-shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex",
+          "border-r border-sidebar-border",
+          "transition-all duration-300 ease-in-out",
+          isCollapsed ? "w-16" : "w-64"
+        )}
+      >
+        {chrome({ collapsed: isCollapsed })}
+      </aside>
+
+      <Sheet open={isOpen} onOpenChange={setOpen}>
+        <SheetContent
+          side="left"
+          className="flex h-full w-72 flex-col gap-0 bg-sidebar p-0 text-sidebar-foreground sm:max-w-xs md:hidden"
         >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4" />
-              <span>{t("menu.collapse") || "Daralt"}</span>
-            </>
-          )}
-        </button>
-      </div>
-    </aside>
+          <SheetTitle className="sr-only">{t("header.menu") || "Menyu"}</SheetTitle>
+          {chrome({ collapsed: false, onNavigate: () => setOpen(false), showToggle: false })}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
 
@@ -338,12 +370,14 @@ function NavGroup({
   isActive,
   label,
   t,
+  onNavigate,
 }: {
   items: NavItem[];
   isCollapsed: boolean;
   isActive: (href: string, exact?: boolean) => boolean;
   label: string;
   t: (key: string) => string;
+  onNavigate?: () => void;
 }) {
   return (
     <div>
@@ -361,9 +395,10 @@ function NavGroup({
                 isCollapsed={isCollapsed}
                 isActive={isActive}
                 t={t}
+                onNavigate={onNavigate}
               />
             ) : (
-              <NavLink item={item} isCollapsed={isCollapsed} isActive={isActive} t={t} />
+              <NavLink item={item} isCollapsed={isCollapsed} isActive={isActive} t={t} onNavigate={onNavigate} />
             )}
           </li>
         ))}
@@ -377,11 +412,13 @@ function NavLink({
   isCollapsed,
   isActive,
   t,
+  onNavigate,
 }: {
   item: NavItem | NavChild;
   isCollapsed: boolean;
   isActive: (href: string, exact?: boolean) => boolean;
   t: (key: string) => string;
+  onNavigate?: () => void;
 }) {
   const Icon = item.icon;
   const active = isActive(item.href, "exact" in item ? item.exact : false);
@@ -391,6 +428,7 @@ function NavLink({
     <Link
       href={item.href}
       title={isCollapsed ? displayTitle : undefined}
+      onClick={onNavigate}
       className={itemClassName(active, isCollapsed)}
     >
       <Icon className={cn("flex-shrink-0", isCollapsed ? "h-5 w-5" : "h-4 w-4")} />
@@ -404,11 +442,13 @@ function CollapsibleNavItem({
   isCollapsed,
   isActive,
   t,
+  onNavigate,
 }: {
   item: NavItem;
   isCollapsed: boolean;
   isActive: (href: string, exact?: boolean) => boolean;
   t: (key: string) => string;
+  onNavigate?: () => void;
 }) {
   const Icon = item.icon;
   const displayTitle = item.tKey ? t(item.tKey) : item.title;
@@ -430,7 +470,7 @@ function CollapsibleNavItem({
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="w-52">
           <DropdownMenuItem asChild>
-            <Link href={primaryHref} className="flex cursor-pointer items-center gap-2">
+            <Link href={primaryHref} onClick={onNavigate} className="flex cursor-pointer items-center gap-2">
               <Icon className="h-4 w-4 text-muted-foreground" />
               {displayTitle}
             </Link>
@@ -442,6 +482,7 @@ function CollapsibleNavItem({
               isActive={isActive}
               t={t}
               collapsed
+              onNavigate={onNavigate}
             />
           ))}
         </DropdownMenuContent>
@@ -468,6 +509,7 @@ function CollapsibleNavItem({
       >
         <Link
           href={primaryHref}
+          onClick={onNavigate}
           className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
         >
           <Icon className="h-4 w-4 flex-shrink-0" />
@@ -490,7 +532,7 @@ function CollapsibleNavItem({
         <ul className="ml-4 mt-1 space-y-0.5 border-l border-sidebar-border pl-2">
           {item.children?.map((child) => (
             <li key={child.href}>
-              <SubNavLink child={child} isActive={isActive} t={t} />
+              <SubNavLink child={child} isActive={isActive} t={t} onNavigate={onNavigate} />
             </li>
           ))}
         </ul>
@@ -504,11 +546,13 @@ function SubNavLink({
   isActive,
   t,
   collapsed = false,
+  onNavigate,
 }: {
   child: NavChild;
   isActive: (href: string, exact?: boolean) => boolean;
   t: (key: string) => string;
   collapsed?: boolean;
+  onNavigate?: () => void;
 }) {
   const ChildIcon = child.icon;
   const childTitle = child.tKey ? t(child.tKey) : child.title;
@@ -517,7 +561,7 @@ function SubNavLink({
   if (collapsed) {
     return (
       <DropdownMenuItem asChild>
-        <Link href={child.href} className="flex cursor-pointer items-center gap-2">
+        <Link href={child.href} onClick={onNavigate} className="flex cursor-pointer items-center gap-2">
           <ChildIcon className="h-4 w-4 text-muted-foreground" />
           {childTitle}
         </Link>
@@ -528,6 +572,7 @@ function SubNavLink({
   return (
     <Link
       href={child.href}
+      onClick={onNavigate}
       className={cn(
         "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200",
         active

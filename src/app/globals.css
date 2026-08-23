@@ -473,6 +473,17 @@ body {
 }
 
 /* =============================================================================
+   Hide scrollbar (horizontal tables / kanban on mobile)
+   ============================================================================= */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* =============================================================================
    Custom Scrollbar (webkit)
    ============================================================================= */
 ::-webkit-scrollbar {

@@ -46,8 +46,8 @@ export default function MarketingClient({
       <Toaster position="top-right" />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="flex justify-center border-b border-border">
-          <TabsList className="h-auto w-full justify-center gap-1 rounded-none bg-transparent p-0">
+        <div className="flex justify-center overflow-x-auto scrollbar-hide border-b border-border">
+          <TabsList className="h-auto w-max min-w-full justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="start" className={TAB_TRIGGER_CLASS}>
               <Rocket className="mr-1.5 h-3.5 w-3.5" /> {t("marketing.tabStart")}
             </TabsTrigger>

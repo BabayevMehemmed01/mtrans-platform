@@ -75,7 +75,7 @@ export function DepartmentTabs({
   return (
     <div className="flex flex-col h-full">
       {/* Tab Bar */}
-      <div className="flex-shrink-0 border-b border-border bg-card px-6">
+      <div className="flex-shrink-0 overflow-x-auto scrollbar-hide border-b border-border bg-card px-4 md:px-6">
         <div className="flex items-center gap-1">
           {TABS.map((tab) => {
             const Icon = tab.icon;
