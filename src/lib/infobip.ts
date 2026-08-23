@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { formatPhoneForAPI } from "@/lib/utils";
 
 export class InfobipApiError extends Error {
   response: { data: unknown };
@@ -11,7 +12,7 @@ export class InfobipApiError extends Error {
 }
 
 function normalizePhone(phone: string): string {
-  return phone.replace(/[^\d]/g, "");
+  return formatPhoneForAPI(phone).replace(/[^\d]/g, "");
 }
 
 async function logWhatsapp(params: {

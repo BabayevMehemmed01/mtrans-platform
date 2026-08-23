@@ -3,6 +3,8 @@ import { randomBytes } from "crypto";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendDealWelcomeNotification } from "@/lib/integrationService";
+import { sendWhatsappMessage } from "@/lib/infobip";
+import { formatPhoneForAPI } from "@/lib/utils";
 
 export async function GET(req: Request) {
   try {
@@ -141,6 +143,24 @@ export async function POST(req: Request) {
       }).catch((err) => {
         console.error("[CRM_DEAL_WELCOME_NOTIFY_FAILED]", err);
       });
+    }
+
+    const whatsappPhone =
+      deal.clientPhone || deal.customer?.phone || deal.crmContact?.phone || null;
+    if (whatsappPhone) {
+      const formattedPhone = formatPhoneForAPI(whatsappPhone);
+      const customerName =
+        deal.clientName ||
+        deal.customer?.name ||
+        [deal.crmContact?.firstName, deal.crmContact?.lastName].filter(Boolean).join(" ") ||
+        "Customer";
+      void (async () => {
+        try {
+          await sendWhatsappMessage(formattedPhone, customerName, "test_whatsapp_template_en");
+        } catch (error) {
+          console.error("[WHATSAPP_CRM_TRIGGER_ERROR]", error);
+        }
+      })();
     }
 
     return NextResponse.json(deal);

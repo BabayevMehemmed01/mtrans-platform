@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { sendWhatsappMessage } from "@/lib/infobip";
+import { formatPhoneForAPI } from "@/lib/utils";
 
 export async function GET(req: Request) {
   try {
@@ -57,6 +59,19 @@ export async function POST(req: Request) {
         crmCompany: true,
       },
     });
+
+    if (contact.phone) {
+      const formattedPhone = formatPhoneForAPI(contact.phone);
+      const customerName =
+        [contact.firstName, contact.lastName].filter(Boolean).join(" ") || "Customer";
+      void (async () => {
+        try {
+          await sendWhatsappMessage(formattedPhone, customerName, "test_whatsapp_template_en");
+        } catch (error) {
+          console.error("[WHATSAPP_CRM_TRIGGER_ERROR]", error);
+        }
+      })();
+    }
 
     return NextResponse.json(contact);
   } catch (error) {

@@ -7,6 +7,17 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+const AZ_LOCAL_PREFIXES = ["050", "055", "070", "077", "010"] as const;
+
+/** Infobip və oxşar API-lər üçün nömrəni rəqəmlərə çevirir (məs. 0558087202 → 994558087202). */
+export function formatPhoneForAPI(phone: string): string {
+  const cleaned = phone.replace(/[\s+()\-]/g, "");
+  if (AZ_LOCAL_PREFIXES.some((prefix) => cleaned.startsWith(prefix))) {
+    return `994${cleaned.slice(1)}`;
+  }
+  return cleaned;
+}
+
 export function slugify(text: string) {
   return text
     .toString()

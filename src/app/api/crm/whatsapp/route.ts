@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { sendWhatsappMessage } from "@/lib/infobip";
+import { formatPhoneForAPI } from "@/lib/utils";
 
 export async function POST(req: Request) {
   try {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     const data = await sendWhatsappMessage(
-      phone,
+      formatPhoneForAPI(phone),
       name,
       templateName || "test_whatsapp_template_en"
     );

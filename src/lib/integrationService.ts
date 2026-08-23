@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
 import type { MessageLogType } from "@prisma/client";
-import { sendWhatsappMessage } from "@/lib/infobip";
 
 // =============================================================================
 // Inteqrasiya Servisi — Email (SMTP), Telegram Bot API, Twilio (SMS), Infobip (WhatsApp)
@@ -239,14 +238,6 @@ export async function sendDealWelcomeNotification(params: {
 
   if (params.customerPhone) {
     tasks.push(sendTwilioMessage(params.customerPhone, message, meta));
-    tasks.push(
-      sendWhatsappMessage(params.customerPhone, params.customerName, "test_whatsapp_template_en")
-        .then(() => ({ success: true } satisfies IntegrationResult))
-        .catch((error) => ({
-          success: false,
-          error: error instanceof Error ? error.message : String(error),
-        }))
-    );
   }
 
   if (tasks.length === 0) return;
