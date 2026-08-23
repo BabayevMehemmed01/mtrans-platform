@@ -18,6 +18,11 @@ async function main() {
   console.log("\n🎉 Seed tamamlandı!");
   console.log("━".repeat(50));
   console.log(`Şöbə: ${result.departmentCount} | İşçi: ${result.userCount}`);
+  console.log(`Layihə: ${result.projectCount} | Tapşırıq: ${result.taskCount}`);
+  console.log(`CRM: ${result.crmCompanyCount} şirkət, ${result.dealCount} sövdələşmə`);
+  console.log(`WMS: ${result.warehouseCount} anbar, ${result.productCount} SKU, ${result.movementCount} hərəkət`);
+  console.log(`Marketinq: ${result.segmentCount} seqment, ${result.campaignCount} kampaniya`);
+  console.log(`Şablon: ${result.taskTemplateCount} tapşırıq, ${result.marketingTemplateCount} marketinq`);
   console.log(`Şifrə (bütün demo hesablar): ${DEMO_PASSWORD}`);
   console.log("  Təsisçi:     founder@mtrans.com");
   console.log("  Super Admin: admin@demo.com");

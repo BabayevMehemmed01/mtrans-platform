@@ -1,5 +1,6 @@
 import { PrismaClient, PermissionKey } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { seedDemoOperations, wipeDemoOperations } from "./demo-data-seed";
 import {
   DEMO_PASSWORD,
   MODULE_PERMISSIONS,
@@ -79,6 +80,8 @@ async function ensurePermissions(prisma: Db) {
 }
 
 async function wipeTestStaff(prisma: Db, companyId: string, founderId: string) {
+  await wipeDemoOperations(prisma, companyId);
+
   const doomed = await prisma.user.findMany({
     where: {
       companyId,
@@ -342,9 +345,17 @@ export async function seedOrganization(prisma: Db) {
     await prisma.department.update({ where: { id: itmId }, data: { headUserId: itHead } });
   }
 
+  const demo = await seedDemoOperations(prisma, {
+    companyId: company.id,
+    founderId: founder.id,
+    userIdByEmail,
+    deptIdByKey,
+  });
+
   return {
     companyId: company.id,
     userCount: ORG_PEOPLE.length,
     departmentCount: ORG_DEPARTMENTS.length,
+    ...demo,
   };
 }
