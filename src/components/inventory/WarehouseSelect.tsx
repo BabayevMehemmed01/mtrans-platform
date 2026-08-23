@@ -40,7 +40,7 @@ interface WarehouseSelectProps {
   placeholder?: string;
 }
 
-export function WarehouseSelect({ warehouses, value, onChange, onCreated, placeholder = "Warehouse" }: WarehouseSelectProps) {
+export function WarehouseSelect({ warehouses, value, onChange, onCreated, placeholder = "Anbar seçin" }: WarehouseSelectProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
@@ -99,7 +99,7 @@ export function WarehouseSelect({ warehouses, value, onChange, onCreated, placeh
           ))}
           {warehouses.length > 0 && <SelectSeparator />}
           <SelectItem value={CREATE_NEW_VALUE} className="text-primary">
-            <Plus className="h-3.5 w-3.5" /> Create new warehouse
+            <Plus className="h-3.5 w-3.5" /> Yeni anbar yarat
           </SelectItem>
         </SelectContent>
       </Select>
@@ -126,8 +126,8 @@ export function WarehouseSelect({ warehouses, value, onChange, onCreated, placeh
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MAIN">Əsas (MAIN)</SelectItem>
-                  <SelectItem value="TRANSIT">Tranzit (TRANSIT)</SelectItem>
+                  <SelectItem value="MAIN">Əsas</SelectItem>
+                  <SelectItem value="TRANSIT">Tranzit</SelectItem>
                 </SelectContent>
               </Select>
             </div>

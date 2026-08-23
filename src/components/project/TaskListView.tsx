@@ -54,8 +54,8 @@ const STATUS_MAP = {
   IN_PROGRESS: { label: "In Progress", color: "#f59e0b", dot: "border-[#f59e0b] bg-[#f59e0b]" },
   REVIEW:      { label: "Review",      color: "#8b5cf6", dot: "border-[#8b5cf6] bg-[#8b5cf6]" },
   DONE:        { label: "Done",        color: "#22c55e", dot: "border-[#22c55e] bg-[#22c55e]" },
-  CANCELLED:   { label: "Cancelled",   color: "#ef4444", dot: "border-[#ef4444]" },
-  TODO:        { label: "To Do",       color: "#6366f1", dot: "border-[#6366f1]" },
+  CANCELLED:   { label: "Ləğv edildi",   color: "#ef4444", dot: "border-[#ef4444]" },
+  TODO:        { label: "Gözləyir",    color: "#6366f1", dot: "border-[#6366f1]" },
   BACKLOG:     { label: "Backlog",     color: "#94a3b8", dot: "border-[#94a3b8]" },
   IN_REVIEW:   { label: "In Review",   color: "#8b5cf6", dot: "border-[#8b5cf6] bg-[#8b5cf6]" },
 } as const;
@@ -910,7 +910,7 @@ export function TaskListView({
     { status: "IN_PROGRESS", ...STATUS_MAP.IN_PROGRESS, label: t("status.IN_PROGRESS") || "In Progress" },
     { status: "REVIEW",      ...STATUS_MAP.REVIEW,      label: t("status.REVIEW") || "Review" },
     { status: "DONE",        ...STATUS_MAP.DONE,        label: t("status.DONE") || "Done" },
-    { status: "CANCELLED",   ...STATUS_MAP.CANCELLED,   label: t("status.CANCELLED") || "Cancelled" },
+    { status: "CANCELLED",   ...STATUS_MAP.CANCELLED,   label: t("status.CANCELLED") || "Ləğv edildi" },
   ];
 
   const handleSheetUpdated = useCallback((updatedTask: KanbanTask) => {

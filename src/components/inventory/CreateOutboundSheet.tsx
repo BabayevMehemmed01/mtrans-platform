@@ -71,7 +71,7 @@ export function CreateOutboundSheet({
   const handleSubmit = async (status: "DRAFT" | "COMPLETED") => {
     const validLines = lines.filter((l) => l.productId && l.warehouseId && l.quantity > 0);
     if (validLines.length === 0) {
-      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (Product, Warehouse, Quantity)");
+      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (Məhsul, Anbar, Miqdar)");
       setActiveTab("products");
       return;
     }
@@ -129,7 +129,7 @@ export function CreateOutboundSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <ArrowUpFromLine className="h-4.5 w-4.5 text-blue-600" /> New Shipment (Sales order)
+            <ArrowUpFromLine className="h-4.5 w-4.5 text-blue-600" /> Yeni Göndərmə (Satış sifarişi)
           </SheetTitle>
           <SheetDescription>
             Müştəriyə göndəriləcək malları qeydə alın — anbar qalığı avtomatik azaldılacaq.
@@ -143,13 +143,13 @@ export function CreateOutboundSheet({
                 value="general"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                General
+                Ümumi
               </TabsTrigger>
               <TabsTrigger
                 value="products"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                Products {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
+                Məhsullar {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -158,17 +158,17 @@ export function CreateOutboundSheet({
             <TabsContent value="general" className="m-0 space-y-4 px-6 py-5">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="out-name">Document Name</Label>
+                  <Label htmlFor="out-name">Sənəd adı</Label>
                   <Input
                     id="out-name"
                     value={documentName}
                     onChange={(e) => setDocumentName(e.target.value)}
-                    placeholder="Sales order #"
+                    placeholder="Satış sifarişi №"
                     autoFocus
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="out-customer">Customer</Label>
+                  <Label htmlFor="out-customer">Müştəri</Label>
                   <Input
                     id="out-customer"
                     value={customerName}
@@ -179,7 +179,7 @@ export function CreateOutboundSheet({
               </div>
 
               <div className="space-y-1.5">
-                <Label>Currency</Label>
+                <Label>Valyuta</Label>
                 <Select value={currency} onValueChange={(v) => setCurrency(v ?? "AZN")}>
                   <SelectTrigger className="w-full">
                     <SelectValue />
@@ -195,7 +195,7 @@ export function CreateOutboundSheet({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="out-comment">Comment</Label>
+                <Label htmlFor="out-comment">Qeyd</Label>
                 <Textarea
                   id="out-comment"
                   value={comment}
@@ -216,8 +216,8 @@ export function CreateOutboundSheet({
                 onWarehouseCreated={onWarehouseCreated}
                 showPrices
                 warehouseMode="single"
-                warehouseLabel="Shipping warehouse"
-                quantityLabel="Quantity to ship"
+                warehouseLabel="Göndərmə anbarı"
+                quantityLabel="Göndəriləcək miqdar"
               />
             </TabsContent>
           </ScrollArea>
@@ -226,22 +226,22 @@ export function CreateOutboundSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-between">
             <p className="text-sm">
-              <span className="text-muted-foreground">Total amount: </span>
+              <span className="text-muted-foreground">Ümumi məbləğ: </span>
               <span className="font-semibold text-foreground">
                 {totalAmount.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
               </span>
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-                Cancel
+                Ləğv et
               </Button>
               <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save
+                Yadda saxla
               </Button>
               <Button onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save and Process
+                Yadda saxla və icra et
               </Button>
             </div>
           </div>

@@ -29,7 +29,7 @@ interface ProductComboboxProps {
   placeholder?: string;
 }
 
-export function ProductCombobox({ products, value, onSelect, onCreateNew, placeholder = "Search product..." }: ProductComboboxProps) {
+export function ProductCombobox({ products, value, onSelect, onCreateNew, placeholder = "Məhsul axtar..." }: ProductComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);

@@ -34,8 +34,8 @@ function Command({
 }
 
 function CommandDialog({
-  title = "Command Palette",
-  description = "Search for a command to run...",
+  title = "Əmr paneli",
+  description = "İcra etmək üçün əmr axtarın...",
   children,
   className,
   showCloseButton = false,

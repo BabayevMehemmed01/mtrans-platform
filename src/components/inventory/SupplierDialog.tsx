@@ -108,7 +108,7 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
           <DialogTitle>{mode === "create" ? "Yeni Təchizatçı" : "Təchizatçını Redaktə Et"}</DialogTitle>
           <DialogDescription>
             {mode === "create"
-              ? "Yeni təchizatçı yaradın — dərhal Receiving (qəbul) sənədlərində istifadə edilə bilər."
+              ? "Yeni təchizatçı yaradın — dərhal qəbul sənədlərində istifadə edilə bilər."
               : "Dəyişikliklər yalnız bu təchizatçıya aiddir, əvvəlki sənədlərə təsir etməz."}
           </DialogDescription>
         </DialogHeader>

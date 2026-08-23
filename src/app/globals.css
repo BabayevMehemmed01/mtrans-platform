@@ -116,14 +116,54 @@
 /* =============================================================================
    Rəng Temaları (Color Themes) — Parametrlər > Görünüş bölməsindən idarə olunur
    `data-color-theme` atributu <html> elementinə tətbiq olunur.
-   "default" üçün əlavə override lazım deyil (:root/.dark dəyərləri kifayətdir).
+   Hər tema YALNIZ vurğu (primary) rəngini deyil, bütün səth tonlarını da
+   (background/card/popover/muted/accent/sidebar) öz "hue" dəyəri ətrafında
+   incə şəkildə köçürür — beləliklə tema seçimi bütün interfeysi əhatə edir.
+   Kontrastı qorumaq üçün YALNIZ "chroma" (rəng doyğunluğu) əlavə olunur,
+   "lightness" (işıqlılıq) dəyərləri baza (:root/.dark) ilə demək olar ki
+   eynidir — bu səbəbdən mətn oxunaqlılığı və Shadcn komponent kontrastı
+   pozulmur. Keçidlər `*, *::before, *::after` üzərindəki qlobal transition
+   qaydası ilə axıcıdır (bax: aşağıda "Smooth Theme Transition").
    ============================================================================= */
+[data-color-theme="default"] {
+  --background: oklch(0.958 0.034 276.966);
+  --card: oklch(0.988 0.016 276.966);
+  --popover: oklch(0.988 0.016 276.966);
+  --secondary: oklch(0.938 0.038 276.966);
+  --muted: oklch(0.938 0.038 276.966);
+  --accent: oklch(0.918 0.052 276.966);
+  --border: oklch(0.872 0.034 276.966);
+  --input: oklch(0.872 0.034 276.966);
+  --sidebar: oklch(0.944 0.038 276.966);
+  --sidebar-accent: oklch(0.918 0.048 276.966);
+}
+.dark[data-color-theme="default"] {
+  --background: oklch(0.142 0.034 276.966);
+  --card: oklch(0.202 0.042 276.966);
+  --popover: oklch(0.202 0.042 276.966);
+  --secondary: oklch(0.268 0.038 276.966);
+  --muted: oklch(0.268 0.038 276.966);
+  --accent: oklch(0.292 0.048 276.966);
+  --sidebar: oklch(0.188 0.040 276.966);
+  --sidebar-accent: oklch(0.268 0.042 276.966);
+}
+
 [data-color-theme="blue"] {
   --primary: oklch(0.546 0.245 262.881);
   --primary-foreground: oklch(0.985 0 0);
   --ring: oklch(0.623 0.214 259.815);
   --sidebar-primary: oklch(0.546 0.245 262.881);
   --sidebar-ring: oklch(0.623 0.214 259.815);
+  --background: oklch(0.958 0.034 262.881);
+  --card: oklch(0.988 0.016 262.881);
+  --popover: oklch(0.988 0.016 262.881);
+  --secondary: oklch(0.938 0.038 262.881);
+  --muted: oklch(0.938 0.038 262.881);
+  --accent: oklch(0.918 0.052 262.881);
+  --border: oklch(0.872 0.034 262.881);
+  --input: oklch(0.872 0.034 262.881);
+  --sidebar: oklch(0.944 0.038 262.881);
+  --sidebar-accent: oklch(0.918 0.048 262.881);
 }
 .dark[data-color-theme="blue"] {
   --primary: oklch(0.623 0.214 259.815);
@@ -131,6 +171,14 @@
   --ring: oklch(0.546 0.245 262.881);
   --sidebar-primary: oklch(0.623 0.214 259.815);
   --sidebar-ring: oklch(0.546 0.245 262.881);
+  --background: oklch(0.142 0.034 262.881);
+  --card: oklch(0.202 0.042 262.881);
+  --popover: oklch(0.202 0.042 262.881);
+  --secondary: oklch(0.268 0.038 262.881);
+  --muted: oklch(0.268 0.038 262.881);
+  --accent: oklch(0.292 0.048 262.881);
+  --sidebar: oklch(0.188 0.040 262.881);
+  --sidebar-accent: oklch(0.268 0.042 262.881);
 }
 
 [data-color-theme="purple"] {
@@ -139,6 +187,16 @@
   --ring: oklch(0.606 0.25 292.717);
   --sidebar-primary: oklch(0.541 0.281 293.009);
   --sidebar-ring: oklch(0.606 0.25 292.717);
+  --background: oklch(0.958 0.034 293.009);
+  --card: oklch(0.988 0.016 293.009);
+  --popover: oklch(0.988 0.016 293.009);
+  --secondary: oklch(0.938 0.038 293.009);
+  --muted: oklch(0.938 0.038 293.009);
+  --accent: oklch(0.918 0.052 293.009);
+  --border: oklch(0.872 0.034 293.009);
+  --input: oklch(0.872 0.034 293.009);
+  --sidebar: oklch(0.944 0.038 293.009);
+  --sidebar-accent: oklch(0.918 0.048 293.009);
 }
 .dark[data-color-theme="purple"] {
   --primary: oklch(0.606 0.25 292.717);
@@ -146,6 +204,14 @@
   --ring: oklch(0.541 0.281 293.009);
   --sidebar-primary: oklch(0.606 0.25 292.717);
   --sidebar-ring: oklch(0.541 0.281 293.009);
+  --background: oklch(0.142 0.034 293.009);
+  --card: oklch(0.202 0.042 293.009);
+  --popover: oklch(0.202 0.042 293.009);
+  --secondary: oklch(0.268 0.038 293.009);
+  --muted: oklch(0.268 0.038 293.009);
+  --accent: oklch(0.292 0.048 293.009);
+  --sidebar: oklch(0.188 0.040 293.009);
+  --sidebar-accent: oklch(0.268 0.042 293.009);
 }
 
 [data-color-theme="green"] {
@@ -154,6 +220,16 @@
   --ring: oklch(0.696 0.17 162.48);
   --sidebar-primary: oklch(0.596 0.145 163.225);
   --sidebar-ring: oklch(0.696 0.17 162.48);
+  --background: oklch(0.958 0.034 163.225);
+  --card: oklch(0.988 0.016 163.225);
+  --popover: oklch(0.988 0.016 163.225);
+  --secondary: oklch(0.938 0.038 163.225);
+  --muted: oklch(0.938 0.038 163.225);
+  --accent: oklch(0.918 0.052 163.225);
+  --border: oklch(0.872 0.034 163.225);
+  --input: oklch(0.872 0.034 163.225);
+  --sidebar: oklch(0.944 0.038 163.225);
+  --sidebar-accent: oklch(0.918 0.048 163.225);
 }
 .dark[data-color-theme="green"] {
   --primary: oklch(0.696 0.17 162.48);
@@ -161,6 +237,14 @@
   --ring: oklch(0.596 0.145 163.225);
   --sidebar-primary: oklch(0.696 0.17 162.48);
   --sidebar-ring: oklch(0.596 0.145 163.225);
+  --background: oklch(0.142 0.034 163.225);
+  --card: oklch(0.202 0.042 163.225);
+  --popover: oklch(0.202 0.042 163.225);
+  --secondary: oklch(0.268 0.038 163.225);
+  --muted: oklch(0.268 0.038 163.225);
+  --accent: oklch(0.292 0.048 163.225);
+  --sidebar: oklch(0.188 0.040 163.225);
+  --sidebar-accent: oklch(0.268 0.042 163.225);
 }
 
 [data-color-theme="rose"] {
@@ -169,6 +253,16 @@
   --ring: oklch(0.645 0.246 16.439);
   --sidebar-primary: oklch(0.586 0.253 17.585);
   --sidebar-ring: oklch(0.645 0.246 16.439);
+  --background: oklch(0.958 0.034 17.585);
+  --card: oklch(0.988 0.016 17.585);
+  --popover: oklch(0.988 0.016 17.585);
+  --secondary: oklch(0.938 0.038 17.585);
+  --muted: oklch(0.938 0.038 17.585);
+  --accent: oklch(0.918 0.052 17.585);
+  --border: oklch(0.872 0.034 17.585);
+  --input: oklch(0.872 0.034 17.585);
+  --sidebar: oklch(0.944 0.038 17.585);
+  --sidebar-accent: oklch(0.918 0.048 17.585);
 }
 .dark[data-color-theme="rose"] {
   --primary: oklch(0.645 0.246 16.439);
@@ -176,21 +270,48 @@
   --ring: oklch(0.586 0.253 17.585);
   --sidebar-primary: oklch(0.645 0.246 16.439);
   --sidebar-ring: oklch(0.586 0.253 17.585);
+  --background: oklch(0.142 0.034 17.585);
+  --card: oklch(0.202 0.042 17.585);
+  --popover: oklch(0.202 0.042 17.585);
+  --secondary: oklch(0.268 0.038 17.585);
+  --muted: oklch(0.268 0.038 17.585);
+  --accent: oklch(0.292 0.048 17.585);
+  --sidebar: oklch(0.188 0.040 17.585);
+  --sidebar-accent: oklch(0.268 0.042 17.585);
 }
 
+/* "orange" id — Kəhrəba (Amber) rəng ailəsi kimi tərtib olunub (daha qızılı/isti ton) */
 [data-color-theme="orange"] {
-  --primary: oklch(0.646 0.222 41.116);
-  --primary-foreground: oklch(0.985 0 0);
-  --ring: oklch(0.705 0.213 47.604);
-  --sidebar-primary: oklch(0.646 0.222 41.116);
-  --sidebar-ring: oklch(0.705 0.213 47.604);
+  --primary: oklch(0.666 0.179 58.318);
+  --primary-foreground: oklch(0.145 0 0);
+  --ring: oklch(0.769 0.188 70.08);
+  --sidebar-primary: oklch(0.666 0.179 58.318);
+  --sidebar-ring: oklch(0.769 0.188 70.08);
+  --background: oklch(0.958 0.034 58.318);
+  --card: oklch(0.988 0.016 58.318);
+  --popover: oklch(0.988 0.016 58.318);
+  --secondary: oklch(0.938 0.038 58.318);
+  --muted: oklch(0.938 0.038 58.318);
+  --accent: oklch(0.918 0.052 58.318);
+  --border: oklch(0.872 0.034 58.318);
+  --input: oklch(0.872 0.034 58.318);
+  --sidebar: oklch(0.944 0.038 58.318);
+  --sidebar-accent: oklch(0.918 0.048 58.318);
 }
 .dark[data-color-theme="orange"] {
-  --primary: oklch(0.705 0.213 47.604);
+  --primary: oklch(0.769 0.188 70.08);
   --primary-foreground: oklch(0.145 0 0);
-  --ring: oklch(0.646 0.222 41.116);
-  --sidebar-primary: oklch(0.705 0.213 47.604);
-  --sidebar-ring: oklch(0.646 0.222 41.116);
+  --ring: oklch(0.666 0.179 58.318);
+  --sidebar-primary: oklch(0.769 0.188 70.08);
+  --sidebar-ring: oklch(0.666 0.179 58.318);
+  --background: oklch(0.142 0.034 58.318);
+  --card: oklch(0.202 0.042 58.318);
+  --popover: oklch(0.202 0.042 58.318);
+  --secondary: oklch(0.268 0.038 58.318);
+  --muted: oklch(0.268 0.038 58.318);
+  --accent: oklch(0.292 0.048 58.318);
+  --sidebar: oklch(0.188 0.040 58.318);
+  --sidebar-accent: oklch(0.268 0.042 58.318);
 }
 
 [data-color-theme="slate"] {
@@ -199,6 +320,16 @@
   --ring: oklch(0.554 0.046 257.417);
   --sidebar-primary: oklch(0.446 0.043 257.281);
   --sidebar-ring: oklch(0.554 0.046 257.417);
+  --background: oklch(0.975 0.005 257.281);
+  --card: oklch(0.995 0.002 257.281);
+  --popover: oklch(0.995 0.002 257.281);
+  --secondary: oklch(0.955 0.007 257.281);
+  --muted: oklch(0.955 0.007 257.281);
+  --accent: oklch(0.94 0.011 257.281);
+  --border: oklch(0.9 0.007 257.281);
+  --input: oklch(0.9 0.007 257.281);
+  --sidebar: oklch(0.965 0.007 257.281);
+  --sidebar-accent: oklch(0.94 0.01 257.281);
 }
 .dark[data-color-theme="slate"] {
   --primary: oklch(0.704 0.04 256.788);
@@ -206,6 +337,14 @@
   --ring: oklch(0.554 0.046 257.417);
   --sidebar-primary: oklch(0.704 0.04 256.788);
   --sidebar-ring: oklch(0.554 0.046 257.417);
+  --background: oklch(0.155 0.008 257.281);
+  --card: oklch(0.215 0.011 257.281);
+  --popover: oklch(0.215 0.011 257.281);
+  --secondary: oklch(0.275 0.012 257.281);
+  --muted: oklch(0.275 0.012 257.281);
+  --accent: oklch(0.3 0.015 257.281);
+  --sidebar: oklch(0.195 0.011 257.281);
+  --sidebar-accent: oklch(0.275 0.013 257.281);
 }
 
 [data-color-theme="zinc"] {
@@ -214,6 +353,16 @@
   --ring: oklch(0.552 0.014 285.938);
   --sidebar-primary: oklch(0.371 0.013 285.805);
   --sidebar-ring: oklch(0.552 0.014 285.938);
+  --background: oklch(0.975 0.004 285.805);
+  --card: oklch(0.995 0.002 285.805);
+  --popover: oklch(0.995 0.002 285.805);
+  --secondary: oklch(0.955 0.006 285.805);
+  --muted: oklch(0.955 0.006 285.805);
+  --accent: oklch(0.94 0.009 285.805);
+  --border: oklch(0.9 0.006 285.805);
+  --input: oklch(0.9 0.006 285.805);
+  --sidebar: oklch(0.965 0.006 285.805);
+  --sidebar-accent: oklch(0.94 0.008 285.805);
 }
 .dark[data-color-theme="zinc"] {
   --primary: oklch(0.705 0.015 286.067);
@@ -221,6 +370,28 @@
   --ring: oklch(0.552 0.014 285.938);
   --sidebar-primary: oklch(0.705 0.015 286.067);
   --sidebar-ring: oklch(0.552 0.014 285.938);
+  --background: oklch(0.155 0.007 285.805);
+  --card: oklch(0.215 0.009 285.805);
+  --popover: oklch(0.215 0.009 285.805);
+  --secondary: oklch(0.275 0.01 285.805);
+  --muted: oklch(0.275 0.01 285.805);
+  --accent: oklch(0.3 0.013 285.805);
+  --sidebar: oklch(0.195 0.009 285.805);
+  --sidebar-accent: oklch(0.275 0.011 285.805);
+}
+
+/* =============================================================================
+   Smooth Theme Transition — Rəng teması və ya İşıq/Qaranlıq rejimi dəyişəndə
+   fon/mətn/sərhəd rəngləri sərt sıçrayış deyil, axıcı keçid etsin.
+   Xüsusi `transition` təyin edilmiş elementlər (.card-hover və s.) özlərinin
+   daha spesifik qaydası ilə üstün gəlir, bu qayda yalnız defolt keçid təmin edir.
+   ============================================================================= */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 0.25s;
+  transition-timing-function: ease;
 }
 
 /* =============================================================================
@@ -428,6 +599,12 @@ body {
   .animate-scale-in,
   .card-hover {
     animation: none !important;
+    transition: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
     transition: none !important;
   }
 }

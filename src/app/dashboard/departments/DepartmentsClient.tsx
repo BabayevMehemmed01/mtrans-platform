@@ -336,7 +336,7 @@ export function DepartmentsClient({
                     <div className="relative flex items-center justify-between">
                       {dept.isDefault ? (
                         <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm gap-1">
-                          <Lock className="h-3 w-3" /> {t("departmentsClient.defaultBadge") || "Default"}
+                          <Lock className="h-3 w-3" /> {t("departmentsClient.defaultBadge") || "Standart"}
                         </Badge>
                       ) : <span />}
 

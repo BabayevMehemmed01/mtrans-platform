@@ -71,7 +71,7 @@ export function MarketingAdsTab({ campaigns, config, loading, onOpenCreate, onCa
       <div className="space-y-4">
         <div className="flex items-center justify-end">
           <Button onClick={handleCreateClick} className="gap-1.5 bg-pink-600 text-white hover:bg-pink-600/90">
-            <Plus className="h-4 w-4" /> Create Ad
+            <Plus className="h-4 w-4" /> Reklam yarat
           </Button>
         </div>
         <div className="rounded-2xl border border-dashed border-pink-200 bg-pink-50/40 p-10 text-center shadow-sm">
@@ -97,7 +97,7 @@ export function MarketingAdsTab({ campaigns, config, loading, onOpenCreate, onCa
           <Input placeholder="Reklam axtar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
         </div>
         <Button onClick={handleCreateClick} className="gap-1.5 bg-pink-600 text-white hover:bg-pink-600/90">
-          <Plus className="h-4 w-4" /> Create Ad
+          <Plus className="h-4 w-4" /> Reklam yarat
         </Button>
       </div>
 
@@ -108,7 +108,7 @@ export function MarketingAdsTab({ campaigns, config, loading, onOpenCreate, onCa
               <TableHead>Ad</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Yaradılma tarixi</TableHead>
-              <TableHead className="w-[64px]">Actions</TableHead>
+              <TableHead className="w-[64px]">Əməliyyatlar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -123,7 +123,7 @@ export function MarketingAdsTab({ campaigns, config, loading, onOpenCreate, onCa
                 <TableCell colSpan={4} className="p-0">
                   <MarketingEmptyState
                     icon={Camera}
-                    title="No data found"
+                    title="Məlumat tapılmadı"
                     description="Hələ heç bir Instagram reklamı yaradılmayıb."
                   />
                 </TableCell>

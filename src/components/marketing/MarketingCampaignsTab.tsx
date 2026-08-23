@@ -123,7 +123,7 @@ export function MarketingCampaignsTab({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-600/90">
-              <Plus className="h-4 w-4" /> Create Campaign <ChevronDown className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" /> Kampaniya yarat <ChevronDown className="h-3.5 w-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 rounded-xl">
@@ -153,11 +153,11 @@ export function MarketingCampaignsTab({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>Ad</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Statistics</TableHead>
+              <TableHead>Statistika</TableHead>
               <TableHead>Yaradılma tarixi</TableHead>
-              <TableHead className="w-[64px]">Actions</TableHead>
+              <TableHead className="w-[64px]">Əməliyyatlar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,8 +172,8 @@ export function MarketingCampaignsTab({
                 <TableCell colSpan={5} className="p-0">
                   <MarketingEmptyState
                     icon={Megaphone}
-                    title="No data found"
-                    description="Hələ heç bir kampaniya yaradılmayıb. Yuxarıdaki 'Create Campaign' düyməsi ilə başlayın."
+                    title="Məlumat tapılmadı"
+                    description="Hələ heç bir kampaniya yaradılmayıb. Yuxarıdakı «Kampaniya yarat» düyməsi ilə başlayın."
                   />
                 </TableCell>
               </TableRow>

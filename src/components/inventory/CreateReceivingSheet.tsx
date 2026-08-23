@@ -77,7 +77,7 @@ export function CreateReceivingSheet({
   const handleSubmit = async (status: "DRAFT" | "COMPLETED") => {
     const validLines = lines.filter((l) => l.productId && l.warehouseId && l.quantity > 0);
     if (validLines.length === 0) {
-      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (Product, Warehouse, Quantity)");
+      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (Məhsul, Anbar, Miqdar)");
       setActiveTab("products");
       return;
     }
@@ -132,7 +132,7 @@ export function CreateReceivingSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <ArrowDownToLine className="h-4.5 w-4.5 text-emerald-600" /> Goods Receiving
+            <ArrowDownToLine className="h-4.5 w-4.5 text-emerald-600" /> Mal Qəbulu
           </SheetTitle>
           <SheetDescription>
             Təchizatçıdan daxil olan malları qəbul edin — anbar qalığı avtomatik artırılacaq.
@@ -146,13 +146,13 @@ export function CreateReceivingSheet({
                 value="general"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                General
+                Ümumi
               </TabsTrigger>
               <TabsTrigger
                 value="products"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                Products {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
+                Məhsullar {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -160,29 +160,29 @@ export function CreateReceivingSheet({
           <ScrollArea className="flex-1">
             <TabsContent value="general" className="m-0 space-y-4 px-6 py-5">
               <div className="space-y-1.5">
-                <Label htmlFor="rcv-name">Document Name</Label>
+                <Label htmlFor="rcv-name">Sənəd adı</Label>
                 <Input
                   id="rcv-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Goods receipt #"
+                  placeholder="Qəbul sənədi №"
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Supplier</Label>
+                  <Label>Təchizatçı</Label>
                   <SupplierSelect
                     suppliers={suppliers}
                     value={supplierId}
                     onChange={setSupplierId}
                     onCreated={onSupplierCreated}
-                    placeholder="Select supplier..."
+                    placeholder="Təchizatçı seçin..."
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Currency</Label>
+                  <Label>Valyuta</Label>
                   <Select value={currency} onValueChange={(v) => setCurrency(v ?? "AZN")}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -199,7 +199,7 @@ export function CreateReceivingSheet({
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="rcv-comment">Comment</Label>
+                <Label htmlFor="rcv-comment">Qeyd</Label>
                 <Textarea
                   id="rcv-comment"
                   value={comment}
@@ -220,8 +220,8 @@ export function CreateReceivingSheet({
                 onWarehouseCreated={onWarehouseCreated}
                 showPrices
                 warehouseMode="single"
-                warehouseLabel="Receiving warehouse"
-                quantityLabel="Quantity received"
+                warehouseLabel="Qəbul anbarı"
+                quantityLabel="Qəbul edilən miqdar"
               />
             </TabsContent>
           </ScrollArea>
@@ -230,22 +230,22 @@ export function CreateReceivingSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-between">
             <p className="text-sm">
-              <span className="text-muted-foreground">Total amount: </span>
+              <span className="text-muted-foreground">Ümumi məbləğ: </span>
               <span className="font-semibold text-foreground">
                 {totalAmount.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
               </span>
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-                Cancel
+                Ləğv et
               </Button>
               <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save
+                Yadda saxla
               </Button>
               <Button onClick={() => handleSubmit("COMPLETED")} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700">
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save and Process
+                Yadda saxla və icra et
               </Button>
             </div>
           </div>

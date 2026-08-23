@@ -83,7 +83,7 @@ export default async function DepartmentDetailPage({ params }: Props) {
       where: { project: { companyId, departmentId: id }, isArchived: false },
       include: {
         assignee: { select: { id: true, name: true, avatar: true } },
-        project: { select: { id: true, name: true } },
+        project: { select: { id: true, name: true, color: true } },
         labels: { include: { label: true } },
         _count: { select: { subtasks: true, comments: true, attachments: true } },
       },

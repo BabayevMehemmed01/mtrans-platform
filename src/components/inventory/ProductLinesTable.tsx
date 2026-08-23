@@ -46,8 +46,8 @@ export function ProductLinesTable({
   onWarehouseCreated,
   showPrices = true,
   warehouseMode = "single",
-  warehouseLabel = "Warehouse",
-  quantityLabel = "Quantity",
+  warehouseLabel = "Anbar",
+  quantityLabel = "Miqdar",
 }: ProductLinesTableProps) {
   const updateLine = (key: string, patch: Partial<StockMovementLineDraft>) => {
     onLinesChange(lines.map((l) => (l.key === key ? { ...l, ...patch } : l)));
@@ -113,17 +113,17 @@ export function ProductLinesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[200px]">Product</TableHead>
-              <TableHead className="min-w-[160px]">Barcode</TableHead>
-              {showPrices && <TableHead className="w-[120px]">Purchase price</TableHead>}
-              {showPrices && <TableHead className="w-[120px]">Sales price</TableHead>}
+              <TableHead className="min-w-[200px]">Məhsul</TableHead>
+              <TableHead className="min-w-[160px]">Barkod</TableHead>
+              {showPrices && <TableHead className="w-[120px]">Alış qiyməti</TableHead>}
+              {showPrices && <TableHead className="w-[120px]">Satış qiyməti</TableHead>}
               <TableHead className="w-[110px]">{quantityLabel}</TableHead>
               {warehouseMode === "single" ? (
                 <TableHead className="min-w-[180px]">{warehouseLabel}</TableHead>
               ) : (
                 <>
-                  <TableHead className="min-w-[160px]">From warehouse</TableHead>
-                  <TableHead className="min-w-[160px]">To warehouse</TableHead>
+                  <TableHead className="min-w-[160px]">Haradan</TableHead>
+                  <TableHead className="min-w-[160px]">Haraya</TableHead>
                 </>
               )}
               <TableHead className="w-[44px]" />
@@ -133,7 +133,7 @@ export function ProductLinesTable({
             {lines.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                  Hələ məhsul əlavə edilməyib. Aşağıdakı &ldquo;Add product&rdquo; düyməsi ilə başlayın.
+                  Hələ məhsul əlavə edilməyib. Aşağıdakı «Məhsul əlavə et» düyməsi ilə başlayın.
                 </TableCell>
               </TableRow>
             ) : (
@@ -153,7 +153,7 @@ export function ProductLinesTable({
                         <ScanBarcode className="h-3.5 w-3.5" />
                       </InputGroupAddon>
                       <InputGroupInput
-                        placeholder="Scan or type..."
+                        placeholder="Barkod oxudun və ya yazın..."
                         value={line.barcode}
                         onChange={(e) => updateLine(line.key, { barcode: e.target.value })}
                         onKeyDown={(e) => {
@@ -216,7 +216,7 @@ export function ProductLinesTable({
                           value={line.fromWarehouseId}
                           onChange={(id) => updateLine(line.key, { fromWarehouseId: id })}
                           onCreated={onWarehouseCreated}
-                          placeholder="From"
+                          placeholder="Haradan"
                         />
                       </TableCell>
                       <TableCell>
@@ -225,7 +225,7 @@ export function ProductLinesTable({
                           value={line.toWarehouseId}
                           onChange={(id) => updateLine(line.key, { toWarehouseId: id })}
                           onCreated={onWarehouseCreated}
-                          placeholder="To"
+                          placeholder="Haraya"
                         />
                       </TableCell>
                     </>
@@ -243,12 +243,12 @@ export function ProductLinesTable({
       </div>
 
       <Button variant="outline" size="sm" onClick={addLine} className="gap-1.5">
-        <Plus className="h-3.5 w-3.5" /> Add product
+        <Plus className="h-3.5 w-3.5" /> Məhsul əlavə et
       </Button>
 
       {showPrices && (
         <div className="flex items-center justify-end gap-2 border-t border-border/60 pt-3 text-sm">
-          <span className="text-muted-foreground">Total amount:</span>
+          <span className="text-muted-foreground">Ümumi məbləğ:</span>
           <span className="text-base font-semibold">{total.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
       )}

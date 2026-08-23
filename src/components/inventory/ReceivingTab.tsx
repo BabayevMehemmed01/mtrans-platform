@@ -69,9 +69,9 @@ export function ReceivingTab({ movements, loading, onOpenCreate, onChanged }: Re
     return (
       <InventoryEmptyState
         icon={ArrowDownToLine}
-        title="No receiving documents yet"
+        title="Hələ qəbul sənədi yoxdur"
         description="Təchizatçılardan qəbul olunan mallar (INBOUND) burada görünəcək."
-        actionLabel="New Receiving"
+        actionLabel="Yeni Qəbul"
         onAction={onOpenCreate}
         className="min-h-[45vh]"
       />
@@ -82,7 +82,7 @@ export function ReceivingTab({ movements, loading, onOpenCreate, onChanged }: Re
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         <Button onClick={onOpenCreate} className="gap-1.5 bg-emerald-600 hover:bg-emerald-700">
-          <ArrowDownToLine className="h-4 w-4" /> New Receiving
+          <ArrowDownToLine className="h-4 w-4" /> Yeni Qəbul
         </Button>
       </div>
 
@@ -90,11 +90,11 @@ export function ReceivingTab({ movements, loading, onOpenCreate, onChanged }: Re
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Reference</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>To warehouse</TableHead>
-              <TableHead>Quantity</TableHead>
+              <TableHead>Sənəd №</TableHead>
+              <TableHead>Məhsul</TableHead>
+              <TableHead>Təchizatçı</TableHead>
+              <TableHead>Hədəf anbar</TableHead>
+              <TableHead>Miqdar</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[56px]" />
             </TableRow>
@@ -122,10 +122,10 @@ export function ReceivingTab({ movements, loading, onOpenCreate, onChanged }: Re
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem className="gap-2" onClick={() => handleAction(m.id, "process")}>
-                          <Play className="h-4 w-4" /> Process
+                          <Play className="h-4 w-4" /> İcra et
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleAction(m.id, "cancel")}>
-                          <X className="h-4 w-4" /> Cancel
+                          <X className="h-4 w-4" /> Ləğv et
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

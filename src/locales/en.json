@@ -62,12 +62,12 @@
       "colorTheme": "Color Theme",
       "colorThemeDesc": "Choose the app's main accent color. Your selected card activates instantly, but the change is only applied once you press the button below.",
       "colorThemes": {
-        "default": "Default",
-        "blue": "Blue",
-        "purple": "Purple",
-        "green": "Green",
+        "default": "Indigo",
+        "blue": "Sky",
+        "purple": "Violet",
+        "green": "Emerald",
         "rose": "Rose",
-        "orange": "Orange",
+        "orange": "Amber",
         "slate": "Slate",
         "zinc": "Zinc"
       },
@@ -972,7 +972,11 @@
     "weekThu": "Thu",
     "weekFri": "Fri",
     "weekSat": "Sat",
-    "weekSun": "Sun"
+    "weekSun": "Sun",
+    "pickerTitle": "Calendar",
+    "noDealsForDay": "No deals for this day",
+    "viewMonth": "Month",
+    "viewWeek": "Week"
   },
   "crmContactCenter": {
     "title": "Contact Center",

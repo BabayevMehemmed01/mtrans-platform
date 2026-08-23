@@ -129,7 +129,7 @@ const COLOR_THEMES: { id: ColorThemeId; swatch: string; labelKey: string }[] = [
   { id: "purple", swatch: "#7c3aed", labelKey: "purple" },
   { id: "green", swatch: "#059669", labelKey: "green" },
   { id: "rose", swatch: "#e11d48", labelKey: "rose" },
-  { id: "orange", swatch: "#ea580c", labelKey: "orange" },
+  { id: "orange", swatch: "#d97706", labelKey: "orange" },
   { id: "slate", swatch: "#475569", labelKey: "slate" },
   { id: "zinc", swatch: "#3f3f46", labelKey: "zinc" },
 ];

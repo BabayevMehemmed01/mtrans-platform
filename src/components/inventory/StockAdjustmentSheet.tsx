@@ -72,7 +72,7 @@ export function StockAdjustmentSheet({
   const handleSubmit = async (status: "DRAFT" | "COMPLETED") => {
     const validLines = lines.filter((l) => l.productId && l.warehouseId && l.quantity > 0);
     if (validLines.length === 0) {
-      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (Product, Warehouse, Quantity)");
+      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (məhsul, anbar, miqdar)");
       setActiveTab("products");
       return;
     }
@@ -126,7 +126,7 @@ export function StockAdjustmentSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <ClipboardEdit className="h-4.5 w-4.5 text-primary" /> Stock Adjustment
+            <ClipboardEdit className="h-4.5 w-4.5 text-primary" /> Stok Tənzimləməsi
           </SheetTitle>
           <SheetDescription>
             Anbar qalıqlarını ilkin quraşdırın və ya inventarlaşdırma nəticəsində tənzimləyin.
@@ -140,13 +140,13 @@ export function StockAdjustmentSheet({
                 value="general"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                General
+                Ümumi
               </TabsTrigger>
               <TabsTrigger
                 value="products"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                Products {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
+                Məhsullar {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -154,19 +154,19 @@ export function StockAdjustmentSheet({
           <ScrollArea className="flex-1">
             <TabsContent value="general" className="m-0 space-y-4 px-6 py-5">
               <div className="space-y-1.5">
-                <Label htmlFor="doc-name">Document Name</Label>
+                <Label htmlFor="doc-name">Sənəd adı</Label>
                 <Input
                   id="doc-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Stock adjustment #"
+                  placeholder="Stok tənzimləməsi №"
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Currency</Label>
+                  <Label>Valyuta</Label>
                   <Select value={currency} onValueChange={(v) => setCurrency(v ?? "AZN")}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -181,21 +181,21 @@ export function StockAdjustmentSheet({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Stage</Label>
+                  <Label>Mərhələ</Label>
                   <Select value={stage} onValueChange={(v) => setStage((v as "DRAFT" | "COMPLETED") ?? "DRAFT")}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="DRAFT">Draft</SelectItem>
-                      <SelectItem value="COMPLETED">Processed</SelectItem>
+                      <SelectItem value="DRAFT">Qaralama</SelectItem>
+                      <SelectItem value="COMPLETED">İcra olunub</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="doc-comment">Comment</Label>
+                <Label htmlFor="doc-comment">Şərh</Label>
                 <Textarea
                   id="doc-comment"
                   value={comment}
@@ -216,8 +216,8 @@ export function StockAdjustmentSheet({
                 onWarehouseCreated={onWarehouseCreated}
                 showPrices
                 warehouseMode="single"
-                warehouseLabel="Warehouse"
-                quantityLabel="Quantity arrived"
+                warehouseLabel="Anbar"
+                quantityLabel="Gələn miqdar"
               />
             </TabsContent>
           </ScrollArea>
@@ -226,22 +226,22 @@ export function StockAdjustmentSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-between">
             <p className="text-sm">
-              <span className="text-muted-foreground">Total amount: </span>
+              <span className="text-muted-foreground">Ümumi məbləğ: </span>
               <span className="font-semibold text-foreground">
                 {totalAmount.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
               </span>
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-                Cancel
+                Ləğv et
               </Button>
               <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save
+                Yadda saxla
               </Button>
               <Button onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Save and Process
+                Saxla və icra et
               </Button>
             </div>
           </div>

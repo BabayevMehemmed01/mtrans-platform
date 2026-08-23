@@ -98,7 +98,7 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
               <TableHead>{t("crmDealsList.thContactDetails") || t("crmDealsList.thContact") || "Əlaqə"}</TableHead>
               <TableHead>{t("crmDealsList.thStage") || "Mərhələ"}</TableHead>
               <TableHead>{t("crmDealsList.thValue") || "Məbləğ"}</TableHead>
-              <TableHead>{t("crmDealsList.thDeadline") || t("crmDealsList.thCloseDate") || "Deadline"}</TableHead>
+              <TableHead>{t("crmDealsList.thDeadline") || t("crmDealsList.thCloseDate") || "Son tarix"}</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>

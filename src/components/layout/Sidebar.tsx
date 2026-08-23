@@ -411,7 +411,8 @@ function CollapsibleNavItem({
   const displayTitle = item.tKey ? t(item.tKey) : item.title;
   const childActive = item.children?.some((child) => isActive(child.href)) ?? false;
   const groupActive = childActive || isActive(item.href);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(groupActive);
+  const primaryHref = item.href === "/dashboard/my-work" ? "/dashboard/my-work/tasks" : item.children?.[0]?.href ?? item.href;
 
   if (isCollapsed) {
     return (
@@ -426,7 +427,7 @@ function CollapsibleNavItem({
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="w-52">
           <DropdownMenuItem asChild>
-            <Link href={item.href} className="flex cursor-pointer items-center gap-2">
+            <Link href={primaryHref} className="flex cursor-pointer items-center gap-2">
               <Icon className="h-4 w-4 text-muted-foreground" />
               {displayTitle}
             </Link>
@@ -446,7 +447,14 @@ function CollapsibleNavItem({
   }
 
   return (
-    <Collapsible.Root open={open} onOpenChange={setOpen}>
+    <Collapsible.Root
+      open={open}
+      onOpenChange={setOpen}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => {
+        if (!groupActive) setOpen(false);
+      }}
+    >
       <div
         className={cn(
           "flex items-center rounded-md text-sm font-medium transition-all duration-200",
@@ -456,7 +464,7 @@ function CollapsibleNavItem({
         )}
       >
         <Link
-          href={item.href}
+          href={primaryHref}
           className="flex min-w-0 flex-1 items-center gap-3 px-3 py-2"
         >
           <Icon className="h-4 w-4 flex-shrink-0" />

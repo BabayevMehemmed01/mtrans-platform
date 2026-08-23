@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { ClipboardEdit, PackagePlus, Search, UploadCloud, Warehouse } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { InventoryTableSkeleton } from "./InventoryEmptyState";
+import { MigrateDataDialog } from "./MigrateDataDialog";
 import { cn } from "@/lib/utils";
 import type { ProductLite } from "./types";
 
@@ -34,6 +34,7 @@ interface InventoryOverviewTabProps {
 
 export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpenAdjustment }: InventoryOverviewTabProps) {
   const [search, setSearch] = useState("");
+  const [migrateOpen, setMigrateOpen] = useState(false);
 
   const filtered = useMemo(
     () =>
@@ -69,13 +70,13 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
               <ClipboardEdit className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Create your first stock adjustment</p>
+              <p className="text-sm font-semibold text-foreground">İlk stok tənzimləməsini yaradın</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
                 Anbarlarınızın ilkin qalığını əlavə edin. Məhsul kataloqu, anbar iyerarxiyası və qiymətlər dinamik
                 olaraq Prisma verilənlər bazasında yaradılır.
               </p>
             </div>
-            <span className="mt-1 text-xs font-medium text-primary group-hover:underline">Start now →</span>
+            <span className="mt-1 text-xs font-medium text-primary group-hover:underline">İndi başlayın →</span>
           </button>
 
           <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-left">
@@ -83,21 +84,18 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
               <UploadCloud className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Migrate</p>
+              <p className="text-sm font-semibold text-foreground">Miqrasiya</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Digər sistemdən (Excel/1C/Bitrix24) məhsul kataloqu və qalıqları köçürün.
+                Digər sistemdən (Excel, CSV, Zoho, QuickBooks) məhsul kataloqu və qalıqları köçürün.
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => toast("Migrasiya modulu tezliklə əlavə olunacaq", { icon: "🚧" })}
-              className="mt-1"
-            >
-              Migrate data
+            <Button size="sm" variant="outline" onClick={() => setMigrateOpen(true)} className="mt-1">
+              Məlumatları Miqrasiya Et
             </Button>
           </div>
         </div>
+
+        <MigrateDataDialog open={migrateOpen} onOpenChange={setMigrateOpen} />
       </div>
     );
   }
@@ -107,22 +105,27 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
       <div className="flex items-center justify-between gap-3">
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search product, SKU, barcode..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
+          <Input placeholder="Məhsul, SKU, barkod axtar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
         </div>
-        <Button onClick={onOpenAdjustment} className="gap-1.5">
-          <PackagePlus className="h-4 w-4" /> Stock Adjustment
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setMigrateOpen(true)} className="gap-1.5">
+            <UploadCloud className="h-4 w-4" /> Miqrasiya Et
+          </Button>
+          <Button onClick={onOpenAdjustment} className="gap-1.5">
+            <PackagePlus className="h-4 w-4" /> Stok Tənzimləməsi
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-2xl shadow-sm">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Product</TableHead>
+              <TableHead>Məhsul</TableHead>
               <TableHead>SKU</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Total quantity</TableHead>
-              <TableHead>Min. stock</TableHead>
+              <TableHead>Kateqoriya</TableHead>
+              <TableHead>Ümumi miqdar</TableHead>
+              <TableHead>Min. stok</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
@@ -163,7 +166,7 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
                           low ? "border-red-200 bg-red-50 text-red-600" : "border-emerald-200 bg-emerald-50 text-emerald-600"
                         )}
                       >
-                        {low ? "Low stock" : "In stock"}
+                        {low ? "Stok azdır" : "Stokda var"}
                       </Badge>
                     </TableCell>
                   </TableRow>
@@ -173,6 +176,8 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
           </TableBody>
         </Table>
       </div>
+
+      <MigrateDataDialog open={migrateOpen} onOpenChange={setMigrateOpen} />
     </div>
   );
 }

@@ -21,6 +21,7 @@ interface CrmDealDialogProps {
   mode: "create" | "edit";
   deal?: CrmDeal | null;
   defaultStageId?: string;
+  defaultDeadline?: string;
   stages: CrmStage[];
   members: CrmMember[];
   contacts: CrmContact[];
@@ -31,14 +32,15 @@ interface CrmDealDialogProps {
   onCompanyCreated: (company: CrmCompanyLite) => void;
 }
 
-function emptyForm(defaultStageId?: string) {
+function emptyForm(defaultStageId?: string, defaultDeadline?: string) {
+  const deadlineValue = defaultDeadline ? toDateInputValue(defaultDeadline) : "";
   return {
     title: "",
     value: "",
     currency: "AZN",
     probability: "0",
-    expectedCloseDate: "",
-    deadline: "",
+    expectedCloseDate: deadlineValue,
+    deadline: deadlineValue,
     clientName: "",
     clientCompany: "",
     clientPhone: "",
@@ -67,6 +69,7 @@ export function CrmDealDialog({
   mode,
   deal,
   defaultStageId,
+  defaultDeadline,
   stages,
   members,
   contacts,
@@ -86,7 +89,7 @@ export function CrmDealDialog({
     { value: "LOST", label: t("crmDealDialog.statusLost") || "İtirildi" },
   ];
 
-  const [form, setForm] = useState(emptyForm(defaultStageId));
+  const [form, setForm] = useState(emptyForm(defaultStageId, defaultDeadline));
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -112,10 +115,10 @@ export function CrmDealDialog({
         status: deal.status || "OPEN",
       });
     } else {
-      setForm(emptyForm(defaultStageId));
+      setForm(emptyForm(defaultStageId, defaultDeadline));
     }
     setCopied(false);
-  }, [open, mode, deal, defaultStageId]);
+  }, [open, mode, deal, defaultStageId, defaultDeadline]);
 
   const trackingUrl =
     mode === "edit" && deal?.trackingToken && typeof window !== "undefined"

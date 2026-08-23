@@ -52,25 +52,25 @@ export default function InventoryClient() {
         <div className="flex justify-center overflow-x-auto border-b border-border">
           <TabsList className="h-auto w-full min-w-max justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="inventory" className={TAB_TRIGGER_CLASS}>
-              <Boxes className="mr-1.5 h-3.5 w-3.5" /> Inventory
+              <Boxes className="mr-1.5 h-3.5 w-3.5" /> Anbar
             </TabsTrigger>
             <TabsTrigger value="receiving" className={TAB_TRIGGER_CLASS}>
-              <ArrowDownToLine className="mr-1.5 h-3.5 w-3.5" /> Receiving
+              <ArrowDownToLine className="mr-1.5 h-3.5 w-3.5" /> Qəbul
             </TabsTrigger>
             <TabsTrigger value="sales-orders" className={TAB_TRIGGER_CLASS}>
-              <ShoppingCart className="mr-1.5 h-3.5 w-3.5" /> Sales orders
+              <ShoppingCart className="mr-1.5 h-3.5 w-3.5" /> Satış sifarişləri
             </TabsTrigger>
             <TabsTrigger value="transfers" className={TAB_TRIGGER_CLASS}>
-              <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" /> Transfers
+              <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" /> Köçürmələr
             </TabsTrigger>
             <TabsTrigger value="write-offs" className={TAB_TRIGGER_CLASS}>
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Write-offs
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Silinmələr
             </TabsTrigger>
             <TabsTrigger value="suppliers" className={TAB_TRIGGER_CLASS}>
-              <Truck className="mr-1.5 h-3.5 w-3.5" /> Suppliers
+              <Truck className="mr-1.5 h-3.5 w-3.5" /> Təchizatçılar
             </TabsTrigger>
             <TabsTrigger value="analytics" className={TAB_TRIGGER_CLASS}>
-              <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analytics
+              <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analitika
             </TabsTrigger>
           </TabsList>
         </div>

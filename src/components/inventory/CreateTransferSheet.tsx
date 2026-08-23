@@ -59,7 +59,7 @@ export function CreateTransferSheet({
       (l) => l.productId && l.fromWarehouseId && l.toWarehouseId && l.quantity > 0
     );
     if (validLines.length === 0) {
-      toast.error("Ən azı bir sətirdə Product, From/To warehouse və Quantity doldurulmalıdır");
+      toast.error("Ən azı bir sətirdə məhsul, haradan/haraya anbar və miqdar doldurulmalıdır");
       return;
     }
     const sameWarehouse = validLines.find((l) => l.fromWarehouseId === l.toWarehouseId);
@@ -113,7 +113,7 @@ export function CreateTransferSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <ArrowLeftRight className="h-4.5 w-4.5 text-primary" /> New Transfer
+            <ArrowLeftRight className="h-4.5 w-4.5 text-primary" /> Yeni köçürmə
           </SheetTitle>
           <SheetDescription>Anbarlar/hüceyrələr arası daxili stok köçürməsi yaradın.</SheetDescription>
         </SheetHeader>
@@ -122,17 +122,17 @@ export function CreateTransferSheet({
           <div className="space-y-5 px-6 py-5">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="transfer-name">Document Name</Label>
+                <Label htmlFor="transfer-name">Sənəd adı</Label>
                 <Input
                   id="transfer-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Transfer #"
+                  placeholder="Köçürmə №"
                   autoFocus
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="transfer-comment">Comment</Label>
+                <Label htmlFor="transfer-comment">Şərh</Label>
                 <Input
                   id="transfer-comment"
                   value={comment}
@@ -151,7 +151,7 @@ export function CreateTransferSheet({
               onWarehouseCreated={onWarehouseCreated}
               showPrices={false}
               warehouseMode="transfer"
-              quantityLabel="Quantity"
+              quantityLabel="Miqdar"
             />
           </div>
         </ScrollArea>
@@ -159,15 +159,15 @@ export function CreateTransferSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Cancel
+              Ləğv et
             </Button>
             <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save
+              Yadda saxla
             </Button>
             <Button onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save and Process
+              Saxla və icra et
             </Button>
           </div>
         </SheetFooter>

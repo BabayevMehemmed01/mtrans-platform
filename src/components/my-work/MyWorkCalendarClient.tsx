@@ -20,7 +20,6 @@ import { ArrowUpRight, CalendarClock, ChevronLeft, ChevronRight } from "lucide-r
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Sheet,
@@ -115,29 +114,46 @@ export function MyWorkCalendarClient({ tasks }: { tasks: MyWorkCalendarTask[] })
   const goToday = () => setCursor(new Date());
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold capitalize tracking-tight text-foreground">{title}</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <Tabs value={view} onValueChange={(v) => setView(v as ViewMode)}>
-            <TabsList>
-              <TabsTrigger value="week">Həftə</TabsTrigger>
-              <TabsTrigger value="month">Ay</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon-sm" className="text-muted-foreground" onClick={goPrev} aria-label="Əvvəlki">
-              <ChevronLeft className="size-4" />
-            </Button>
-            <Button variant="outline" size="sm" onClick={goToday}>
+    <div className="flex h-full flex-col overflow-hidden bg-muted/30">
+      <div className="z-10 flex flex-wrap items-center justify-between gap-3 border-b border-border bg-card px-6 py-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex rounded-lg border border-border bg-muted p-1">
+            <button type="button" onClick={goPrev} className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-card hover:shadow-sm" aria-label="Əvvəlki">
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button type="button" onClick={goToday} className="rounded-md px-4 py-1.5 text-sm font-bold text-foreground transition-all hover:bg-card hover:shadow-sm">
               Bu gün
-            </Button>
-            <Button variant="ghost" size="icon-sm" className="text-muted-foreground" onClick={goNext} aria-label="Növbəti">
-              <ChevronRight className="size-4" />
-            </Button>
+            </button>
+            <button type="button" onClick={goNext} className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-card hover:shadow-sm" aria-label="Növbəti">
+              <ChevronRight className="h-5 w-5" />
+            </button>
           </div>
+          <h2 className="text-xl font-black capitalize tracking-tight text-foreground">{title}</h2>
+        </div>
+        <div className="flex rounded-lg border border-border bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setView("month")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-bold transition-all",
+              view === "month" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Ay
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("week")}
+            className={cn(
+              "rounded-md px-3 py-1.5 text-xs font-bold transition-all",
+              view === "week" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Həftə
+          </button>
         </div>
       </div>
+      <div className="flex flex-1 flex-col gap-4 overflow-auto p-4 sm:p-6">
 
       {view === "week" ? (
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
@@ -268,6 +284,7 @@ export function MyWorkCalendarClient({ tasks }: { tasks: MyWorkCalendarTask[] })
           </div>
         </div>
       )}
+      </div>
 
       <Sheet open={!!selectedTask} onOpenChange={(open) => !open && setSelectedTask(null)}>
         <SheetContent className="flex flex-col p-6 sm:max-w-md">

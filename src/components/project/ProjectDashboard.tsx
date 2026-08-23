@@ -103,11 +103,11 @@ export function ProjectDashboard({ tasks, members, memberCount }: ProjectDashboa
           </h3>
           <div className="space-y-4">
             {[
-              { label: t("status.NOT_PLANNED") || "Not Planned", count: notPlanned, color: "#94a3b8" },
-              { label: t("status.IN_PROGRESS") || "In Progress", count: inProgress, color: "#f59e0b" },
-              { label: t("status.REVIEW") || "Review", count: inReview, color: "#8b5cf6" },
-              { label: t("status.DONE") || "Done", count: done, color: "#22c55e" },
-              { label: t("status.CANCELLED") || "Cancelled", count: cancelled, color: "#ef4444" },
+              { label: t("status.NOT_PLANNED") || "Planlaşdırılmayıb", count: notPlanned, color: "#94a3b8" },
+              { label: t("status.IN_PROGRESS") || "Davam edir", count: inProgress, color: "#f59e0b" },
+              { label: t("status.REVIEW") || "Yoxlanılır", count: inReview, color: "#8b5cf6" },
+              { label: t("status.DONE") || "Tamamlandı", count: done, color: "#22c55e" },
+              { label: t("status.CANCELLED") || "Ləğv edildi", count: cancelled, color: "#ef4444" },
             ].map((item) => (
               <div key={item.label} className="flex items-center gap-4 group">
                 <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: item.color }} />

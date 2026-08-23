@@ -57,7 +57,7 @@ export function CreateWriteOffSheet({
   const handleSubmit = async (status: "DRAFT" | "COMPLETED") => {
     const validLines = lines.filter((l) => l.productId && l.warehouseId && l.quantity > 0);
     if (validLines.length === 0) {
-      toast.error("Ən azı bir sətirdə Product, Warehouse və Quantity doldurulmalıdır");
+      toast.error("Ən azı bir sətirdə məhsul, anbar və miqdar doldurulmalıdır");
       return;
     }
 
@@ -106,7 +106,7 @@ export function CreateWriteOffSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <Trash2 className="h-4.5 w-4.5 text-destructive" /> New Write-off
+            <Trash2 className="h-4.5 w-4.5 text-destructive" /> Yeni silinmə
           </SheetTitle>
           <SheetDescription>Yararsız və ya zay olmuş məhsulları anbar qalığından silin.</SheetDescription>
         </SheetHeader>
@@ -115,18 +115,18 @@ export function CreateWriteOffSheet({
           <div className="space-y-5 px-6 py-5">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="wof-name">Document Name</Label>
+                <Label htmlFor="wof-name">Sənəd adı</Label>
                 <Input
                   id="wof-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Write-off #"
+                  placeholder="Silinmə №"
                   autoFocus
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wof-reason">Reason / Comment</Label>
+              <Label htmlFor="wof-reason">Səbəb / Şərh</Label>
               <Textarea
                 id="wof-reason"
                 value={reason}
@@ -145,8 +145,8 @@ export function CreateWriteOffSheet({
               onWarehouseCreated={onWarehouseCreated}
               showPrices
               warehouseMode="single"
-              warehouseLabel="Warehouse"
-              quantityLabel="Quantity to write off"
+              warehouseLabel="Anbar"
+              quantityLabel="Silinəcək miqdar"
             />
           </div>
         </ScrollArea>
@@ -154,15 +154,15 @@ export function CreateWriteOffSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Cancel
+              Ləğv et
             </Button>
             <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save
+              Yadda saxla
             </Button>
             <Button variant="destructive" onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save and Process
+              Saxla və icra et
             </Button>
           </div>
         </SheetFooter>

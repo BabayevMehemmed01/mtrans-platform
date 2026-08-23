@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Bell, Search, CheckCheck } from "lucide-react";
+import { Bell, Search, CheckCheck, ListTodo, CalendarClock, MessageSquare, AtSign, UserPlus, PhoneIncoming } from "lucide-react";
 import { timeAgo } from "@/lib/utils";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -21,6 +21,28 @@ interface NotificationItem {
   link: string | null;
   isRead: boolean;
   createdAt: string;
+}
+
+// Bildiriş növünə görə ikon və rəng — dropdown-da tez oxunması üçün
+const NOTIF_TYPE_META: Record<string, { icon: typeof Bell; className: string }> = {
+  TASK_ASSIGNED: { icon: ListTodo, className: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  TASK_STATUS_CHANGED: { icon: ListTodo, className: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
+  DEADLINE_APPROACHING: { icon: CalendarClock, className: "bg-amber-500/10 text-amber-600 dark:text-amber-400" },
+  MENTION: { icon: AtSign, className: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
+  COMMENT_REPLY: { icon: MessageSquare, className: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
+  COMMENT_ADDED: { icon: MessageSquare, className: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
+  INVITE: { icon: UserPlus, className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" },
+  CALL_INCOMING: { icon: PhoneIncoming, className: "bg-rose-500/10 text-rose-600 dark:text-rose-400" },
+};
+
+function NotificationIcon({ type }: { type: string }) {
+  const meta = NOTIF_TYPE_META[type] ?? { icon: Bell, className: "bg-muted text-muted-foreground" };
+  const Icon = meta.icon;
+  return (
+    <span className={cn("flex size-7 flex-shrink-0 items-center justify-center rounded-full", meta.className)}>
+      <Icon className="size-3.5" />
+    </span>
+  );
 }
 
 // =============================================================================
@@ -104,10 +126,12 @@ export function Header() {
     ? (user as any).role
     : ((user as any)?.role?.name ?? (t("header.defaultRole") || "İstifadəçi"));
 
-  // Bildirişə kliklədikdə oxunmuş edilməsi və müvafiq səhifəyə keçid
+  // Bildirişə kliklədikdə oxunmuş edilməsi və müvafiq səhifəyə keçid.
+  // "virtual-" prefiksli bildirişlər DB-də saxlanılmır (canlı sintez olunub),
+  // ona görə onlar üçün tək-tək "oxunmuş et" sorğusu göndərmirik.
   const handleNotificationClick = async (notif: NotificationItem) => {
     setNotifMenuOpen(false);
-    if (!notif.isRead) {
+    if (!notif.isRead && !notif.id.startsWith("virtual-")) {
       fetch(`/api/notifications/${notif.id}`, { method: "PATCH" }).then(() =>
         mutateNotifications()
       );
@@ -183,44 +207,46 @@ export function Header() {
             <div className="absolute right-0 top-full mt-1 z-40 w-80 rounded-xl border border-border bg-card shadow-xl animate-scale-in overflow-hidden">
               <div className="flex items-center justify-between p-3 border-b border-border">
                 <p className="text-sm font-semibold">{t("header.notifications") || "Bildirişlər"}</p>
-                {unreadCount > 0 && (
+                {notifications.length > 0 && (
                   <button
                     onClick={handleMarkAllRead}
                     className="flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
-                    {t("header.markAllRead") || "Hamısını oxunmuş et"}
+                    {t("header.markAllRead") || "Hamısını oxunmuş kimi qeyd et"}
                   </button>
                 )}
               </div>
               <div className="max-h-80 overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
-                  <p className="p-4 text-sm text-center text-muted-foreground">
-                    {t("header.noNotifications") || "Bildiriş yoxdur"}
-                  </p>
+                  <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+                    <Bell className="size-8 text-muted-foreground/40" />
+                    <p className="text-sm text-muted-foreground">
+                      {t("header.noNotifications") || "Bildiriş yoxdur"}
+                    </p>
+                  </div>
                 ) : (
                   notifications.map((notif) => (
                     <button
                       key={notif.id}
                       onClick={() => handleNotificationClick(notif)}
                       className={cn(
-                        "w-full text-left px-3 py-2.5 border-b border-border last:border-b-0 hover:bg-accent transition-colors",
+                        "flex w-full items-start gap-2.5 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-accent",
                         !notif.isRead && "bg-primary/5"
                       )}
                     >
-                      <div className="flex items-start gap-2">
-                        {!notif.isRead && (
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                        )}
-                        <div className={cn("min-w-0", notif.isRead && "pl-3.5")}>
-                          <p className="text-xs text-foreground leading-snug">
-                            {notif.message}
-                          </p>
-                          <p className="text-[10px] text-muted-foreground mt-1">
-                            {timeAgo(notif.createdAt)}
-                          </p>
-                        </div>
+                      <NotificationIcon type={notif.type} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs leading-snug text-foreground">
+                          {notif.message}
+                        </p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {timeAgo(notif.createdAt)}
+                        </p>
                       </div>
+                      {!notif.isRead && (
+                        <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                      )}
                     </button>
                   ))
                 )}

@@ -6,7 +6,7 @@ import { getTranslation } from "@/lib/i18n"; // YENİ
 import { FolderKanban, Users, Calendar, LayoutDashboard, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProjectDashboard } from "@/components/project/ProjectDashboard";
-import { WorkCalendar, type CalendarTaskItem } from "@/components/dashboard/WorkCalendar";
+import { MyWorkCalendarClient, type MyWorkCalendarTask } from "@/components/my-work/MyWorkCalendarClient";
 import { DepartmentProjectsTab } from "@/components/department/DepartmentProjectsTab";
 import { DepartmentPeopleTab } from "@/components/department/DepartmentPeopleTab";
 import { DepartmentChatTab } from "@/components/department/DepartmentChatTab";
@@ -47,21 +47,27 @@ export function DepartmentTabs({
     { id: "projects" as TabId,  label: t("departmentTabs.tabProjects") || "Layihələr", icon: FolderKanban },
     { id: "people" as TabId,    label: t("departmentTabs.tabPeople") || "İnsanlar", icon: Users },
     { id: "calendar" as TabId,  label: t("departmentTabs.tabCalendar") || "Təqvim", icon: Calendar },
-    { id: "dashboard" as TabId, label: t("departmentTabs.tabDashboard") || "Dashboard", icon: LayoutDashboard },
+    { id: "dashboard" as TabId, label: t("departmentTabs.tabDashboard") || "Analitika", icon: LayoutDashboard },
     { id: "chat" as TabId,      label: t("departmentTabs.tabChat") || "Qrup Mesajı", icon: MessageSquare },
   ], [t]);
 
   const [activeTab, setActiveTab] = useState<TabId>("projects");
 
-  const calendarTasks: CalendarTaskItem[] = tasks
+  // Departament Təqvimi — "Mənim İşlərim > Təqvimim" ilə EYNİ (100% ortaq)
+  // komponentdən istifadə edir, sadəcə bu şöbənin bütün tapşırıqlarını göstərir.
+  const calendarTasks: MyWorkCalendarTask[] = tasks
     .filter((t) => t.dueDate)
     .map((t) => ({
       id: t.id,
       title: t.title,
       dueDate: t.dueDate,
+      priority: t.priority,
       status: t.status,
-      href: `/dashboard/projects/${t.project.id}?task=${t.id}`,
-      meta: t.project.name,
+      project: {
+        id: t.project.id,
+        name: t.project.name,
+        color: t.project.color ?? "#6366f1",
+      },
     }));
 
   const dashboardMembers = members.map((m) => ({ id: m.id, name: m.name, avatar: m.avatar, jobTitle: m.jobTitle }));
@@ -113,9 +119,7 @@ export function DepartmentTabs({
 
         {activeTab === "calendar" && (
           <div className="p-6">
-            <div className="bg-card rounded-2xl border border-border p-6 max-w-3xl shadow-sm transition-all hover:shadow-md">
-              <WorkCalendar tasks={calendarTasks} />
-            </div>
+            <MyWorkCalendarClient tasks={calendarTasks} />
           </div>
         )}
 

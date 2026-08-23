@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function MarketingEmptyState({
   icon: Icon = Inbox,
-  title = "No data found",
+  title = "Məlumat tapılmadı",
   description,
   actionLabel,
   onAction,

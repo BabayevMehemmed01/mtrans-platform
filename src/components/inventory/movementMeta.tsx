@@ -23,11 +23,11 @@ export const MOVEMENT_TYPE_META: Record<
   StockMovementType,
   { label: string; icon: LucideIcon; accent: string; softBg: string }
 > = {
-  INBOUND: { label: "Inbound", icon: ArrowDownToLine, accent: "text-emerald-600", softBg: "bg-emerald-50" },
-  OUTBOUND: { label: "Outbound", icon: ArrowUpFromLine, accent: "text-blue-600", softBg: "bg-blue-50" },
-  TRANSFER: { label: "Transfer", icon: ArrowLeftRight, accent: "text-purple-600", softBg: "bg-purple-50" },
-  ADJUSTMENT: { label: "Adjustment", icon: ClipboardEdit, accent: "text-amber-600", softBg: "bg-amber-50" },
-  SCRAP: { label: "Write-off", icon: Trash2, accent: "text-red-600", softBg: "bg-red-50" },
+  INBOUND: { label: "Qəbul", icon: ArrowDownToLine, accent: "text-emerald-600", softBg: "bg-emerald-50" },
+  OUTBOUND: { label: "Göndərmə", icon: ArrowUpFromLine, accent: "text-blue-600", softBg: "bg-blue-50" },
+  TRANSFER: { label: "Köçürmə", icon: ArrowLeftRight, accent: "text-purple-600", softBg: "bg-purple-50" },
+  ADJUSTMENT: { label: "Tənzimləmə", icon: ClipboardEdit, accent: "text-amber-600", softBg: "bg-amber-50" },
+  SCRAP: { label: "Silinmə", icon: Trash2, accent: "text-red-600", softBg: "bg-red-50" },
 };
 
 const STATUS_META: Record<

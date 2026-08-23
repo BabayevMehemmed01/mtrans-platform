@@ -67,9 +67,9 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
       <>
         <InventoryEmptyState
           icon={Truck}
-          title="No suppliers yet"
-          description="Məhsul qəbulu (Receiving) sənədləri üçün təchizatçı əlavə edin."
-          actionLabel="New Supplier"
+          title="Hələ təchizatçı yoxdur"
+          description="Məhsul qəbulu sənədləri üçün təchizatçı əlavə edin."
+          actionLabel="Yeni Təchizatçı"
           onAction={openCreate}
           className="min-h-[45vh]"
         />
@@ -90,10 +90,10 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
       <div className="flex items-center justify-between gap-3">
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Search supplier..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
+          <Input placeholder="Təchizatçı axtar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
         </div>
         <Button onClick={openCreate} className="gap-1.5">
-          <Plus className="h-4 w-4" /> New Supplier
+          <Plus className="h-4 w-4" /> Yeni Təchizatçı
         </Button>
       </div>
 
@@ -101,10 +101,10 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Documents</TableHead>
+              <TableHead>Təchizatçı</TableHead>
+              <TableHead>Əlaqə</TableHead>
+              <TableHead>Ünvan</TableHead>
+              <TableHead>Sənədlər</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[44px]" />
             </TableRow>
@@ -163,7 +163,7 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
                         s.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-600" : "border-slate-200 bg-slate-100 text-slate-500"
                       )}
                     >
-                      {s.isActive ? "Active" : "Inactive"}
+                      {s.isActive ? "Aktiv" : "Deaktiv"}
                     </Badge>
                   </TableCell>
                   <TableCell>

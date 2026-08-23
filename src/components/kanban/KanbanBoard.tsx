@@ -121,7 +121,7 @@ export function KanbanBoard({
           body: JSON.stringify(payload),
         });
       } catch (err) {
-        console.error(t("kanbanBoard.errorStatusUpdate") || "Task status update failed:", err);
+        console.error(t("kanbanBoard.errorStatusUpdate") || "Tapşırıq statusu yenilənmədi:", err);
       }
     },
     [variant, t]

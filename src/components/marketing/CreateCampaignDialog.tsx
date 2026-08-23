@@ -126,7 +126,7 @@ export function CreateCampaignDialog({
             <DialogTitle>Yeni {meta.label}</DialogTitle>
           </div>
           <DialogDescription>
-            Kampaniyanı qaralama (draft) kimi yaradın, sonra Campaigns cədvəlindən istədiyiniz vaxt göndərin.
+            Kampaniyanı qaralama (draft) kimi yaradın, sonra Kampaniyalar cədvəlindən istədiyiniz vaxt göndərin.
           </DialogDescription>
         </DialogHeader>
 
@@ -221,7 +221,7 @@ export function CreateCampaignDialog({
 
           {segments.length === 0 && (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Sparkles className="h-3 w-3" /> Seqment yoxdur — &ldquo;Segments&rdquo; tabından auditoriya yarada bilərsiniz.
+              <Sparkles className="h-3 w-3" /> Seqment yoxdur — &ldquo;Seqmentlər&rdquo; tabından auditoriya yarada bilərsiniz.
             </p>
           )}
         </div>

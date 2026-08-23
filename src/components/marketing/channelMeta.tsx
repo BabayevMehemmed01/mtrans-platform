@@ -17,7 +17,7 @@ export interface ChannelMeta {
 export const CHANNEL_META: Record<CampaignType, ChannelMeta> = {
   EMAIL: {
     key: "EMAIL",
-    label: "Email Campaign",
+    label: "Email kampaniyası",
     shortLabel: "Email",
     description: "SMTP / Resend vasitəsilə kütləvi email göndərişi",
     icon: Mail,
@@ -29,7 +29,7 @@ export const CHANNEL_META: Record<CampaignType, ChannelMeta> = {
   },
   SMS: {
     key: "SMS",
-    label: "SMS Campaign",
+    label: "SMS kampaniyası",
     shortLabel: "SMS",
     description: "Twilio vasitəsilə qısa mesaj (SMS) kampaniyası",
     icon: MessageSquareText,
@@ -41,7 +41,7 @@ export const CHANNEL_META: Record<CampaignType, ChannelMeta> = {
   },
   WHATSAPP: {
     key: "WHATSAPP",
-    label: "WhatsApp/Messengers",
+    label: "WhatsApp / Mesajlaşma",
     shortLabel: "WhatsApp",
     description: "Twilio WhatsApp Business API ilə mesajlaşma kampaniyası",
     icon: MessageCircle,
@@ -53,7 +53,7 @@ export const CHANNEL_META: Record<CampaignType, ChannelMeta> = {
   },
   INSTAGRAM: {
     key: "INSTAGRAM",
-    label: "Instagram Ads",
+    label: "Instagram reklamları",
     shortLabel: "Instagram",
     description: "Meta Graph API ilə Instagram reklam kampaniyası",
     icon: Camera,

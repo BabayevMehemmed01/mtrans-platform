@@ -144,7 +144,7 @@ export function MarketingStartTab({
             </div>
           ) : recent.length === 0 ? (
             <MarketingEmptyState
-              title="No data found"
+              title="Məlumat tapılmadı"
               description="Hələ heç bir kampaniya yaradılmayıb. Yuxarıdaki kanallardan birini seçərək ilk kampaniyanızı yaradın."
             />
           ) : (

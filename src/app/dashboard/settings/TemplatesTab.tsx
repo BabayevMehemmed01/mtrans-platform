@@ -420,8 +420,8 @@ export function TemplatesTab({ permissions }: { permissions: Permission[] }) {
                   <Select value={form.inviteType} onValueChange={(v) => v && setForm((p) => ({ ...p, inviteType: v }))}>
                     <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="MEMBER">Üzv (Member)</SelectItem>
-                      <SelectItem value="GUEST">Qonaq (Guest)</SelectItem>
+                      <SelectItem value="MEMBER">Üzv</SelectItem>
+                      <SelectItem value="GUEST">Qonaq</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

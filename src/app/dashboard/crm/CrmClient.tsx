@@ -60,7 +60,7 @@ export default function CrmClient() {
           <CrmDealsList board={board} />
         </TabsContent>
 
-        <TabsContent value="calendar" className="space-y-4 mt-4">
+        <TabsContent value="calendar" className="mt-4 h-[min(860px,calc(100vh-220px))] overflow-hidden p-0">
           <CrmCalendar board={board} />
         </TabsContent>
 

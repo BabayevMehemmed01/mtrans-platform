@@ -64,7 +64,7 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
           />
         </div>
         <Button onClick={onOpenCreate} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Create Segment
+          <Plus className="h-4 w-4" /> Seqment yarat
         </Button>
       </div>
 
@@ -72,11 +72,11 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Use count</TableHead>
-              <TableHead>Recipients</TableHead>
+              <TableHead>Ad</TableHead>
+              <TableHead>İstifadə sayı</TableHead>
+              <TableHead>Alıcılar</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="w-[64px]">Actions</TableHead>
+              <TableHead className="w-[64px]">Əməliyyatlar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,8 +91,8 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
                 <TableCell colSpan={5} className="p-0">
                   <MarketingEmptyState
                     icon={Layers}
-                    title="No data found"
-                    description="Hələ heç bir auditoriya seqmenti yaradılmayıb. 'Create Segment' düyməsi ilə başlayın."
+                    title="Məlumat tapılmadı"
+                    description="Hələ heç bir auditoriya seqmenti yaradılmayıb. «Seqment yarat» düyməsi ilə başlayın."
                   />
                 </TableCell>
               </TableRow>

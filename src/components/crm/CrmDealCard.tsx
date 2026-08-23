@@ -114,14 +114,14 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
           >
             {deal.deadline
               ? formatDealDate(deal.deadline, lang)
-              : (t("crmCalendar.noDeadline") || "Deadline yoxdur")}
+              : (t("crmCalendar.noDeadline") || "Son tarix yoxdur")}
           </span>
         </div>
 
         <div className="flex items-center gap-0.5 flex-shrink-0">
           <QuickAction
             icon={Mail}
-            label={t("crmDealCard.mail") || "Mail"}
+            label={t("crmDealCard.mail") || "E-poçt"}
             href={clientEmail ? `mailto:${clientEmail}` : undefined}
           />
           <QuickAction

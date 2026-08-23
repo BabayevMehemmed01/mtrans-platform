@@ -107,7 +107,7 @@ export function DepartmentHeader({
           <h1 className="text-2xl font-bold text-white drop-shadow-sm">{department.name}</h1>
           {department.isDefault && (
             <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm gap-1">
-              <Lock className="h-3 w-3" /> {t("departmentHeader.defaultBadge") || "Default"}
+              <Lock className="h-3 w-3" /> {t("departmentHeader.defaultBadge") || "Standart"}
             </Badge>
           )}
         </div>

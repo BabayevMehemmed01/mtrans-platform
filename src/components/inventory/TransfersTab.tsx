@@ -68,9 +68,9 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
     return (
       <InventoryEmptyState
         icon={ArrowLeftRight}
-        title="No transfers yet"
+        title="Hələ köçürmə yoxdur"
         description="Anbarlar/hüceyrələr arası daxili köçürmələr burada görünəcək."
-        actionLabel="New Transfer"
+        actionLabel="Yeni köçürmə"
         onAction={onOpenCreate}
         className="min-h-[45vh]"
       />
@@ -81,7 +81,7 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         <Button onClick={onOpenCreate} className="gap-1.5">
-          <ArrowLeftRight className="h-4 w-4" /> New Transfer
+          <ArrowLeftRight className="h-4 w-4" /> Yeni köçürmə
         </Button>
       </div>
 
@@ -89,11 +89,11 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Reference</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>From</TableHead>
-              <TableHead>To</TableHead>
-              <TableHead>Quantity</TableHead>
+              <TableHead>İstinad</TableHead>
+              <TableHead>Məhsul</TableHead>
+              <TableHead>Haradan</TableHead>
+              <TableHead>Haraya</TableHead>
+              <TableHead>Miqdar</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-[56px]" />
             </TableRow>
@@ -121,10 +121,10 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem className="gap-2" onClick={() => handleAction(m.id, "process")}>
-                          <Play className="h-4 w-4" /> Process
+                          <Play className="h-4 w-4" /> İcra et
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleAction(m.id, "cancel")}>
-                          <X className="h-4 w-4" /> Cancel
+                          <X className="h-4 w-4" /> Ləğv et
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

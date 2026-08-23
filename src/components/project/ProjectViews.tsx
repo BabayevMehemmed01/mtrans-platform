@@ -63,10 +63,10 @@ export function ProjectViews({
   // Tabları lüğətlə (useMemo içində, hər renderdə yenilənməsin deyə) qururuq
   const TABS = useMemo(() => {
     const tabs = [
-      { id: "list" as TabId,      label: t("projectViews.tabList") || "List", icon: List },
-      { id: "deadline" as TabId,  label: t("projectViews.tabDeadline") || "Deadline", icon: CalendarClock },
-      { id: "planner" as TabId,   label: t("projectViews.tabPlanner") || "Planner", icon: LayoutGrid },
-      { id: "calendar" as TabId,  label: t("projectViews.tabCalendar") || "Calendar", icon: Calendar },
+      { id: "list" as TabId,      label: t("projectViews.tabList") || "Siyahı", icon: List },
+      { id: "deadline" as TabId,  label: t("projectViews.tabDeadline") || "Son tarix", icon: CalendarClock },
+      { id: "planner" as TabId,   label: t("projectViews.tabPlanner") || "Planlayıcı", icon: LayoutGrid },
+      { id: "calendar" as TabId,  label: t("projectViews.tabCalendar") || "Təqvim", icon: Calendar },
       { id: "members" as TabId,   label: t("projectViews.tabMembers") || "İnsanlar",      icon: Users },
       { id: "chat" as TabId,      label: t("projectViews.tabChat") || "Mesajlar",         icon: MessageCircle },
       { id: "dashboard" as TabId, label: t("projectViews.tabDashboard") || "Analitika",   icon: LayoutDashboard },

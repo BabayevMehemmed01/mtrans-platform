@@ -111,7 +111,7 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
       ) : visibleTemplates.length === 0 ? (
         <MarketingEmptyState
           icon={LayoutTemplate}
-          title="No templates found"
+          title="Şablon tapılmadı"
           description={`${meta.shortLabel} kanalı üçün hələ şablon yoxdur. "Yeni Şablon" düyməsi ilə başlayın.`}
           actionLabel="Yeni Şablon"
           onAction={openCreate}

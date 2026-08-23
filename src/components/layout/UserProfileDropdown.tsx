@@ -460,7 +460,7 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
             {/* Şirkət Loqosu - Sadəcə URL daxil etmək üçün, gələcəkdə UploadThing bura gələcək */}
             <div className="col-span-1 sm:col-span-2 space-y-1.5 flex items-center gap-4 p-4 rounded-xl border border-border border-dashed bg-muted">
                {companyForm.logo ? (
-                 <img src={companyForm.logo} alt="Logo" className="w-16 h-16 rounded-xl object-contain bg-card border border-border shadow-sm" />
+                 <img src={companyForm.logo} alt="Loqo" className="w-16 h-16 rounded-xl object-contain bg-card border border-border shadow-sm" />
                ) : (
                  <div className="w-16 h-16 rounded-xl bg-muted flex items-center justify-center border border-border text-muted-foreground">
                     <ImageIcon className="w-6 h-6" />

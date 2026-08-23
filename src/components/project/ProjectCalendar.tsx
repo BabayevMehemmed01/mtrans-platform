@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { format, addMonths, subMonths, addWeeks, subWeeks, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay, isToday } from "date-fns";
+import { az, enUS, ru } from "date-fns/locale";
 import { ChevronLeft, ChevronRight, Plus, Loader2 } from "lucide-react";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
@@ -25,6 +26,7 @@ export function ProjectCalendar({ projectId, tasks, members, onTaskUpdated, onTa
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
+  const dateLocale = lang === "en" ? enUS : lang === "ru" ? ru : az;
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -116,8 +118,8 @@ export function ProjectCalendar({ projectId, tasks, members, onTaskUpdated, onTa
           </div>
           <h2 className="text-xl font-black text-foreground capitalize tracking-tight">
             {viewMode === "week"
-              ? `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`
-              : format(currentDate, "MMMM yyyy")}
+              ? `${format(weekStart, "d MMM", { locale: dateLocale })} – ${format(weekEnd, "d MMM yyyy", { locale: dateLocale })}`
+              : format(currentDate, "LLLL yyyy", { locale: dateLocale })}
           </h2>
         </div>
         <div className="flex rounded-lg border border-border bg-muted p-1">
@@ -166,7 +168,7 @@ export function ProjectCalendar({ projectId, tasks, members, onTaskUpdated, onTa
               />
               <div className="mt-3 space-y-2 px-2 pb-2">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {format(selectedDate, "d MMMM yyyy")}
+                  {format(selectedDate, "d MMMM yyyy", { locale: dateLocale })}
                 </p>
                 {selectedDayTasks.length === 0 ? (
                   <p className="text-xs text-muted-foreground">

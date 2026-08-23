@@ -40,7 +40,7 @@ interface SupplierSelectProps {
   placeholder?: string;
 }
 
-export function SupplierSelect({ suppliers, value, onChange, onCreated, placeholder = "Supplier" }: SupplierSelectProps) {
+export function SupplierSelect({ suppliers, value, onChange, onCreated, placeholder = "Təchizatçı" }: SupplierSelectProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -101,7 +101,7 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
           ))}
           {activeSuppliers.length > 0 && <SelectSeparator />}
           <SelectItem value={CREATE_NEW_VALUE} className="text-primary">
-            <Plus className="h-3.5 w-3.5" /> Create new supplier
+            <Plus className="h-3.5 w-3.5" /> Yeni təchizatçı yarat
           </SelectItem>
         </SelectContent>
       </Select>
