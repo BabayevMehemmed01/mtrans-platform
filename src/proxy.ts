@@ -10,7 +10,7 @@ import type { NextRequest } from "next/server";
 // Tamamilə açıq (public) route-lar — heç bir session yoxlaması aparılmır,
 // nə giriş edən, nə də etməyən istifadəçi bu yollardan yönləndirilmir.
 // Bu route-lar öz daxilində (token/secret key ilə) təhlükəsizliyi təmin edir.
-const ALWAYS_PUBLIC_ROUTES = ["/api/crm/1c-sync", "/track"];
+const ALWAYS_PUBLIC_ROUTES = ["/api/crm/1c-sync", "/api/test-whatsapp", "/track"];
 
 export default auth((req: NextRequest & { auth: any }) => {
   const { pathname } = req.nextUrl;
@@ -47,6 +47,6 @@ export default auth((req: NextRequest & { auth: any }) => {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/crm/1c-sync|track|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)",
+    "/((?!api/auth|api/crm/1c-sync|api/test-whatsapp|track|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.svg$).*)",
   ],
 };

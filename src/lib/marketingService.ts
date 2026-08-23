@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { sendEmail, sendTwilioMessage } from "@/lib/integrationService";
+import { sendWhatsappMessage } from "@/lib/infobip";
 import { getMarketingConfig } from "@/lib/marketing-config";
 import type { CampaignType } from "@prisma/client";
 
 // =============================================================================
 // Marketing Service — Seqment → Alıcı siyahısı həlli və kampaniya yayımı.
-// Email/SMS/WhatsApp üçün mövcud `integrationService`-dəki REAL inteqrasiyalar
-// (SMTP/Twilio) istifadə olunur. Instagram üçün arxitektura hazırdır: META_API_KEY
+// Email/SMS üçün `integrationService` (SMTP/Twilio), WhatsApp üçün Infobip
+// istifadə olunur. Instagram üçün arxitektura hazırdır: META_API_KEY
 // mövcud olduqda "aktiv" sayılır, real Ads Manager inteqrasiyası (ad hesabı,
 // kampaniya obyekti və s.) ayrıca layihə tələb edir.
 // =============================================================================
@@ -112,6 +113,24 @@ export async function dispatchCampaign(campaignId: string, companyId: string) {
     // lakin real ad-hesabı axını (ad account id, campaign objective, creative)
     // ayrıca inteqrasiya tələb edir. Hazırkı arxitektura statusu tamamlayır.
     sentCount = recipients.length;
+  } else if (campaign.type === "WHATSAPP") {
+    const templateName =
+      campaign.content?.trim() && /^[a-zA-Z0-9_]+$/.test(campaign.content.trim())
+        ? campaign.content.trim()
+        : "test_whatsapp_template_en";
+
+    for (const r of recipients) {
+      if (!r.phone) {
+        failedCount++;
+        continue;
+      }
+      try {
+        await sendWhatsappMessage(r.phone, r.name || "Customer", templateName);
+        sentCount++;
+      } catch {
+        failedCount++;
+      }
+    }
   } else {
     const results = await Promise.allSettled(
       recipients.map((r) => {
@@ -125,9 +144,7 @@ export async function dispatchCampaign(campaignId: string, companyId: string) {
           );
         }
         if (!r.phone) return Promise.resolve({ success: false });
-        return sendTwilioMessage(r.phone, campaign.content || "", campaign.type === "WHATSAPP", {
-          customerId: r.customerId,
-        });
+        return sendTwilioMessage(r.phone, campaign.content || "", { customerId: r.customerId });
       })
     );
 

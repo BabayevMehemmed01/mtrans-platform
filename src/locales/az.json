@@ -1415,7 +1415,7 @@
     "channelSmsDesc": "Twilio vasitəsilə qısa mesaj (SMS) kampaniyası",
     "channelWhatsappLabel": "WhatsApp / Mesajlaşma",
     "channelWhatsappShort": "WhatsApp",
-    "channelWhatsappDesc": "Twilio WhatsApp Business API ilə mesajlaşma kampaniyası",
+    "channelWhatsappDesc": "Infobip WhatsApp Business API ilə mesajlaşma kampaniyası",
     "channelInstagramLabel": "Instagram reklamları",
     "channelInstagramShort": "Instagram",
     "channelInstagramDesc": "Meta Graph API ilə Instagram reklam kampaniyası",

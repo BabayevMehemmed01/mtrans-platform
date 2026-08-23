@@ -1415,7 +1415,7 @@
     "channelSmsDesc": "Short message (SMS) campaign via Twilio",
     "channelWhatsappLabel": "WhatsApp / Messaging",
     "channelWhatsappShort": "WhatsApp",
-    "channelWhatsappDesc": "Messaging campaign via Twilio WhatsApp Business API",
+    "channelWhatsappDesc": "Messaging campaign via Infobip WhatsApp Business API",
     "channelInstagramLabel": "Instagram ads",
     "channelInstagramShort": "Instagram",
     "channelInstagramDesc": "Instagram ad campaign via Meta Graph API",

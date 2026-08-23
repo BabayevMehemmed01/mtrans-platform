@@ -24,15 +24,13 @@ export interface MarketingConfig {
 /**
  * Server tərəfindən kanal aktivliyini hesablayır:
  * - Email: sistemdə artıq SMTP/Resend inteqrasiyası olduğu üçün default aktivdir.
- * - WhatsApp / SMS: TWILIO_WHATSAPP_NUMBER / TWILIO_SMS_NUMBER (və ya mövcud
- *   TWILIO_WHATSAPP_FROM / TWILIO_SMS_FROM) mühit dəyişənləri təyin olunubsa aktivdir.
+ * - WhatsApp: INFOBIP_API_KEY təyin olunubsa aktivdir.
+ * - SMS: TWILIO_SMS_NUMBER / TWILIO_SMS_FROM mühit dəyişənləri təyin olunubsa aktivdir.
  * - Instagram: META_API_KEY təyin olunubsa aktivdir.
  */
 export function getMarketingConfig(): MarketingConfig {
   const isEmailActive = true;
-  const isWhatsappActive = Boolean(
-    process.env.TWILIO_WHATSAPP_NUMBER || process.env.TWILIO_WHATSAPP_FROM
-  );
+  const isWhatsappActive = !!process.env.INFOBIP_API_KEY;
   const isSmsActive = Boolean(
     process.env.TWILIO_SMS_NUMBER || process.env.TWILIO_SMS_FROM
   );
@@ -46,7 +44,7 @@ export function getMarketingConfig(): MarketingConfig {
     channels: {
       EMAIL: { key: "EMAIL", active: isEmailActive, envHint: "SMTP_USER / SMTP_PASS" },
       SMS: { key: "SMS", active: isSmsActive, envHint: "TWILIO_SMS_NUMBER" },
-      WHATSAPP: { key: "WHATSAPP", active: isWhatsappActive, envHint: "TWILIO_WHATSAPP_NUMBER" },
+      WHATSAPP: { key: "WHATSAPP", active: isWhatsappActive, envHint: "INFOBIP_API_KEY" },
       INSTAGRAM: { key: "INSTAGRAM", active: isInstagramActive, envHint: "META_API_KEY" },
     },
   };

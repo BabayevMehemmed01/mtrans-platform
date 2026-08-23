@@ -1,9 +1,10 @@
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
 import type { MessageLogType } from "@prisma/client";
+import { sendWhatsappMessage } from "@/lib/infobip";
 
 // =============================================================================
-// Inteqrasiya Servisi — Email (SMTP), Telegram Bot API, Twilio (SMS/WhatsApp)
+// Inteqrasiya Servisi — Email (SMTP), Telegram Bot API, Twilio (SMS), Infobip (WhatsApp)
 // Hər bir funksiya REAL xarici sorğu atır. Nəticə (SENT/FAILED) dərhal
 // `prisma.messageLog` cədvəlinə yazılır. Mock/console.log əvəzləyicisi YOXDUR.
 // =============================================================================
@@ -146,22 +147,22 @@ export async function sendTelegram(
 }
 
 // -----------------------------------------------------------------------------
-// TWILIO — real Twilio REST API (fetch + Basic Auth, SMS və WhatsApp)
+// TWILIO — real Twilio REST API (fetch + Basic Auth, yalnız SMS)
+// WhatsApp Infobip vasitəsilə göndərilir (`src/lib/infobip.ts`).
 // -----------------------------------------------------------------------------
 
 export async function sendTwilioMessage(
   to: string,
   text: string,
-  isWhatsApp: boolean = false,
   meta?: MessageMeta
 ): Promise<IntegrationResult> {
-  const type: MessageLogType = isWhatsApp ? "WHATSAPP" : "SMS";
+  const type: MessageLogType = "SMS";
   try {
     if (!to) throw new Error("Alıcı nömrə boşdur");
 
     const accountSid = process.env.TWILIO_ACCOUNT_SID;
     const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const fromNumber = isWhatsApp ? process.env.TWILIO_WHATSAPP_FROM : process.env.TWILIO_SMS_FROM;
+    const fromNumber = process.env.TWILIO_SMS_FROM;
 
     if (!accountSid || !authToken || !fromNumber) {
       throw new Error(
@@ -169,11 +170,7 @@ export async function sendTwilioMessage(
       );
     }
 
-    const formattedTo = isWhatsApp && !to.startsWith("whatsapp:") ? `whatsapp:${to}` : to;
-    const formattedFrom =
-      isWhatsApp && !fromNumber.startsWith("whatsapp:") ? `whatsapp:${fromNumber}` : fromNumber;
-
-    const params = new URLSearchParams({ To: formattedTo, From: formattedFrom, Body: text });
+    const params = new URLSearchParams({ To: to, From: fromNumber, Body: text });
     const authHeader = Buffer.from(`${accountSid}:${authToken}`).toString("base64");
 
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
@@ -241,7 +238,15 @@ export async function sendDealWelcomeNotification(params: {
   }
 
   if (params.customerPhone) {
-    tasks.push(sendTwilioMessage(params.customerPhone, message, false, meta));
+    tasks.push(sendTwilioMessage(params.customerPhone, message, meta));
+    tasks.push(
+      sendWhatsappMessage(params.customerPhone, params.customerName, "test_whatsapp_template_en")
+        .then(() => ({ success: true } satisfies IntegrationResult))
+        .catch((error) => ({
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        }))
+    );
   }
 
   if (tasks.length === 0) return;
