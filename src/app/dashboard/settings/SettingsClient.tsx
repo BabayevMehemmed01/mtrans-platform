@@ -26,7 +26,8 @@ import {
   Sun,
   Image as ImageIcon,
   Lock,
-  LogOut
+  LogOut,
+  LayoutTemplate
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TemplatesTab } from "./TemplatesTab";
 
 // --- TİPLƏR ---
 type CompanyInfo = {
@@ -392,6 +394,11 @@ export function SettingsClient({
           {t("settings.tabs.defaults") || "Dəvət Ayarları"}
         </TabsTrigger>
 
+        <TabsTrigger value="templates" className={SETTINGS_TAB_TRIGGER_CLASS}>
+          <span className={SETTINGS_TAB_ICON_CLASS}><LayoutTemplate className="w-4 h-4" /></span>
+          {t("settings.tabs.templates") || "Şablonlar"}
+        </TabsTrigger>
+
         {isSuperAdmin && (
           <TabsTrigger value="company" className={SETTINGS_TAB_TRIGGER_CLASS}>
             <span className={SETTINGS_TAB_ICON_CLASS}><Building2 className="w-4 h-4" /></span>
@@ -613,6 +620,14 @@ export function SettingsClient({
             </div>
 
           </div>
+        </TabsContent>
+
+        {/* 2.5 ŞABLONLAR (TEMPLATES) */}
+        <TabsContent value="templates" className={SETTINGS_PANEL_CLASS}>
+          <h3 className={SETTINGS_HEADING_CLASS}>
+            {t("settings.tabs.templates") || "Şablonlar"}
+          </h3>
+          <TemplatesTab permissions={permissions} />
         </TabsContent>
 
         {/* 3. ŞİRKƏT PROFİLİ (YALNIZ SUPER ADMIN) */}

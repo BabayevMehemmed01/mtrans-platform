@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createTaskTemplateSchema } from "@/lib/validations";
+import { logAudit } from "@/lib/audit";
 
 // =============================================================================
 // GET  /api/task-templates  — Şirkətin tapşırıq şablonları
@@ -74,9 +75,19 @@ export async function POST(req: NextRequest) {
       data: {
         name: parsed.data.name.trim(),
         description: parsed.data.description || null,
+        data: parsed.data.data ?? {},
         departmentId,
         companyId,
       },
+    });
+
+    await logAudit({
+      userId: session.user.id,
+      companyId,
+      action: "CREATE",
+      entityType: "TEMPLATE",
+      entityId: template.id,
+      entityName: template.name,
     });
 
     return NextResponse.json(template, { status: 201 });

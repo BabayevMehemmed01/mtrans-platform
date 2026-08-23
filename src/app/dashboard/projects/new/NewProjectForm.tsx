@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n";  // YENİ
-import { Loader2, Building2, Save } from "lucide-react";
+import { Loader2, Building2, Save, LayoutTemplate } from "lucide-react";
 import Link from "next/link";
 import {
   Select,
@@ -13,6 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
+type ProjectTemplate = {
+  id: string;
+  name: string;
+  description: string | null;
+  data: { status?: string; priority?: string; color?: string } | null;
+};
 
 const COLOR_PRESETS = [
   "#6366f1", "#8b5cf6", "#ec4899", "#ef4444",
@@ -69,6 +76,37 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
 
   const hasDepartments = departments.length > 0;
 
+  const [templates, setTemplates] = useState<ProjectTemplate[]>([]);
+  const [templateId, setTemplateId] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/templates?type=PROJECT")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        if (!cancelled && Array.isArray(data)) setTemplates(data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const applyTemplate = (id: string) => {
+    setTemplateId(id);
+    const tpl = templates.find((tp) => tp.id === id);
+    if (!tpl?.data) return;
+    // Şablonun `data` sahəsi klonlanır — bu, əsas (master) şablonu
+    // heç bir şəkildə dəyişdirmədən yeni layihəyə başlanğıc dəyərlər verir.
+    const cloned = JSON.parse(JSON.stringify(tpl.data)) as ProjectTemplate["data"];
+    setForm((prev) => ({
+      ...prev,
+      status: cloned?.status ?? prev.status,
+      priority: cloned?.priority ?? prev.priority,
+      color: cloned?.color ?? prev.color,
+    }));
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
@@ -119,6 +157,31 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
                 {t("newProject.goToDepartments") || "Şöbələr səhifəsinə keçin"}
               </Link>
             </p>
+          </div>
+        )}
+
+        {/* Şablon seçimi */}
+        {templates.length > 0 && (
+          <div>
+            <label className="flex items-center gap-1.5 text-sm font-medium mb-1.5">
+              <LayoutTemplate className="w-3.5 h-3.5 text-muted-foreground" />
+              {t("newProject.templateLabel") || "Şablondan başla (istəyə bağlı)"}
+            </label>
+            <Select value={templateId || undefined} onValueChange={(v) => applyTemplate(v ?? "")}>
+              <SelectTrigger className="w-full h-[42px] rounded-lg bg-background">
+                <SelectValue placeholder={t("newProject.selectTemplate") || "Boş başlayın və ya şablon seçin"} />
+              </SelectTrigger>
+              <SelectContent>
+                {templates.map((tpl) => (
+                  <SelectItem key={tpl.id} value={tpl.id}>{tpl.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {templateId && templates.find((tp) => tp.id === templateId)?.description && (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                {templates.find((tp) => tp.id === templateId)?.description}
+              </p>
+            )}
           </div>
         )}
 

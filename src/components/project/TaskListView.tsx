@@ -23,6 +23,23 @@ import type { KanbanTask, TaskMember } from "@/components/kanban/types";
 import { useSession } from "next-auth/react"; // YENİ: Tərcümə üçün
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 import { toPlannerStatus } from "@/lib/task-status";
+import { useCustomization } from "@/hooks/useCustomization";
+import { CustomizeMenu, type CustomizeMenuItem } from "@/components/layout/CustomizeMenu";
+
+// Kustomizasiya: hansı sütunlar istəyə görə gizlədilə bilər (Status və Ad sabitdir).
+type ColumnVisibility = {
+  info: boolean;
+  assignee: boolean;
+  dueDate: boolean;
+  priority: boolean;
+};
+
+const COLUMN_ITEMS: CustomizeMenuItem[] = [
+  { key: "info", label: "Məlumat (alt tapşırıq/şərh/fayl)" },
+  { key: "assignee", label: "İcraçı" },
+  { key: "dueDate", label: "Son Tarix" },
+  { key: "priority", label: "Prioritet" },
+];
 
 // ── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_MAP = {
@@ -457,12 +474,14 @@ function SubtaskRow({
   members,
   onUpdated,
   onDeleted,
+  columns,
   t // YENİ
 }: {
   subtask: SubtaskItem;
   members: TaskMember[];
   onUpdated: (raw: any) => void;
   onDeleted: (id: string) => void;
+  columns: ColumnVisibility;
   t: any; // YENİ
 }) {
   const [hovered, setHovered] = useState(false);
@@ -509,17 +528,21 @@ function SubtaskRow({
         {subtask.title}
       </span>
 
-      <div className="w-24 flex-shrink-0" /> {/* Indicators Placeholder */}
+      {columns.info && <div className="w-24 flex-shrink-0" />} {/* Indicators Placeholder */}
 
-      <div className="w-32 flex-shrink-0 flex justify-center">
-        <AssigneeCell taskId={subtask.id} assignee={subtask.assignee} members={members} onChanged={onUpdated} compact t={t} />
-      </div>
+      {columns.assignee && (
+        <div className="w-32 flex-shrink-0 flex justify-center">
+          <AssigneeCell taskId={subtask.id} assignee={subtask.assignee} members={members} onChanged={onUpdated} compact t={t} />
+        </div>
+      )}
 
-      <div className="w-28 flex-shrink-0 flex justify-end">
-        <DueDateCell taskId={subtask.id} dueDate={subtask.dueDate} isDone={subtask.status === "DONE"} onChanged={onUpdated} compact t={t} />
-      </div>
+      {columns.dueDate && (
+        <div className="w-28 flex-shrink-0 flex justify-end">
+          <DueDateCell taskId={subtask.id} dueDate={subtask.dueDate} isDone={subtask.status === "DONE"} onChanged={onUpdated} compact t={t} />
+        </div>
+      )}
 
-      <div className="w-24 hidden md:block flex-shrink-0" /> {/* Priority Placeholder */}
+      {columns.priority && <div className="w-24 hidden md:block flex-shrink-0" />} {/* Priority Placeholder */}
 
       <div className="w-16 flex justify-end pr-2 flex-shrink-0">
         <button
@@ -541,6 +564,7 @@ function TaskRow({
   onUpdated,
   onDeleted,
   onTaskClick,
+  columns,
   t // YENİ
 }: {
   task: KanbanTask;
@@ -548,6 +572,7 @@ function TaskRow({
   onUpdated: (t: KanbanTask) => void;
   onDeleted: (id: string) => void;
   onTaskClick: (task: KanbanTask) => void;
+  columns: ColumnVisibility;
   t: any; // YENİ
 }) {
   const [hovered, setHovered] = useState(false);
@@ -689,41 +714,49 @@ function TaskRow({
         </div>
 
         {/* 5. Indicators (Subtasks, Comments, Files) */}
-        <div className="w-24 flex-shrink-0 flex items-center gap-3 text-[11px] font-bold text-muted-foreground">
-          {subtaskCount > 0 && (
-            <div className="flex items-center gap-1" title={`${doneSubtasks}/${subtaskCount} alt tapşırıq`}>
-              <Check className="w-3.5 h-3.5" />
-              <span className={doneSubtasks === subtaskCount ? "text-emerald-500" : ""}>{doneSubtasks}/{subtaskCount}</span>
-            </div>
-          )}
-          {commentCount > 0 && (
-            <div className="flex items-center gap-1" title={`${commentCount} şərh`}>
-              <MessageSquare className="w-3.5 h-3.5" /> <span>{commentCount}</span>
-            </div>
-          )}
-          {fileCount > 0 && (
-            <div className="flex items-center gap-1" title={`${fileCount} fayl`}>
-              <Paperclip className="w-3.5 h-3.5" /> <span>{fileCount}</span>
-            </div>
-          )}
-        </div>
+        {columns.info && (
+          <div className="w-24 flex-shrink-0 flex items-center gap-3 text-[11px] font-bold text-muted-foreground">
+            {subtaskCount > 0 && (
+              <div className="flex items-center gap-1" title={`${doneSubtasks}/${subtaskCount} alt tapşırıq`}>
+                <Check className="w-3.5 h-3.5" />
+                <span className={doneSubtasks === subtaskCount ? "text-emerald-500" : ""}>{doneSubtasks}/{subtaskCount}</span>
+              </div>
+            )}
+            {commentCount > 0 && (
+              <div className="flex items-center gap-1" title={`${commentCount} şərh`}>
+                <MessageSquare className="w-3.5 h-3.5" /> <span>{commentCount}</span>
+              </div>
+            )}
+            {fileCount > 0 && (
+              <div className="flex items-center gap-1" title={`${fileCount} fayl`}>
+                <Paperclip className="w-3.5 h-3.5" /> <span>{fileCount}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 6. Assignee */}
-        <div className="w-32 flex-shrink-0 flex justify-center">
-          <AssigneeCell taskId={task.id} assignee={task.assignee} members={members} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
-        </div>
+        {columns.assignee && (
+          <div className="w-32 flex-shrink-0 flex justify-center">
+            <AssigneeCell taskId={task.id} assignee={task.assignee} members={members} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
+          </div>
+        )}
 
         {/* 7. Due Date */}
-        <div className="w-28 flex-shrink-0 flex justify-end">
-          <DueDateCell taskId={task.id} dueDate={task.dueDate} isDone={task.status === "DONE"} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
-        </div>
+        {columns.dueDate && (
+          <div className="w-28 flex-shrink-0 flex justify-end">
+            <DueDateCell taskId={task.id} dueDate={task.dueDate} isDone={task.status === "DONE"} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
+          </div>
+        )}
 
         {/* 8. Priority */}
-        <div className="w-24 flex-shrink-0 hidden md:flex justify-end">
-          <span className={cn("text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider", prio.bg)}>
-            {t(`priority.${task.priority}`) || prio.label}
-          </span>
-        </div>
+        {columns.priority && (
+          <div className="w-24 flex-shrink-0 hidden md:flex justify-end">
+            <span className={cn("text-[11px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider", prio.bg)}>
+              {t(`priority.${task.priority}`) || prio.label}
+            </span>
+          </div>
+        )}
 
         {/* 9. Actions */}
         <div className={cn("w-16 flex-shrink-0 flex items-center justify-end gap-1 transition-opacity pr-2", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}>
@@ -746,7 +779,7 @@ function TaskRow({
           ) : (
             <>
               {(subtasks ?? []).map((sub) => (
-                <SubtaskRow key={sub.id} subtask={sub} members={members} onUpdated={handleSubtaskUpdated} onDeleted={handleSubtaskDeleted} t={t} />
+                <SubtaskRow key={sub.id} subtask={sub} members={members} onUpdated={handleSubtaskUpdated} onDeleted={handleSubtaskDeleted} columns={columns} t={t} />
               ))}
               <div className="pl-14 pr-4 py-1.5">
                 <AddSubtaskRow parentId={task.id} projectId={task.projectId} onCreated={handleSubtaskCreated} t={t} />
@@ -779,6 +812,7 @@ function GroupSection({
   onTaskCreated,
   onTaskClick,
   defaultStatus,
+  columns,
   t // YENİ
 }: {
   title: string;
@@ -791,6 +825,7 @@ function GroupSection({
   onTaskCreated: (t: KanbanTask) => void;
   onTaskClick: (task: KanbanTask) => void;
   defaultStatus: string;
+  columns: ColumnVisibility;
   t: any; // YENİ
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -821,6 +856,7 @@ function GroupSection({
               onUpdated={onTaskUpdated}
               onDeleted={onTaskDeleted}
               onTaskClick={onTaskClick}
+              columns={columns}
               t={t}
             />
           ))}
@@ -847,6 +883,15 @@ export function TaskListView({
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
+
+  // Kustomizasiya: hansı sütunların göstərildiyi (Status/Ad sabit qalır)
+  const { isVisible, setVisible } = useCustomization("task-list-columns");
+  const columns: ColumnVisibility = {
+    info: isVisible("info"),
+    assignee: isVisible("assignee"),
+    dueDate: isVisible("dueDate"),
+    priority: isVisible("priority"),
+  };
 
   const [selectedTask, setSelectedTask] = useState<KanbanTask | null>(null);
   const openedInitialTask = useRef(false);
@@ -891,19 +936,36 @@ export function TaskListView({
           <div className="flex-1 min-w-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">
             {t("taskListView.tableTaskName") || "Tapşırıq Adı"}
           </div>
-          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-            {t("taskListView.tableInfo") || "Məlumat"}
+          {columns.info && (
+            <div className="w-24 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+              {t("taskListView.tableInfo") || "Məlumat"}
+            </div>
+          )}
+          {columns.assignee && (
+            <div className="w-32 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center">
+              {t("taskListView.tableAssignee") || "İcraçı"}
+            </div>
+          )}
+          {columns.dueDate && (
+            <div className="w-28 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">
+              {t("taskListView.tableDueDate") || "Son Tarix"}
+            </div>
+          )}
+          {columns.priority && (
+            <div className="w-24 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right hidden md:block">
+              {t("taskListView.tablePriority") || "Prioritet"}
+            </div>
+          )}
+          <div className="w-16 flex-shrink-0 flex justify-end">
+            <CustomizeMenu
+              items={COLUMN_ITEMS}
+              isVisible={isVisible}
+              setVisible={setVisible}
+              title="Sütunları fərdiləşdir"
+              triggerLabel=""
+              align="end"
+            />
           </div>
-          <div className="w-32 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center">
-            {t("taskListView.tableAssignee") || "İcraçı"}
-          </div>
-          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">
-            {t("taskListView.tableDueDate") || "Son Tarix"}
-          </div>
-          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right hidden md:block">
-            {t("taskListView.tablePriority") || "Prioritet"}
-          </div>
-          <div className="w-16 flex-shrink-0" />
         </div>
 
         {/* Groups */}
@@ -929,6 +991,7 @@ export function TaskListView({
                 onTaskCreated={onTaskCreated}
                 onTaskClick={(task: KanbanTask) => setSelectedTask(task)}
                 defaultStatus={group.status}
+                columns={columns}
                 t={t} // YENİ: Alt komponentlərə t-ni ötürürük
               />
             );

@@ -18,6 +18,7 @@ interface TaskTemplate {
   id: string;
   name: string;
   description: string | null;
+  data?: { priority?: string; estimatedHours?: number | null } | null;
 }
 
 interface CreateTaskModalProps {
@@ -55,6 +56,7 @@ export function CreateTaskModal({
     assigneeId: "",
     observerIds: [] as string[],
     dueDate: defaultDueDate ?? "",
+    estimatedHours: "",
   });
 
   useEffect(() => {
@@ -78,10 +80,15 @@ export function CreateTaskModal({
     setSelectedTemplateId(id);
     const tpl = templates.find((x) => x.id === id);
     if (!tpl) return;
+    // Şablonun `data`-sı KLONLANIR (JSON deep-copy) — bu formu doldurmaq üçün
+    // istifadə olunur, Master TaskTemplate sətrinə heç bir referans qalmır.
+    const cloned = tpl.data ? (JSON.parse(JSON.stringify(tpl.data)) as NonNullable<TaskTemplate["data"]>) : {};
     setForm((p) => ({
       ...p,
       title: tpl.name,
       description: tpl.description ?? "",
+      priority: cloned.priority ?? p.priority,
+      estimatedHours: cloned.estimatedHours != null ? String(cloned.estimatedHours) : p.estimatedHours,
     }));
   };
 
@@ -100,6 +107,10 @@ export function CreateTaskModal({
         body: JSON.stringify({
           name: form.title.trim(),
           description: form.description || null,
+          data: {
+            priority: form.priority,
+            estimatedHours: form.estimatedHours ? Number(form.estimatedHours) : null,
+          },
         }),
       });
       const data = await res.json();
@@ -136,6 +147,7 @@ export function CreateTaskModal({
           assigneeId: form.assigneeId || null,
           observerIds: form.observerIds,
           dueDate: form.dueDate || null,
+          estimatedHours: form.estimatedHours ? Number(form.estimatedHours) : null,
         }),
       });
       const data = await res.json();
@@ -266,15 +278,30 @@ export function CreateTaskModal({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.dueDate") || "Son Tarix"}</label>
-              <input
-                name="dueDate"
-                type="date"
-                value={form.dueDate}
-                onChange={handleChange}
-                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.dueDate") || "Son Tarix"}</label>
+                <input
+                  name="dueDate"
+                  type="date"
+                  value={form.dueDate}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.estimatedHours") || "Təxmini Vaxt (saat)"}</label>
+                <input
+                  name="estimatedHours"
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={form.estimatedHours}
+                  onChange={handleChange}
+                  placeholder="Məs: 4"
+                  className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                />
+              </div>
             </div>
 
             <div className="flex items-center justify-between gap-3 pt-2">

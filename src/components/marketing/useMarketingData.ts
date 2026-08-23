@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import type { MarketingCampaignLite, MarketingSegmentLite, MarketingCustomerLite } from "./types";
+import type { MarketingCampaignLite, MarketingSegmentLite, MarketingCustomerLite, MarketingTemplateLite } from "./types";
 
 // =============================================================================
 // useMarketingData — Marketing modulunun bütün datasını (kampaniyalar,
@@ -12,26 +12,30 @@ export function useMarketingData() {
   const [campaigns, setCampaigns] = useState<MarketingCampaignLite[]>([]);
   const [segments, setSegments] = useState<MarketingSegmentLite[]>([]);
   const [customers, setCustomers] = useState<MarketingCustomerLite[]>([]);
+  const [templates, setTemplates] = useState<MarketingTemplateLite[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [campaignsRes, segmentsRes, customersRes] = await Promise.all([
+      const [campaignsRes, segmentsRes, customersRes, templatesRes] = await Promise.all([
         fetch("/api/marketing/campaigns"),
         fetch("/api/marketing/segments"),
         fetch("/api/marketing/customers"),
+        fetch("/api/marketing/templates"),
       ]);
 
-      const [campaignsData, segmentsData, customersData] = await Promise.all([
+      const [campaignsData, segmentsData, customersData, templatesData] = await Promise.all([
         campaignsRes.json(),
         segmentsRes.json(),
         customersRes.json(),
+        templatesRes.json(),
       ]);
 
       if (Array.isArray(campaignsData)) setCampaigns(campaignsData);
       if (Array.isArray(segmentsData)) setSegments(segmentsData);
       if (Array.isArray(customersData)) setCustomers(customersData);
+      if (Array.isArray(templatesData)) setTemplates(templatesData);
     } catch (error) {
       console.error("Error loading marketing data:", error);
     } finally {
@@ -49,6 +53,8 @@ export function useMarketingData() {
     segments,
     setSegments,
     customers,
+    templates,
+    setTemplates,
     loading,
     refetch: fetchAll,
   };

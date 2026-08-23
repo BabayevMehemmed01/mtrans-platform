@@ -37,9 +37,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
-  MoreVertical, Shield, Trash, Pencil, Mail, RefreshCw, XCircle, 
-  Users, Clock, Search, MessageCircle, ShieldCheck 
+  MoreVertical, Trash, Pencil, Mail, RefreshCw, XCircle, 
+  Users, Clock, Search, MessageCircle, ShieldCheck, LayoutGrid, List
 } from "lucide-react"
+import { MemberStatsCards } from "./MemberStatsCards"
+import { MemberCard, WorkloadBadge } from "./MemberCard"
 
 function getInitials(name: string) {
   if (!name) return "US"
@@ -72,13 +74,24 @@ export function MembersClient({
   roles,
   projects,
   initialInvites,
+  canAssignRole = true,
+  canAssignDepartment = true,
+  canRemoveUser = true,
+  canInviteUser = true,
 }: {
   initialData: any[]
   departments: any[]
   roles: any[]
   projects: any[]
   initialInvites: any[]
+  canAssignRole?: boolean
+  canAssignDepartment?: boolean
+  canRemoveUser?: boolean
+  canInviteUser?: boolean
 }) {
+  // Ad/vəzifə kimi ümumi sahələri redaktə etmək üçün ən azı bir idarəetmə
+  // icazəsi tələb olunur (bax: /api/members/[id] eyni qayda ilə qoruyur).
+  const canManageMembers = canAssignRole || canAssignDepartment || canRemoveUser || canInviteUser
   // YENİ: Dili tapıb tərcümə obyektini formalaşdırırıq
   const { data: session } = useSession()
   const lang = (session?.user as any)?.language || "az"
@@ -91,6 +104,7 @@ export function MembersClient({
   const [members, setMembers] = useState(initialData)
   const [invites, setInvites] = useState(initialInvites)
   const [searchTerm, setSearchTerm] = useState("")
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
 
   const headedDepartments = useMemo(
     () => departments.filter((d) => d.headUserId === currentUserId),
@@ -142,6 +156,8 @@ export function MembersClient({
   const [inviteRoleId, setInviteRoleId] = useState("")
   const [inviteMessage, setInviteMessage] = useState(t("membersClient.inviteMessageDefault") || "Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
   const [inviteProjectIds, setInviteProjectIds] = useState<string[]>([])
+  const [inviteTemplates, setInviteTemplates] = useState<{ id: string; name: string; description: string | null; data: { inviteType?: "MEMBER" | "GUEST"; message?: string } | null }[]>([])
+  const [inviteTemplateId, setInviteTemplateId] = useState("")
 
   // Edit Form
   const [editId, setEditId] = useState("")
@@ -174,6 +190,25 @@ export function MembersClient({
     }
   }, [isInviteOpen, lockedDepartmentId, isManagerInviter, inviteRoleId, assignableInviteRoles])
 
+  // Dəvət şablonları yalnız dialoq açılanda (bir dəfə) yüklənir
+  useEffect(() => {
+    if (!isInviteOpen || inviteTemplates.length > 0) return
+    fetch("/api/templates?type=INVITATION")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => { if (Array.isArray(data)) setInviteTemplates(data) })
+      .catch(() => {})
+  }, [isInviteOpen, inviteTemplates.length])
+
+  const applyInviteTemplate = (id: string) => {
+    setInviteTemplateId(id)
+    const tpl = inviteTemplates.find((tp) => tp.id === id)
+    if (!tpl?.data) return
+    // Klonlama: şablonun `data`sı yeni dəvətə köçürülür, əsas şablona toxunulmur.
+    const cloned = JSON.parse(JSON.stringify(tpl.data)) as { inviteType?: "MEMBER" | "GUEST"; message?: string }
+    if (cloned.inviteType) setInviteType(cloned.inviteType)
+    if (cloned.message) setInviteMessage(cloned.message)
+  }
+
   // Axtarış və Sıralama (Rəhbərlər öndə)
   const filteredAndSortedMembers = useMemo(() => {
     let result = members;
@@ -203,6 +238,7 @@ export function MembersClient({
     setInviteEmail("")
     setInviteDepartmentId(lockedDepartmentId)
     setInviteRoleId("")
+    setInviteTemplateId("")
     setInviteMessage(t("membersClient.inviteMessageDefault") || "Sizi WorkSpace ERP sistemində komandamıza qoşulmağa dəvət edirik!")
     setInviteProjectIds([])
     setInviteError("")
@@ -343,9 +379,19 @@ export function MembersClient({
   }
 
   const pendingInvites = invites.filter(i => i.status === "PENDING" || i.status === "EXPIRED")
+  const activeMembersCount = members.filter((m) => m.status === "ACTIVE").length
+  const departmentCount = departments.length
 
   return (
     <div className="space-y-4">
+      <MemberStatsCards
+        totalMembers={members.length}
+        activeMembers={activeMembersCount}
+        departmentCount={departmentCount}
+        pendingInvitesCount={pendingInvites.length}
+        t={t}
+      />
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         
         {/* Axtarış Qutusu */}
@@ -360,12 +406,14 @@ export function MembersClient({
         </div>
 
         <Dialog open={isInviteOpen} onOpenChange={(open) => { setIsInviteOpen(open); resetInviteForm() }}>
-          <DialogTrigger asChild>
-            <Button className="shrink-0">
-              <Mail className="w-4 h-4 mr-2" />
-              {t("membersClient.inviteBtn") || "Dəvət Göndər"}
-            </Button>
-          </DialogTrigger>
+          {canInviteUser && (
+            <DialogTrigger asChild>
+              <Button className="shrink-0">
+                <Mail className="w-4 h-4 mr-2" />
+                {t("membersClient.inviteBtn") || "Dəvət Göndər"}
+              </Button>
+            </DialogTrigger>
+          )}
           <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{t("membersClient.inviteTitle") || "Yeni Dəvət Göndər"}</DialogTitle>
@@ -377,6 +425,23 @@ export function MembersClient({
               {inviteError && (
                 <div className="px-3 py-2 rounded-md bg-red-50 text-red-600 text-sm border border-red-200">
                   {inviteError}
+                </div>
+              )}
+
+              {inviteTemplates.length > 0 && (
+                <div className="space-y-2">
+                  <Label htmlFor="inviteTemplate">{t("membersClient.inviteTemplate") || "Dəvət Şablonu (istəyə bağlı)"}</Label>
+                  <select
+                    id="inviteTemplate"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                    value={inviteTemplateId}
+                    onChange={(e) => applyInviteTemplate(e.target.value)}
+                  >
+                    <option value="">{t("membersClient.noTemplate") || "Boş başla"}</option>
+                    {inviteTemplates.map((tpl) => (
+                      <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
+                    ))}
+                  </select>
                 </div>
               )}
 
@@ -547,9 +612,11 @@ export function MembersClient({
                 <Label htmlFor="editDept">{t("membersClient.dept") || "Şöbə"}</Label>
                 <select
                   id="editDept"
-                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   value={editDepartmentId}
                   onChange={(e) => setEditDepartmentId(e.target.value)}
+                  disabled={!canAssignDepartment}
+                  title={!canAssignDepartment ? (t("membersClient.noPermission") || "Bu əməliyyat üçün icazəniz yoxdur") : undefined}
                 >
                   <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
                   {departments.map(d => (
@@ -561,9 +628,11 @@ export function MembersClient({
                 <Label htmlFor="editRole">{t("membersClient.role") || "Rol"}</Label>
                 <select
                   id="editRole"
-                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                   value={editRoleId}
                   onChange={(e) => setEditRoleId(e.target.value)}
+                  disabled={!canAssignRole}
+                  title={!canAssignRole ? (t("membersClient.noPermission") || "Bu əməliyyat üçün icazəniz yoxdur") : undefined}
                 >
                   <option value="">{t("membersClient.selectDept") || "Seçin"}</option>
                   {roles.map(r => (
@@ -593,105 +662,155 @@ export function MembersClient({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="members" className="mt-4">
-          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted/50">
-                <TableRow>
-                  <TableHead>{t("membersClient.thName") || "Ad və Soyad"}</TableHead>
-                  <TableHead>{t("membersClient.thDeptRole") || "Şöbə / Vəzifə"}</TableHead>
-                  <TableHead>{t("membersClient.thEmail") || "Email ünvanı"}</TableHead>
-                  <TableHead>{t("membersClient.thStatus") || "Status"}</TableHead>
-                  <TableHead className="w-[80px] text-center">{t("membersClient.thChat") || "Çat"}</TableHead>
-                  <TableHead className="w-[60px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedMembers.map((member) => (
-                  <TableRow key={member.id} className="hover:bg-muted/50 transition-colors">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-border">
-                          <AvatarImage src={member.avatar || undefined} />
-                          <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
-                            {getInitials(member.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="font-semibold text-sm">
-                            {member.name} {member.id === currentUserId && <span className="text-xs text-muted-foreground ml-1">{t("membersClient.you") || "(Siz)"}</span>}
+        <TabsContent value="members" className="mt-4 space-y-3">
+          <div className="flex items-center justify-end">
+            <div className="inline-flex items-center rounded-lg border border-border bg-muted/40 p-0.5">
+              <button
+                type="button"
+                onClick={() => setViewMode("grid")}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === "grid" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("membersClient.viewGrid") || "Kart görünüşü"}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  viewMode === "list" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("membersClient.viewList") || "Cədvəl görünüşü"}
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {filteredAndSortedMembers.length === 0 ? (
+            <div className="rounded-xl border border-border bg-card py-12 text-center text-sm text-muted-foreground shadow-sm">
+              {searchTerm ? (t("membersClient.noMatch") || "Axtarışınıza uyğun heç bir üzv tapılmadı.") : (t("membersClient.noMembers") || "Hələ heç bir üzv yoxdur")}
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filteredAndSortedMembers.map((member) => (
+                <MemberCard
+                  key={member.id}
+                  member={member}
+                  currentUserId={currentUserId}
+                  canManageMembers={canManageMembers}
+                  canRemoveUser={canRemoveUser}
+                  onEdit={openEditModal}
+                  onDelete={handleDelete}
+                  onChat={(id) => router.push(`/dashboard/chat?userId=${id}`)}
+                  t={t}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+              <Table>
+                <TableHeader className="bg-muted/50">
+                  <TableRow>
+                    <TableHead>{t("membersClient.thName") || "Ad və Soyad"}</TableHead>
+                    <TableHead>{t("membersClient.thDeptRole") || "Şöbə / Vəzifə"}</TableHead>
+                    <TableHead>{t("membersClient.thWorkload") || "İş Yükü"}</TableHead>
+                    <TableHead>{t("membersClient.thEmail") || "Email ünvanı"}</TableHead>
+                    <TableHead>{t("membersClient.thStatus") || "Status"}</TableHead>
+                    <TableHead className="w-[80px] text-center">{t("membersClient.thChat") || "Çat"}</TableHead>
+                    <TableHead className="w-[60px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredAndSortedMembers.map((member) => (
+                    <TableRow key={member.id} className="hover:bg-muted/50 transition-colors">
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-9 w-9 border border-border">
+                            <AvatarImage src={member.avatar || undefined} />
+                            <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
+                              {getInitials(member.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="font-semibold text-sm">
+                              {member.name} {member.id === currentUserId && <span className="text-xs text-muted-foreground ml-1">{t("membersClient.you") || "(Siz)"}</span>}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-medium">
+                            {member.jobTitle || (member.role ? member.role.name : (t("membersClient.noVezife") || "Vəzifə yoxdur"))}
+                          </span>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3" /> 
+                            {member.department?.name || "-"}
                           </span>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1">
-                        <span className="text-sm font-medium">
-                          {member.jobTitle || (member.role ? member.role.name : (t("membersClient.noVezife") || "Vəzifə yoxdur"))}
+                      </TableCell>
+                      <TableCell>
+                        <WorkloadBadge active={member.activeTaskCount ?? 0} />
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">{member.email}</span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                          {member.status}
                         </span>
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <ShieldCheck className="w-3 h-3" /> 
-                          {member.department?.name || "-"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm text-muted-foreground">{member.email}</span>
-                    </TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        {member.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
-                        onClick={() => router.push(`/dashboard/chat?userId=${member.id}`)}
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>{t("membersClient.management") || "İdarəetmə"}</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onSelect={() => openEditModal(member)}>
-                            <Pencil className="mr-2 h-4 w-4" />
-                            <span>{t("membersClient.editBtn") || "Redaktə et"}</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-red-600 focus:bg-red-50 focus:text-red-700"
-                            onSelect={(e) => {
-                              e.preventDefault()
-                              handleDelete(member.id)
-                            }}
-                          >
-                            <Trash className="mr-2 h-4 w-4" />
-                            <span>{t("membersClient.deleteBtn") || "Sil"}</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredAndSortedMembers.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-12">
-                      {searchTerm ? (t("membersClient.noMatch") || "Axtarışınıza uyğun heç bir üzv tapılmadı.") : (t("membersClient.noMembers") || "Hələ heç bir üzv yoxdur")}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-muted-foreground hover:text-blue-600 hover:bg-blue-50"
+                          onClick={() => router.push(`/dashboard/chat?userId=${member.id}`)}
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {(canManageMembers || (canRemoveUser && member.id !== currentUserId)) ? (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuLabel>{t("membersClient.management") || "İdarəetmə"}</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {canManageMembers && (
+                                <DropdownMenuItem onSelect={() => openEditModal(member)}>
+                                  <Pencil className="mr-2 h-4 w-4" />
+                                  <span>{t("membersClient.editBtn") || "Redaktə et"}</span>
+                                </DropdownMenuItem>
+                              )}
+                              {canRemoveUser && member.id !== currentUserId && (
+                                <DropdownMenuItem
+                                  className="text-red-600 focus:bg-red-50 focus:text-red-700"
+                                  onSelect={(e) => {
+                                    e.preventDefault()
+                                    handleDelete(member.id)
+                                  }}
+                                >
+                                  <Trash className="mr-2 h-4 w-4" />
+                                  <span>{t("membersClient.deleteBtn") || "Sil"}</span>
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        ) : null}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="invites" className="mt-4">

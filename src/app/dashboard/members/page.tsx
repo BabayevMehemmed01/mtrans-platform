@@ -5,6 +5,7 @@ import { MembersClient } from "./MembersClient";
 import type { Metadata } from "next";
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 import { deleteStaleInvites, invitationListInclude } from "@/lib/invites";
+import { hasPermission, isSuperAdmin } from "@/lib/permissions";
 
 // YENİ: Metadata dinamikləşdirildi
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,6 +36,27 @@ export default async function MembersPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // YENİ: Hər üzvün iş yükü (aktiv/tamamlanmış tapşırıq sayı) — "Workload" badge-i
+  // üçün. Bütün şirkətin tapşırıqları tək sorğu ilə assignee+status üzrə qruplaşdırılır.
+  const taskWorkloadAgg = await prisma.task.groupBy({
+    by: ["assigneeId", "status"],
+    where: { project: { companyId }, isArchived: false, assigneeId: { not: null } },
+    _count: true,
+  });
+  const workloadByUser = new Map<string, { active: number; done: number }>();
+  for (const row of taskWorkloadAgg) {
+    if (!row.assigneeId) continue;
+    const entry = workloadByUser.get(row.assigneeId) ?? { active: 0, done: 0 };
+    if (row.status === "DONE") entry.done += row._count;
+    else if (row.status !== "CANCELLED") entry.active += row._count;
+    workloadByUser.set(row.assigneeId, entry);
+  }
+  const usersWithWorkload = users.map((u) => ({
+    ...u,
+    activeTaskCount: workloadByUser.get(u.id)?.active ?? 0,
+    completedTaskCount: workloadByUser.get(u.id)?.done ?? 0,
+  }));
+
   const departments = await prisma.department.findMany({
     where: { companyId, isActive: true },
     orderBy: { name: "asc" },
@@ -59,6 +81,17 @@ export default async function MembersPage() {
     orderBy: { createdAt: "desc" },
   });
 
+  // TƏHLÜKƏSİZLİK: Server-side hesablanan icazə bayraqları — client komponentə
+  // ötürülür ki, düymələr/menyular yalnız faktiki icazəsi olanlara göstərilsin.
+  // Real qorunma hər zaman API route-larında təkrar yoxlanılır (bax: /api/members/[id]).
+  const superAdmin = await isSuperAdmin(session.user.id);
+  const [canAssignRole, canAssignDepartment, canRemoveUser, canInviteUser] = await Promise.all([
+    superAdmin || hasPermission(session.user.id, "CAN_ASSIGN_ROLE"),
+    superAdmin || hasPermission(session.user.id, "CAN_ASSIGN_DEPARTMENT"),
+    superAdmin || hasPermission(session.user.id, "CAN_REMOVE_USER"),
+    superAdmin || hasPermission(session.user.id, "CAN_INVITE_USER"),
+  ]);
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
@@ -73,11 +106,15 @@ export default async function MembersPage() {
       </div>
 
       <MembersClient
-        initialData={users}
+        initialData={usersWithWorkload}
         departments={departments}
         roles={roles}
         projects={projects}
         initialInvites={invites}
+        canAssignRole={canAssignRole}
+        canAssignDepartment={canAssignDepartment}
+        canRemoveUser={canRemoveUser}
+        canInviteUser={canInviteUser}
       />
     </div>
   );

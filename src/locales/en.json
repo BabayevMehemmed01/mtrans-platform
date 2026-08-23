@@ -47,6 +47,7 @@
     "tabs": {
       "appearance": "Appearance & Language",
       "defaults": "Invitation Defaults",
+      "templates": "Templates",
       "company": "Company Profile",
       "notifications": "Notifications",
       "security": "Security"
@@ -726,7 +727,14 @@
     "permTitle": "{name} — Individual Permissions",
     "permDesc": "Grant specific permissions to this user in addition to the permissions provided by their role.",
     "hasByRole": "Already has via role",
-    "you": "(You)"
+    "you": "(You)",
+    "statTotal": "Total Members",
+    "statActive": "Active Members",
+    "statDepartments": "Departments",
+    "statPendingInvites": "Pending Invites",
+    "thWorkload": "Workload",
+    "viewGrid": "Grid view",
+    "viewList": "Table view"
   },
   "membersPage": {
     "metaTitle": "Team Management",
@@ -773,6 +781,13 @@
     "metaTitle": "Roles and Permissions",
     "title": "Roles and Permissions",
     "description": "Manage roles and system access permissions (RBAC) within the company."
+  },
+  "reportsPage": {
+    "metaTitle": "Reports & Analytics",
+    "title": "Reports & Analytics",
+    "description": "Real-time performance metrics across Projects, CRM, Marketing and Inventory.",
+    "accessDenied": "Access denied",
+    "accessDeniedDesc": "You don't have permission to access Reports & Analytics."
   },
   "profileClient": {
     "errorNameRequired": "Name is required",

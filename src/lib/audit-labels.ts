@@ -23,6 +23,7 @@ const ENTITY_NOUN: Record<EntityType, string> = {
   STOCK_MOVEMENT: "stok hərəkətini",
   SUPPLIER: "təchizatçını",
   PURCHASE_ORDER: "satınalma sifarişini",
+  TEMPLATE: "şablonu",
 };
 
 const ENTITY_NOUN_GENERIC: Record<EntityType, string> = {
@@ -42,6 +43,7 @@ const ENTITY_NOUN_GENERIC: Record<EntityType, string> = {
   STOCK_MOVEMENT: "stok hərəkəti",
   SUPPLIER: "təchizatçı",
   PURCHASE_ORDER: "satınalma sifarişi",
+  TEMPLATE: "şablon",
 };
 
 // Xüsusi action+entityType kombinasiyaları üçün fel ifadələri.
@@ -65,6 +67,7 @@ const SPECIAL: Partial<Record<AuditAction, Partial<Record<EntityType, PhraseFn>>
     STOCK_MOVEMENT: (n) => `yeni stok hərəkəti sənədi yaratdı${quoted(n)}`,
     SUPPLIER: (n) => `yeni təchizatçı yaratdı${quoted(n)}`,
     PURCHASE_ORDER: (n) => `yeni satınalma sifarişi yaratdı${quoted(n)}`,
+    TEMPLATE: (n) => `yeni şablon yaratdı${quoted(n)}`,
   },
   UPDATE: {
     TASK: (n) => `tapşırığı yenilədi${quoted(n)}`,
@@ -80,7 +83,9 @@ const SPECIAL: Partial<Record<AuditAction, Partial<Record<EntityType, PhraseFn>>
     WAREHOUSE: (n) => `anbarı yenilədi${quoted(n)}`,
     PRODUCT: (n) => `məhsulu yenilədi${quoted(n)}`,
     STOCK_MOVEMENT: (n) => `stok hərəkəti sənədini yenilədi${quoted(n)}`,
+    SUPPLIER: (n) => `təchizatçı məlumatlarını yenilədi${quoted(n)}`,
     PURCHASE_ORDER: (n) => `satınalma sifarişini yenilədi${quoted(n)}`,
+    TEMPLATE: (n) => `şablonu yenilədi${quoted(n)}`,
   },
   DELETE: {
     TASK: (n) => `tapşırığı sildi${quoted(n)}`,
@@ -97,6 +102,7 @@ const SPECIAL: Partial<Record<AuditAction, Partial<Record<EntityType, PhraseFn>>
     PRODUCT: (n) => `məhsulu sildi${quoted(n)}`,
     STOCK_MOVEMENT: (n) => `stok hərəkəti sənədini sildi${quoted(n)}`,
     SUPPLIER: (n) => `təchizatçını sildi${quoted(n)}`,
+    TEMPLATE: (n) => `şablonu sildi${quoted(n)}`,
   },
   LOGIN: {
     USER: () => `sistemə daxil oldu`,

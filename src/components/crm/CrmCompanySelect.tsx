@@ -17,6 +17,10 @@ interface CrmCompanySelectProps {
   onCompanyCreated: (company: CrmCompanyLite) => void;
 }
 
+function emptyCompanyForm() {
+  return { name: "", industry: "", website: "", phone: "", email: "", address: "" };
+}
+
 export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated }: CrmCompanySelectProps) {
   // YENİ: Tərcümə
   const { data: session } = useSession();
@@ -24,7 +28,7 @@ export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated 
   const t = getTranslation(lang);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [name, setName] = useState("");
+  const [form, setForm] = useState(emptyCompanyForm());
   const [loading, setLoading] = useState(false);
 
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -36,7 +40,7 @@ export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated 
   };
 
   const handleCreate = async () => {
-    if (!name.trim()) {
+    if (!form.name.trim()) {
       toast.error(t("crmCompanySelect.errorNameRequired") || "Şirkət adı mütləqdir");
       return;
     }
@@ -45,15 +49,15 @@ export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated 
       const res = await fetch("/api/crm/companies", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify(form),
       });
       if (!res.ok) throw new Error((await res.json()).error || (t("crmCompanySelect.errorGeneric") || "Xəta baş verdi"));
       const company = await res.json();
-      onCompanyCreated({ id: company.id, name: company.name });
+      onCompanyCreated(company);
       onChange(company.id);
       toast.success(t("crmCompanySelect.successCreated") || "Şirkət yaradıldı");
       setIsCreateOpen(false);
-      setName("");
+      setForm(emptyCompanyForm());
     } catch (err: any) {
       toast.error(err.message || (t("crmCompanySelect.errorGeneric") || "Xəta baş verdi"));
     } finally {
@@ -76,18 +80,62 @@ export function CrmCompanySelect({ value, onChange, companies, onCompanyCreated 
       </select>
 
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="sm:max-w-[440px]">
           <DialogHeader>
             <DialogTitle>{t("crmCompanySelect.modalTitle") || "Yeni CRM Şirkəti"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
+          <div className="space-y-3 py-2">
             <div className="space-y-2">
-              <Label>{t("crmCompanySelect.companyName") || "Şirkətin adı"}</Label>
+              <Label>{t("crmCompanySelect.companyName") || "Şirkətin adı"} *</Label>
               <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={form.name}
+                onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                 placeholder={t("crmCompanySelect.companyNamePlaceholder") || "Məs: ABC MMC"}
                 autoFocus
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t("crmCompanySelect.industry") || "Sahə"}</Label>
+                <Input
+                  value={form.industry}
+                  onChange={(e) => setForm((p) => ({ ...p, industry: e.target.value }))}
+                  placeholder={t("crmCompanySelect.industryPlaceholder") || "Məs: Tikinti"}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("crmCompanySelect.website") || "Vebsayt"}</Label>
+                <Input
+                  value={form.website}
+                  onChange={(e) => setForm((p) => ({ ...p, website: e.target.value }))}
+                  placeholder="https://..."
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>{t("crmCompanySelect.phone") || "Telefon"}</Label>
+                <Input
+                  value={form.phone}
+                  onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
+                  placeholder="+994 50 000 00 00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t("crmCompanySelect.email") || "Email"}</Label>
+                <Input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
+                  placeholder="info@company.com"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>{t("crmCompanySelect.address") || "Ünvan"}</Label>
+              <Input
+                value={form.address}
+                onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();

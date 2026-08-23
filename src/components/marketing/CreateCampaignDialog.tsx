@@ -24,23 +24,26 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { CHANNEL_META } from "./channelMeta";
-import type { CampaignType, MarketingCampaignLite, MarketingSegmentLite } from "./types";
+import type { CampaignType, MarketingCampaignLite, MarketingSegmentLite, MarketingTemplateLite } from "./types";
 
 interface CreateCampaignDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   type: CampaignType;
   segments: MarketingSegmentLite[];
+  templates: MarketingTemplateLite[];
   onCreated: (campaign: MarketingCampaignLite) => void;
 }
 
 const NO_SEGMENT_VALUE = "__none__";
+const NO_TEMPLATE_VALUE = "__none_template__";
 
 export function CreateCampaignDialog({
   open,
   onOpenChange,
   type,
   segments,
+  templates,
   onCreated,
 }: CreateCampaignDialogProps) {
   const meta = CHANNEL_META[type];
@@ -50,8 +53,11 @@ export function CreateCampaignDialog({
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [segmentId, setSegmentId] = useState<string>(NO_SEGMENT_VALUE);
+  const [templateId, setTemplateId] = useState<string>(NO_TEMPLATE_VALUE);
   const [scheduledAt, setScheduledAt] = useState("");
   const [saving, setSaving] = useState(false);
+
+  const availableTemplates = templates.filter((t) => t.type === type);
 
   useEffect(() => {
     if (open) {
@@ -59,9 +65,22 @@ export function CreateCampaignDialog({
       setSubject("");
       setContent("");
       setSegmentId(NO_SEGMENT_VALUE);
+      setTemplateId(NO_TEMPLATE_VALUE);
       setScheduledAt("");
     }
   }, [open, type]);
+
+  const applyTemplate = (id: string) => {
+    setTemplateId(id);
+    if (id === NO_TEMPLATE_VALUE) return;
+    const tpl = templates.find((t) => t.id === id);
+    if (!tpl) return;
+    // Şablon KLONLANIR — bu, sadəcə başlanğıc dəyərləri köçürür, sonrakı
+    // redaktə nə kampaniyaya, nə də master şablona təsir etmir.
+    if (tpl.subject) setSubject(tpl.subject);
+    setContent(tpl.content);
+    if (!name.trim()) setName(tpl.name);
+  };
 
   const handleSubmit = async () => {
     if (!name.trim()) {
@@ -122,6 +141,25 @@ export function CreateCampaignDialog({
               autoFocus
             />
           </div>
+
+          {availableTemplates.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>Şablon (ixtiyari)</Label>
+              <Select value={templateId} onValueChange={(value) => applyTemplate(value ?? NO_TEMPLATE_VALUE)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Hazır şablondan başlayın" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_TEMPLATE_VALUE}>Şablonsuz (boş) başla</SelectItem>
+                  {availableTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {type === "EMAIL" && (
             <div className="space-y-1.5">

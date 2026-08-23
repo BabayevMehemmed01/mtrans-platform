@@ -9,7 +9,7 @@ import CrmKanban from "@/components/crm/CrmKanban";
 import CrmDealsList from "@/components/crm/CrmDealsList";
 import CrmCalendar from "@/components/crm/CrmCalendar";
 import CrmContactCenter from "@/components/crm/CrmContactCenter";
-import CrmContacts from "@/components/crm/CrmContacts";
+import CrmContactsAndCompanies from "@/components/crm/CrmContactsAndCompanies";
 import { useCrmBoard } from "@/components/crm/useCrmBoard";
 import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n";
@@ -69,7 +69,7 @@ export default function CrmClient() {
         </TabsContent>
 
         <TabsContent value="contacts" className="space-y-4 mt-4">
-          <CrmContacts board={board} />
+          <CrmContactsAndCompanies board={board} />
         </TabsContent>
       </Tabs>
     </>

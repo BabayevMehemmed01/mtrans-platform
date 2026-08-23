@@ -47,6 +47,7 @@
     "tabs": {
       "appearance": "Görünüş və Dil",
       "defaults": "Dəvət Ayarları",
+      "templates": "Şablonlar",
       "company": "Şirkət Profili",
       "notifications": "Bildirişlər",
       "security": "Təhlükəsizlik"
@@ -726,7 +727,14 @@
     "permTitle": "{name} — Fərdi İcazələr",
     "permDesc": "Rolun verdiyi icazələr üstündən əlavə olaraq, bu istifadəçiyə spesifik icazələr verin.",
     "hasByRole": "Rol vasitəsilə artıq var",
-    "you": "(Siz)"
+    "you": "(Siz)",
+    "statTotal": "Cəmi Üzv",
+    "statActive": "Aktiv Üzv",
+    "statDepartments": "Şöbələr",
+    "statPendingInvites": "Gözləyən Dəvət",
+    "thWorkload": "İş Yükü",
+    "viewGrid": "Kart görünüşü",
+    "viewList": "Cədvəl görünüşü"
   },
   "membersPage": {
     "metaTitle": "Komanda İdarəetməsi",
@@ -773,6 +781,13 @@
     "metaTitle": "Rollar və İcazələr",
     "title": "Rollar və İcazələr",
     "description": "Şirkət daxilindəki rolları və sistemə giriş icazələrini (RBAC) idarə edin."
+  },
+  "reportsPage": {
+    "metaTitle": "Hesabatlar və Analitika",
+    "title": "Hesabatlar və Analitika",
+    "description": "Layihələr, CRM, Marketinq və Anbar üzrə real vaxt performans göstəriciləri.",
+    "accessDenied": "İcazə yoxdur",
+    "accessDeniedDesc": "Hesabatlar və analitika bölməsinə giriş üçün icazəniz yoxdur."
   },
   "profileClient": {
     "errorNameRequired": "Ad tələb olunur",

@@ -102,7 +102,13 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
         </TabsContent>
 
         <TabsContent value="templates" className="mt-4">
-          <MarketingTemplatesTab />
+          <MarketingTemplatesTab
+            templates={board.templates}
+            loading={board.loading}
+            onCreated={(t) => board.setTemplates((prev) => [...prev, t])}
+            onUpdated={(t) => board.setTemplates((prev) => prev.map((x) => (x.id === t.id ? t : x)))}
+            onDeleted={(id) => board.setTemplates((prev) => prev.filter((x) => x.id !== id))}
+          />
         </TabsContent>
       </Tabs>
 
@@ -111,6 +117,7 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
         onOpenChange={(open) => setCampaignDialog((prev) => ({ ...prev, open }))}
         type={campaignDialog.type}
         segments={board.segments}
+        templates={board.templates}
         onCreated={(c) => board.setCampaigns((prev) => [c, ...prev])}
       />
 

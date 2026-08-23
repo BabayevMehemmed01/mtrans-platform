@@ -2,22 +2,42 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Plus } from "lucide-react";
+import { Plus, MoreVertical, Pencil, ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CrmDealCard } from "./CrmDealCard";
 import type { CrmStage, CrmDeal } from "./types";
 import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n";
 import { formatStageValueTotals, getBitrixStageColor } from "./crmUtils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface CrmKanbanColumnProps {
   stage: CrmStage;
   deals: CrmDeal[];
   onAddDeal: () => void;
   onDealClick: (deal: CrmDeal) => void;
+  onEditStage: () => void;
+  onMoveStage: (direction: "left" | "right") => void;
+  canMoveLeft: boolean;
+  canMoveRight: boolean;
 }
 
-export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKanbanColumnProps) {
+export function CrmKanbanColumn({
+  stage,
+  deals,
+  onAddDeal,
+  onDealClick,
+  onEditStage,
+  onMoveStage,
+  canMoveLeft,
+  canMoveRight,
+}: CrmKanbanColumnProps) {
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
   const t = getTranslation(lang);
@@ -39,13 +59,37 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
             {deals.length}
           </span>
         </div>
-        <button
-          onClick={onAddDeal}
-          className="p-1 rounded-md hover:bg-white/20 transition-colors flex-shrink-0"
-          title={t("crmKanbanColumn.addDealTitle") || "Əqd əlavə et"}
-        >
-          <Plus className="w-4 h-4" />
-        </button>
+        <div className="flex items-center gap-0.5 flex-shrink-0">
+          <button
+            onClick={onAddDeal}
+            className="p-1 rounded-md hover:bg-white/20 transition-colors"
+            title={t("crmKanbanColumn.addDealTitle") || "Əqd əlavə et"}
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="p-1 rounded-md hover:bg-white/20 transition-colors"
+                title={t("crmKanbanColumn.stageOptionsTitle") || "Mərhələ ayarları"}
+              >
+                <MoreVertical className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={onEditStage}>
+                <Pencil className="mr-2 h-4 w-4" /> {t("crmKanbanColumn.editStage") || "Redaktə et"}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled={!canMoveLeft} onSelect={() => onMoveStage("left")}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> {t("crmKanbanColumn.moveLeft") || "Sola köçür"}
+              </DropdownMenuItem>
+              <DropdownMenuItem disabled={!canMoveRight} onSelect={() => onMoveStage("right")}>
+                <ArrowRight className="mr-2 h-4 w-4" /> {t("crmKanbanColumn.moveRight") || "Sağa köçür"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <p className="px-3 py-1.5 text-[11px] font-medium text-white/90 leading-snug" style={{ backgroundColor: headerColor }}>
         {totalsLabel} {t("crmKanbanColumn.total") || "məcmu"}

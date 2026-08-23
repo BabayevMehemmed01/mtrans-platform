@@ -48,6 +48,17 @@ export interface MarketingCampaignLite {
   createdBy?: { id: string; name: string; avatar: string | null } | null;
 }
 
+export interface MarketingTemplateLite {
+  id: string;
+  name: string;
+  type: CampaignType;
+  subject: string | null;
+  content: string;
+  isSystem: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface MarketingCustomerLite {
   id: string;
   name: string;

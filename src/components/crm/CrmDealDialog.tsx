@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { Trash2 } from "lucide-react";
+import { Trash2, Copy, Check, Link as LinkIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ function emptyForm(defaultStageId?: string) {
     title: "",
     value: "",
     currency: "AZN",
+    probability: "0",
     expectedCloseDate: "",
     deadline: "",
     clientName: "",
@@ -88,6 +89,7 @@ export function CrmDealDialog({
   const [form, setForm] = useState(emptyForm(defaultStageId));
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -96,6 +98,7 @@ export function CrmDealDialog({
         title: deal.title,
         value: deal.value != null ? String(deal.value) : "",
         currency: deal.currency || "AZN",
+        probability: deal.probability != null ? String(deal.probability) : "0",
         expectedCloseDate: toDateInputValue(deal.expectedCloseDate),
         deadline: toDateInputValue(deal.deadline),
         clientName: deal.clientName || "",
@@ -111,7 +114,25 @@ export function CrmDealDialog({
     } else {
       setForm(emptyForm(defaultStageId));
     }
+    setCopied(false);
   }, [open, mode, deal, defaultStageId]);
+
+  const trackingUrl =
+    mode === "edit" && deal?.trackingToken && typeof window !== "undefined"
+      ? `${window.location.origin}/track/${deal.trackingToken}`
+      : "";
+
+  const handleCopyTrackingLink = async () => {
+    if (!trackingUrl) return;
+    try {
+      await navigator.clipboard.writeText(trackingUrl);
+      setCopied(true);
+      toast.success(t("crmDealDialog.linkCopied") || "Link kopyalandı");
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error(t("crmDealDialog.errorGeneric") || "Xəta baş verdi");
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,6 +150,7 @@ export function CrmDealDialog({
       title: form.title,
       value: form.value,
       currency: form.currency,
+      probability: form.probability,
       expectedCloseDate: form.expectedCloseDate || null,
       deadline: form.deadline || null,
       clientName: form.clientName || null,
@@ -244,6 +266,22 @@ export function CrmDealDialog({
             </select>
           </div>
 
+          <div className="space-y-1.5 sm:col-span-2">
+            <div className="flex items-center justify-between">
+              <Label>{t("crmDealDialog.probability") || "Uğur ehtimalı"}</Label>
+              <span className="text-xs font-semibold text-muted-foreground">{form.probability}%</span>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              value={form.probability}
+              onChange={(e) => setForm((p) => ({ ...p, probability: e.target.value }))}
+              className="w-full accent-primary cursor-pointer"
+            />
+          </div>
+
           <div className="space-y-1.5">
             <Label>{t("crmDealDialog.deadline") || "Deadline"}</Label>
             <Input
@@ -346,6 +384,20 @@ export function CrmDealDialog({
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
+            </div>
+          )}
+
+          {mode === "edit" && trackingUrl && (
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="flex items-center gap-1.5">
+                <LinkIcon className="h-3.5 w-3.5" /> {t("crmDealDialog.trackingLink") || "İzləmə Linki (müştəri üçün)"}
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input value={trackingUrl} readOnly className="text-xs text-muted-foreground" />
+                <Button type="button" variant="outline" size="icon" onClick={handleCopyTrackingLink} title={t("crmDealDialog.copyLink") || "Linki kopyala"}>
+                  {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           )}
 

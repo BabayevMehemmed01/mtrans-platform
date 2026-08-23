@@ -33,7 +33,7 @@ import { CrmDealCard } from "./CrmDealCard";
 import { CrmDealDialog } from "./CrmDealDialog";
 import { CrmStageDialog } from "./CrmStageDialog";
 import type { CrmBoard } from "./useCrmBoard";
-import type { CrmDeal } from "./types";
+import type { CrmDeal, CrmStage } from "./types";
 import { CRM_TRASH_ID } from "./crmUtils";
 
 interface CrmKanbanProps {
@@ -70,7 +70,11 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
     deal: CrmDeal | null;
     defaultStageId?: string;
   }>({ open: false, mode: "create", deal: null });
-  const [isStageDialogOpen, setIsStageDialogOpen] = useState(false);
+  const [stageDialogState, setStageDialogState] = useState<{
+    open: boolean;
+    mode: "create" | "edit";
+    stage: CrmStage | null;
+  }>({ open: false, mode: "create", stage: null });
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -166,6 +170,43 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
   const handleUpdated = (deal: CrmDeal) => setDeals((prev) => prev.map((d) => (d.id === deal.id ? deal : d)));
   const handleDeleted = (dealId: string) => setDeals((prev) => prev.filter((d) => d.id !== dealId));
 
+  // ---- Stage (sütun) idarəetməsi ----
+  const openCreateStage = () => setStageDialogState({ open: true, mode: "create", stage: null });
+  const openEditStage = (stage: CrmStage) => setStageDialogState({ open: true, mode: "edit", stage });
+
+  const handleStageUpdated = (updated: CrmStage) =>
+    setStages((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
+
+  const handleStageDeleted = (stageId: string, reassignToStageId: string | null) => {
+    setStages((prev) => prev.filter((s) => s.id !== stageId));
+    if (reassignToStageId) {
+      setDeals((prev) => prev.map((d) => (d.stageId === stageId ? { ...d, stageId: reassignToStageId } : d)));
+    }
+  };
+
+  const moveStage = useCallback(async (stageId: string, direction: "left" | "right") => {
+    const idx = stages.findIndex((s) => s.id === stageId);
+    if (idx === -1) return;
+    const swapWith = direction === "left" ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= stages.length) return;
+
+    const reordered = [...stages];
+    [reordered[idx], reordered[swapWith]] = [reordered[swapWith], reordered[idx]];
+    setStages(reordered);
+
+    try {
+      const res = await fetch("/api/crm/stages/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: reordered.map((s) => s.id) }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      toast.error(t("crmKanban.errorReorder") || "Mərhələlərin sırası yenilənmədi");
+      refetch();
+    }
+  }, [stages, setStages, refetch, t]);
+
   if (loading) {
     return <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{t("crmKanban.loading") || "Yüklənir..."}</div>;
   }
@@ -175,7 +216,7 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">{t("crmKanban.salesFunnel") || "Deals"}</h3>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsStageDialogOpen(true)}>
+          <Button variant="outline" size="sm" onClick={openCreateStage}>
             <Plus className="mr-2 h-4 w-4" /> {t("crmKanban.newStageBtn") || "Yeni Mərhələ"}
           </Button>
           <Button size="sm" onClick={() => openCreate()}>
@@ -196,7 +237,7 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
       >
         <div className={cn("h-[calc(100vh-250px)] overflow-x-auto pb-4", activeDeal && "pb-28")}>
           <div className="flex gap-4 h-full">
-            {stages.map((stage) => {
+            {stages.map((stage, index) => {
               const stageDeals = deals.filter((d) => d.stageId === stage.id);
               return (
                 <SortableContext
@@ -210,6 +251,10 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
                     deals={stageDeals}
                     onAddDeal={() => openCreate(stage.id)}
                     onDealClick={openEdit}
+                    onEditStage={() => openEditStage(stage)}
+                    onMoveStage={(direction) => moveStage(stage.id, direction)}
+                    canMoveLeft={index > 0}
+                    canMoveRight={index < stages.length - 1}
                   />
                 </SortableContext>
               );
@@ -242,9 +287,14 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
       />
 
       <CrmStageDialog
-        open={isStageDialogOpen}
-        onOpenChange={setIsStageDialogOpen}
+        open={stageDialogState.open}
+        onOpenChange={(open) => setStageDialogState((p) => ({ ...p, open }))}
+        mode={stageDialogState.mode}
+        stage={stageDialogState.stage}
+        allStages={stages}
         onCreated={(stage) => setStages((prev) => [...prev, stage])}
+        onUpdated={handleStageUpdated}
+        onDeleted={handleStageDeleted}
       />
     </div>
   );

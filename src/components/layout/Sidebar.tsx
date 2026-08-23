@@ -57,6 +57,9 @@ type NavItem = {
   exact?: boolean;
   children?: NavChild[];
   superAdminOnly?: boolean;
+  // Bu sahələrdən ƏN AZI biri JWT-dəki rol icazələrində olmalıdır (soft-gate;
+  // əsl qorunma hər zaman server-side, bax: src/lib/permissions.ts).
+  requiresAnyPermission?: string[];
 };
 
 const navItems: NavItem[] = [
@@ -157,6 +160,9 @@ const navItems: NavItem[] = [
     tKey: "menu.reports",
     href: "/dashboard/reports",
     icon: BarChart3,
+    // TƏHLÜKƏSİZLİK: Real qorunma server-side-dır (bax: /dashboard/reports/page.tsx),
+    // bu yalnız linkin lazımsız yerə göstərilməsinin qarşısını alan soft-gate-dir.
+    requiresAnyPermission: ["CAN_VIEW_REPORTS"],
   },
 ];
 
@@ -166,6 +172,7 @@ const adminItems: NavItem[] = [
     tKey: "menu.roles",
     href: "/dashboard/roles",
     icon: ShieldCheck,
+    requiresAnyPermission: ["CAN_VIEW_ROLES", "CAN_EDIT_ROLE", "CAN_CREATE_ROLE"],
   },
   {
     title: "Sistem Qeydləri",
@@ -219,15 +226,22 @@ function SidebarInner() {
   const t = getTranslation(lang);
 
   const currentView = searchParams.get("view");
+  const userPermissions = ((session?.user as any)?.role?.permissions as string[] | undefined) ?? [];
   const isSuperAdmin =
     Boolean((session?.user as any)?.isSuperAdmin) ||
-    (((session?.user as any)?.role?.permissions as string[] | undefined) ?? []).includes(
-      "CAN_MANAGE_COMPANY"
-    ) ||
+    userPermissions.includes("CAN_MANAGE_COMPANY") ||
     String((session?.user as any)?.role?.name ?? "")
       .toUpperCase()
       .includes("SUPER");
-  const visibleAdminItems = adminItems.filter((item) => !item.superAdminOnly || isSuperAdmin);
+  const filterByAccess = (item: NavItem) => {
+    if (item.superAdminOnly && !isSuperAdmin) return false;
+    if (item.requiresAnyPermission && !isSuperAdmin) {
+      return item.requiresAnyPermission.some((p) => userPermissions.includes(p));
+    }
+    return true;
+  };
+  const visibleNavItems = navItems.filter(filterByAccess);
+  const visibleAdminItems = adminItems.filter(filterByAccess);
 
   const isActive = (href: string, exact = false) => {
     const { path, view } = parseHref(href);
@@ -270,7 +284,7 @@ function SidebarInner() {
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-2 py-4">
         <NavGroup
-          items={navItems}
+          items={visibleNavItems}
           isCollapsed={isCollapsed}
           isActive={isActive}
           label={t("menu.main") || "Əsas"}

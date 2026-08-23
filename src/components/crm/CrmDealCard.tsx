@@ -69,9 +69,26 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
       </p>
 
       <div className="pl-3 space-y-0.5">
-        <p className="font-bold text-sm text-foreground">
-          {(deal.value ?? 0).toLocaleString()} {deal.currency}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p className="font-bold text-sm text-foreground">
+            {(deal.value ?? 0).toLocaleString()} {deal.currency}
+          </p>
+          {deal.probability > 0 && (
+            <span
+              className={cn(
+                "text-[10px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0",
+                deal.probability >= 70
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                  : deal.probability >= 40
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                    : "bg-muted text-muted-foreground"
+              )}
+              title={t("crmDealDialog.probability") || "Uğur ehtimalı"}
+            >
+              {deal.probability}%
+            </span>
+          )}
+        </div>
         {clientName && (
           <p className="font-bold text-[12px] leading-tight truncate">{clientName}</p>
         )}

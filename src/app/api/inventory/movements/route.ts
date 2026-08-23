@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         product: { select: { id: true, name: true, sku: true, unit: true, barcode: true } },
         fromWarehouse: { select: { id: true, name: true } },
         toWarehouse: { select: { id: true, name: true } },
+        supplier: { select: { id: true, name: true } },
         createdBy: { select: { id: true, name: true, avatar: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -97,6 +98,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Seçilmiş anbarlardan bəzisi tapılmadı" }, { status: 400 });
     }
 
+    let supplierId: string | null = null;
+    if (data.supplierId) {
+      const validSupplier = await prisma.supplier.findFirst({ where: { id: data.supplierId, companyId } });
+      if (!validSupplier) {
+        return NextResponse.json({ error: "Seçilmiş təchizatçı tapılmadı" }, { status: 400 });
+      }
+      supplierId = validSupplier.id;
+    }
+
     const result = await createStockMovementDocument({
       companyId,
       createdById: session.user.id,
@@ -105,6 +115,7 @@ export async function POST(req: NextRequest) {
       reference: data.reference,
       comment: data.comment,
       currency: data.currency,
+      supplierId,
       lines: data.lines,
     });
 

@@ -18,6 +18,13 @@ export type CrmMember = {
 export type CrmCompanyLite = {
   id: string;
   name: string;
+  industry?: string | null;
+  website?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  createdAt?: string;
+  _count?: { contacts: number; deals: number };
 };
 
 export type CrmContact = {
@@ -45,6 +52,7 @@ export type CrmDeal = {
   clientCompany: string | null;
   clientPhone: string | null;
   clientEmail: string | null;
+  trackingToken?: string | null;
   createdAt: string;
   stageId: string;
   stage?: CrmStage | null;

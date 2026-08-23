@@ -166,6 +166,7 @@ export interface CreateStockMovementDocumentParams {
   reference?: string | null;
   comment?: string | null;
   currency?: string;
+  supplierId?: string | null;
   lines: StockMovementLineInput[];
 }
 
@@ -175,7 +176,7 @@ export interface CreateStockMovementDocumentParams {
  * tətbiq olunur (hamısı və ya heç biri — atomiklik).
  */
 export async function createStockMovementDocument(params: CreateStockMovementDocumentParams) {
-  const { companyId, createdById, type, status, comment, currency = "AZN" } = params;
+  const { companyId, createdById, type, status, comment, currency = "AZN", supplierId } = params;
   const reference = params.reference?.trim() || (await generateDocumentReference(companyId, documentPrefixFor(type)));
 
   return prisma.$transaction(async (tx) => {
@@ -208,11 +209,13 @@ export async function createStockMovementDocument(params: CreateStockMovementDoc
           fromBinId: line.fromBinId || null,
           toBinId: line.toBinId || null,
           createdById,
+          supplierId: supplierId || null,
         },
         include: {
           product: { select: { id: true, name: true, sku: true, unit: true } },
           fromWarehouse: { select: { id: true, name: true } },
           toWarehouse: { select: { id: true, name: true } },
+          supplier: { select: { id: true, name: true } },
         },
       });
 
@@ -284,19 +287,30 @@ function documentPrefixFor(type: StockMovementType): string {
 // ANALYTICS — ABC analizi, stok dövriyyəsi, real-time qalıq
 // =============================================================================
 
+export interface LowStockItem {
+  id: string;
+  name: string;
+  sku: string;
+  quantity: number;
+  minStockLimit: number;
+}
+
 export interface RealtimeTotals {
   totalProducts: number;
   totalQuantity: number;
   totalValuation: number;
   lowStockCount: number;
   warehouseCount: number;
+  // YENİ: Reports/Analitika modulunda göstərilən "Ən aşağı qalıqlı məhsullar"
+  // vidjeti üçün — limitə ən yaxın (ən kritik) 10 məhsul, azalan aciliyyət sırası ilə.
+  lowStockItems: LowStockItem[];
 }
 
 export async function getRealtimeTotals(companyId: string): Promise<RealtimeTotals> {
   const [products, levels, warehouseCount] = await Promise.all([
     prisma.product.findMany({
       where: { companyId, isActive: true },
-      select: { id: true, purchasePrice: true, minStockLimit: true },
+      select: { id: true, name: true, sku: true, purchasePrice: true, minStockLimit: true },
     }),
     prisma.inventoryLevel.findMany({
       where: { product: { companyId } },
@@ -313,13 +327,20 @@ export async function getRealtimeTotals(companyId: string): Promise<RealtimeTota
   let totalQuantity = 0;
   let totalValuation = 0;
   let lowStockCount = 0;
+  const lowStockItems: LowStockItem[] = [];
 
   for (const product of products) {
     const qty = qtyByProduct.get(product.id) ?? 0;
     totalQuantity += qty;
     totalValuation += qty * product.purchasePrice;
-    if (product.minStockLimit > 0 && qty < product.minStockLimit) lowStockCount++;
+    if (product.minStockLimit > 0 && qty < product.minStockLimit) {
+      lowStockCount++;
+      lowStockItems.push({ id: product.id, name: product.name, sku: product.sku, quantity: qty, minStockLimit: product.minStockLimit });
+    }
   }
+
+  // Ən kritik olanlar (qalıq/limit nisbəti ən aşağı olanlar) əvvəldə
+  lowStockItems.sort((a, b) => a.quantity / a.minStockLimit - b.quantity / b.minStockLimit);
 
   return {
     totalProducts: products.length,
@@ -327,6 +348,7 @@ export async function getRealtimeTotals(companyId: string): Promise<RealtimeTota
     totalValuation,
     lowStockCount,
     warehouseCount,
+    lowStockItems: lowStockItems.slice(0, 10),
   };
 }
 

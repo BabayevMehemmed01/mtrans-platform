@@ -261,11 +261,24 @@ export const createTaskSchema = z.object({
   projectId: z.string().min(1, "Layihə ID-si tələb olunur"),
 });
 
+// Şablondan yaradılan tapşırığa köçürülən struktur sahələr (deep-clone edilir,
+// Master TaskTemplate-ə heç bir referans saxlanmır).
+export const taskTemplateDataSchema = z.object({
+  priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
+  estimatedHours: z.coerce.number().positive().max(10000).optional().or(z.null()),
+});
+
 export const createTaskTemplateSchema = z.object({
   name: z.string().min(1, "Şablon adı tələb olunur").max(300),
   description: z.string().max(10000).optional().or(z.null()),
   departmentId: z.string().optional().or(z.null()),
+  data: taskTemplateDataSchema.optional(),
 });
+
+export const updateTaskTemplateSchema = createTaskTemplateSchema.partial();
+
+export type TaskTemplateDataInput = z.infer<typeof taskTemplateDataSchema>;
+export type UpdateTaskTemplateInput = z.infer<typeof updateTaskTemplateSchema>;
 
 export const updateTaskSchema = createTaskSchema.partial().omit({ projectId: true });
 // Alias
@@ -436,6 +449,8 @@ export const createStockMovementDocumentSchema = z.object({
   reference: z.string().max(150).optional().or(z.literal("")),
   comment: z.string().max(2000).optional().or(z.literal("")),
   currency: z.string().max(10).optional(),
+  // INBOUND (qəbul) sənədləri üçün mənbə təchizatçı
+  supplierId: z.string().optional().or(z.literal("")).or(z.null()),
   lines: z.array(stockMovementLineSchema).min(1, "Ən azı bir məhsul sətri əlavə edilməlidir"),
 });
 
@@ -451,7 +466,64 @@ export const createSupplierSchema = z.object({
   taxId: z.string().max(50).optional().or(z.literal("")),
 });
 
+export const updateSupplierSchema = createSupplierSchema.partial().extend({
+  isActive: z.boolean().optional(),
+});
+
 export type CreateSupplierInput = z.infer<typeof createSupplierSchema>;
+export type UpdateSupplierInput = z.infer<typeof updateSupplierSchema>;
+
+// =============================================================================
+// TEMPLATE Validations (Layihə / Dəvət / Rol şablonları)
+// =============================================================================
+
+export const templateTypeEnum = z.enum(["PROJECT", "INVITATION", "ROLE"]);
+
+export const createTemplateSchema = z.object({
+  type: templateTypeEnum,
+  name: z.string().min(2, "Şablon adı ən az 2 simvol olmalıdır").max(150),
+  description: z.string().max(2000).optional().or(z.literal("")).or(z.null()),
+  data: z.record(z.string(), z.any()).default({}),
+});
+
+export const updateTemplateSchema = z.object({
+  name: z.string().min(2).max(150).optional(),
+  description: z.string().max(2000).optional().or(z.literal("")).or(z.null()),
+  data: z.record(z.string(), z.any()).optional(),
+});
+
+export type CreateTemplateInput = z.infer<typeof createTemplateSchema>;
+export type UpdateTemplateInput = z.infer<typeof updateTemplateSchema>;
+
+// =============================================================================
+// MARKETING TEMPLATE Validations (Email / SMS / WhatsApp məzmun şablonları)
+// =============================================================================
+
+export const createMarketingTemplateSchema = z.object({
+  name: z.string().min(2, "Şablon adı ən az 2 simvol olmalıdır").max(150),
+  type: campaignTypeEnum,
+  subject: z.string().max(300).optional().or(z.literal("")),
+  content: z.string().max(20000).optional().or(z.literal("")),
+});
+
+export const updateMarketingTemplateSchema = createMarketingTemplateSchema.partial();
+
+export type CreateMarketingTemplateInput = z.infer<typeof createMarketingTemplateSchema>;
+export type UpdateMarketingTemplateInput = z.infer<typeof updateMarketingTemplateSchema>;
+
+// =============================================================================
+// KUSTOMİZASİYA (User Preferences) Validations
+// =============================================================================
+
+// Bir "scope" (səhifə/vidjet qrupu) daxilində tək bir elementin görünürlüyünü
+// dəyişir, məsələn: { scope: "my-work-dashboard", key: "loggedTime", value: false }
+export const updatePreferenceSchema = z.object({
+  scope: z.string().min(1).max(100),
+  key: z.string().min(1).max(100),
+  value: z.boolean(),
+});
+
+export type UpdatePreferenceInput = z.infer<typeof updatePreferenceSchema>;
 
 // =============================================================================
 // PAGINATION
@@ -466,3 +538,44 @@ export const paginationSchema = z.object({
 });
 
 export type PaginationInput = z.infer<typeof paginationSchema>;
+
+// =============================================================================
+// CRM Validations (B2B Şirkət / Mərhələ idarəetməsi)
+// =============================================================================
+
+export const createCrmCompanySchema = z.object({
+  name: z.string().min(1, "Şirkət adı tələb olunur").max(200),
+  industry: z.string().max(150).optional().or(z.literal("")).or(z.null()),
+  website: z.string().max(300).optional().or(z.literal("")).or(z.null()),
+  phone: z.string().max(50).optional().or(z.literal("")).or(z.null()),
+  email: z
+    .string()
+    .max(200)
+    .refine((v) => v === "" || z.string().email().safeParse(v).success, "Düzgün email daxil edin")
+    .optional()
+    .or(z.literal(""))
+    .or(z.null()),
+  address: z.string().max(500).optional().or(z.literal("")).or(z.null()),
+});
+
+export const updateCrmCompanySchema = createCrmCompanySchema.partial();
+
+export type CreateCrmCompanyInput = z.infer<typeof createCrmCompanySchema>;
+export type UpdateCrmCompanyInput = z.infer<typeof updateCrmCompanySchema>;
+
+export const createCrmStageSchema = z.object({
+  name: z.string().min(1, "Mərhələ adı tələb olunur").max(100),
+  color: z.string().max(20).optional(),
+});
+
+export const updateCrmStageSchema = z.object({
+  name: z.string().min(1, "Mərhələ adı tələb olunur").max(100).optional(),
+  color: z.string().max(20).optional(),
+});
+
+export const reorderCrmStagesSchema = z.object({
+  orderedIds: z.array(z.string()).min(1, "Sıralama üçün ən azı bir mərhələ tələb olunur"),
+});
+
+export type CreateCrmStageInput = z.infer<typeof createCrmStageSchema>;
+export type UpdateCrmStageInput = z.infer<typeof updateCrmStageSchema>;

@@ -100,6 +100,7 @@ enum EntityType {
   STOCK_MOVEMENT
   SUPPLIER
   PURCHASE_ORDER
+  TEMPLATE
 }
 
 // --- CRM İNTEQRASİYA ENUM-LARI (1C / Email / Twilio / Telegram) ---
@@ -161,6 +162,15 @@ enum PurchaseOrderStatus {
   PARTIALLY_RECEIVED
   RECEIVED
   CANCELLED
+}
+
+// --- ŞABLON (TEMPLATE) SİSTEMİ ENUM-U ---
+// Kartlar/Tapşırıqlar üçün ayrıca `TaskTemplate` modeli mövcuddur (aşağıda).
+// Bu model isə Layihə, Dəvət və Rol/İcazə şablonlarını əhatə edir.
+enum TemplateType {
+  PROJECT
+  INVITATION
+  ROLE
 }
 
 // =============================================================================
@@ -279,6 +289,8 @@ model Company {
   taskTemplates      TaskTemplate[]
   marketingCampaigns MarketingCampaign[]
   marketingSegments  MarketingSegment[]
+  marketingTemplates MarketingTemplate[]
+  templates          Template[]
 
   // WMS (Anbar İdarəetmə Sistemi)
   warehouses     Warehouse[]
@@ -429,6 +441,11 @@ model User {
   language  String @default("az") // "az", "en", "ru"
   wallpaper String @default("default") // Rəng Teması (Color Theme): default | blue | purple | green | rose | orange | slate | zinc
 
+  // YENİ: Kustomizasiya — səhifə üzrə vidjet/sütun görünürlüyü tərcihləri.
+  // Format: { "<scopeKey>": { "<itemKey>": true|false } }, məsələn:
+  // { "my-work-dashboard": { "upcomingEvents": true, "loggedTime": false } }
+  preferences Json @default("{}")
+
   timezone    String    @default("Asia/Baku")
   lastLoginAt DateTime?
   createdAt   DateTime  @default(now())
@@ -473,6 +490,10 @@ model User {
   // WMS (Anbar İdarəetmə Sistemi)
   stockMovementsCreated StockMovement[] @relation("StockMovementCreator")
   purchaseOrdersCreated PurchaseOrder[] @relation("PurchaseOrderCreator")
+
+  // Şablon (Template) sistemi
+  templatesCreated          Template[]          @relation("TemplateCreator")
+  marketingTemplatesCreated MarketingTemplate[] @relation("MarketingTemplateCreator")
 
   @@map("users")
 }
@@ -593,9 +614,13 @@ model TaskTemplate {
   id           String      @id @default(cuid())
   name         String
   description  String?
+  // YENİ: Strukturlaşdırılmış şablon məzmunu — { priority, estimatedHours, labelIds: [...], checklist: [...] }.
+  // Şablondan tapşırıq yaradılarkən bu JSON klonlanır (dərin kopya) — Master şablon heç vaxt dəyişmir.
+  data         Json        @default("{}")
   departmentId String?
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   // Multi-tenant (şirkət sərhədi — şablonlar qarışmasın)
   companyId String
@@ -604,6 +629,39 @@ model TaskTemplate {
   @@index([companyId])
   @@index([departmentId])
   @@map("task_templates")
+}
+
+// =============================================================================
+// MODEL: Template (Layihə / Dəvət / Rol-İcazə şablonları)
+// =============================================================================
+// Vahid "Master Template" sistemi: hər şablon bir dəfə yaradılır və redaktə
+// oluna bilər, lakin şablon ƏSASINDA yeni element (layihə/dəvət/rol) yaradıldıqda
+// `data` JSON-u sadəcə YENİ elementin öz sahələrinə KLONLANIR — heç bir
+// birbaşa DB əlaqəsi saxlanmır. Bu səbəbdən yeni elementin sonrakı redaktəsi
+// Master şablonu HEÇ VAXT zədələyə bilməz (referans deyil, tam surət).
+model Template {
+  id          String       @id @default(cuid())
+  type        TemplateType
+  name        String
+  description String?
+  // Növünə görə strukturu dəyişən "master" məzmun:
+  //  PROJECT:    { status, priority, category, color, defaultTaskTitles: [...] }
+  //  INVITATION: { inviteType, departmentId, roleId, message }
+  //  ROLE:       { color, permissionKeys: [...] }
+  data        Json         @default("{}")
+  isSystem    Boolean      @default(false) // Standart quraşdırma ilə gələn "Default Template" — silinə bilməz, yalnız redaktə
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation("TemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, type, name])
+  @@index([companyId, type])
+  @@map("templates")
 }
 
 // =============================================================================
@@ -956,6 +1014,30 @@ model MarketingCampaign {
   @@index([status])
   @@index([type])
   @@map("marketing_campaigns")
+}
+
+// Marketinq kampaniyaları üçün təkrar istifadə edilə bilən məzmun şablonları
+// (Email/SMS/WhatsApp). Master şablon kampaniya yaradılarkən klonlanır.
+model MarketingTemplate {
+  id      String       @id @default(cuid())
+  name    String
+  type    CampaignType
+  subject String?
+  content String       @default("")
+
+  isSystem  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User?   @relation("MarketingTemplateCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([companyId])
+  @@index([type])
+  @@map("marketing_templates")
 }
 
 // =============================================================================
@@ -1320,12 +1402,17 @@ model StockMovement {
   toBinId String?
   toBin   WarehouseBin? @relation("MovementToBin", fields: [toBinId], references: [id])
 
+  // YENİ: Təchizatçı — INBOUND (qəbul) sənədləri üçün mənbə təchizatçı
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+
   createdById String
   createdBy   User   @relation("StockMovementCreator", fields: [createdById], references: [id])
 
   @@index([companyId])
   @@index([productId])
   @@index([type])
+  @@index([supplierId])
   @@index([status])
   @@index([reference])
   @@index([companyId, createdAt(sort: Desc)])
@@ -1348,6 +1435,7 @@ model Supplier {
   company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   purchaseOrders PurchaseOrder[]
+  stockMovements StockMovement[]
 
   @@unique([companyId, name])
   @@index([companyId])

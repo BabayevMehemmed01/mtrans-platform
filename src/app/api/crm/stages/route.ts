@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createCrmStageSchema } from "@/lib/validations";
 
 export async function GET(req: Request) {
   try {
@@ -48,14 +49,20 @@ export async function POST(req: Request) {
     if (!companyId) return NextResponse.json({ error: "Şirkət tələb olunur" }, { status: 400 });
 
     const body = await req.json();
-    const { name, color } = body;
-    if (!name) return NextResponse.json({ error: "Ad tələb olunur" }, { status: 400 });
+    const parsed = createCrmStageSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: parsed.error.issues[0]?.message ?? "Məlumatlar düzgün deyil" },
+        { status: 400 }
+      );
+    }
+    const { name, color } = parsed.data;
 
     const maxPos = await prisma.crmStage.aggregate({ where: { companyId }, _max: { position: true } });
 
     const stage = await prisma.crmStage.create({
       data: {
-        name,
+        name: name.trim(),
         color: color || "#94a3b8",
         position: (maxPos._max.position ?? -1) + 1,
         companyId,
@@ -64,6 +71,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json(stage, { status: 201 });
   } catch (error) {
+    if ((error as { code?: string })?.code === "P2002") {
+      return NextResponse.json({ error: "Bu adda mərhələ artıq mövcuddur" }, { status: 409 });
+    }
     console.error("[CRM_STAGES_POST]", error);
     return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }

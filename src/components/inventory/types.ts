@@ -29,6 +29,19 @@ export interface WarehouseLite {
   createdAt: string;
 }
 
+export interface SupplierLite {
+  id: string;
+  name: string;
+  contactName: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  taxId: string | null;
+  isActive: boolean;
+  createdAt: string;
+  _count?: { purchaseOrders: number; stockMovements: number };
+}
+
 export interface ProductLite {
   id: string;
   sku: string;
@@ -66,6 +79,8 @@ export interface StockMovementLite {
   fromWarehouse?: { id: string; name: string } | null;
   toWarehouseId: string | null;
   toWarehouse?: { id: string; name: string } | null;
+  supplierId?: string | null;
+  supplier?: { id: string; name: string } | null;
   createdBy?: { id: string; name: string; avatar: string | null } | null;
 }
 

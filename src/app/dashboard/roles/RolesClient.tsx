@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react" // YENİ: Dil üçün sessiya
 import { getTranslation } from "@/lib/i18n" // YENİ: Tərcümə mühərriki
@@ -153,9 +153,15 @@ function PermissionCheckboxGroup({
 export function RolesClient({
   initialRoles,
   permissions,
+  canCreate = true,
+  canEdit = true,
+  canDelete = true,
 }: {
   initialRoles: any[]
   permissions: any[]
+  canCreate?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
 }) {
   // YENİ: Dili tapıb tərcümə obyektini formalaşdırırıq
   const { data: session } = useSession()
@@ -173,6 +179,33 @@ export function RolesClient({
   const [color, setColor] = useState("#8b5cf6")
   const [selectedPerms, setSelectedPerms] = useState<string[]>([])
 
+  // Rol şablonları (yalnız yaratma dialoqu açılanda yüklənir)
+  const [roleTemplates, setRoleTemplates] = useState<{ id: string; name: string; description: string | null; data: { color?: string; permissionKeys?: string[] } | null }[]>([])
+  const [roleTemplateId, setRoleTemplateId] = useState("")
+
+  useEffect(() => {
+    if (!isCreateOpen || roleTemplates.length > 0) return
+    fetch("/api/templates?type=ROLE")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => { if (Array.isArray(data)) setRoleTemplates(data) })
+      .catch(() => {})
+  }, [isCreateOpen, roleTemplates.length])
+
+  const applyRoleTemplate = (id: string) => {
+    setRoleTemplateId(id)
+    const tpl = roleTemplates.find((tp) => tp.id === id)
+    if (!tpl?.data) return
+    // Klonlama: şablonun `data`sı yeni rola köçürülür, əsas (master) şablon dəyişməz qalır.
+    const cloned = JSON.parse(JSON.stringify(tpl.data)) as { color?: string; permissionKeys?: string[] }
+    if (cloned.color) setColor(cloned.color)
+    if (cloned.permissionKeys) {
+      const ids = permissions
+        .filter((p: any) => cloned.permissionKeys!.includes(p.key))
+        .map((p: any) => p.id)
+      setSelectedPerms(ids)
+    }
+  }
+
   // Edit form
   const [editId, setEditId] = useState("")
   const [editName, setEditName] = useState("")
@@ -183,6 +216,7 @@ export function RolesClient({
     setName("")
     setColor("#8b5cf6")
     setSelectedPerms([])
+    setRoleTemplateId("")
   }
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -258,9 +292,11 @@ export function RolesClient({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold text-foreground">{t("rolesClient.rolesTitle") || "Rollar"}</h2>
-        <Button onClick={() => setIsCreateOpen(true)}>
-          {t("rolesClient.newRoleBtn") || "+ Yeni Rol"}
-        </Button>
+        {canCreate && (
+          <Button onClick={() => setIsCreateOpen(true)}>
+            {t("rolesClient.newRoleBtn") || "+ Yeni Rol"}
+          </Button>
+        )}
       </div>
 
       {/* ──── CREATE MODAL ──── */}
@@ -270,6 +306,27 @@ export function RolesClient({
             <DialogTitle>{t("rolesClient.newRoleTitle") || "Yeni Rol Yarat"}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4 mt-2">
+            {roleTemplates.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="roleTemplate">{t("rolesClient.templateLabel") || "Şablondan başla (istəyə bağlı)"}</Label>
+                <select
+                  id="roleTemplate"
+                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
+                  value={roleTemplateId}
+                  onChange={(e) => applyRoleTemplate(e.target.value)}
+                >
+                  <option value="">{t("rolesClient.noTemplate") || "Boş başla"}</option>
+                  {roleTemplates.map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
+                  ))}
+                </select>
+                {roleTemplateId && roleTemplates.find((tp) => tp.id === roleTemplateId)?.description && (
+                  <p className="text-xs text-muted-foreground">
+                    {roleTemplates.find((tp) => tp.id === roleTemplateId)?.description}
+                  </p>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-3 gap-4">
               <div className="col-span-2 space-y-2">
                 <Label htmlFor="roleName">{t("rolesClient.roleNameLabel") || "Rol adı"}</Label>
@@ -423,29 +480,35 @@ export function RolesClient({
                 )}
               </TableCell>
               <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => openEdit(role)}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      <span>{t("rolesClient.editPermsMenu") || "İcazələri redaktə et"}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onSelect={(e) => {
-                        e.preventDefault()
-                        handleDelete(role.id, role.isSystem)
-                      }}
-                    >
-                      <Trash className="mr-2 h-4 w-4" />
-                      <span>{t("rolesClient.deleteMenu") || "Sil"}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {(canEdit || (canDelete && !role.isSystem)) ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      {canEdit && (
+                        <DropdownMenuItem onSelect={() => openEdit(role)}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          <span>{t("rolesClient.editPermsMenu") || "İcazələri redaktə et"}</span>
+                        </DropdownMenuItem>
+                      )}
+                      {canDelete && !role.isSystem && (
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={(e) => {
+                            e.preventDefault()
+                            handleDelete(role.id, role.isSystem)
+                          }}
+                        >
+                          <Trash className="mr-2 h-4 w-4" />
+                          <span>{t("rolesClient.deleteMenu") || "Sil"}</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
               </TableCell>
             </TableRow>
           ))}
