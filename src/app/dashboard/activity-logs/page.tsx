@@ -1,13 +1,17 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { isSuperAdmin } from "@/lib/permissions";
 import { getTranslation } from "@/lib/i18n";
 import { ActivityLogsClient } from "./ActivityLogsClient";
 import { AccessDenied } from "@/components/ui/access-denied";
 
-export const metadata = {
-  title: "Fəaliyyət Jurnalı | ERP",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const session = await auth();
+  const lang = (session?.user as any)?.language || "az";
+  const t = getTranslation(lang);
+  return { title: t("activityLogs.metaTitle") };
+}
 
 export default async function ActivityLogsPage() {
   const session = await auth();

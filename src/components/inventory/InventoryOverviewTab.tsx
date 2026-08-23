@@ -16,6 +16,7 @@ import {
 import { InventoryTableSkeleton } from "./InventoryEmptyState";
 import { MigrateDataDialog } from "./MigrateDataDialog";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import type { ProductLite } from "./types";
 
 // =============================================================================
@@ -33,6 +34,7 @@ interface InventoryOverviewTabProps {
 }
 
 export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpenAdjustment }: InventoryOverviewTabProps) {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [migrateOpen, setMigrateOpen] = useState(false);
 
@@ -70,13 +72,12 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
               <ClipboardEdit className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">İlk stok tənzimləməsini yaradın</p>
+              <p className="text-sm font-semibold text-foreground">{t("inventory.firstAdjustment")}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Anbarlarınızın ilkin qalığını əlavə edin. Məhsul kataloqu, anbar iyerarxiyası və qiymətlər dinamik
-                olaraq Prisma verilənlər bazasında yaradılır.
+                {t("inventory.firstAdjustmentDesc")}
               </p>
             </div>
-            <span className="mt-1 text-xs font-medium text-primary group-hover:underline">İndi başlayın →</span>
+            <span className="mt-1 text-xs font-medium text-primary group-hover:underline">{t("inventory.startNow")}</span>
           </button>
 
           <div className="flex flex-col items-start gap-3 rounded-2xl border border-dashed border-border/60 bg-muted/20 p-6 text-left">
@@ -84,13 +85,13 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
               <UploadCloud className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">Miqrasiya</p>
+              <p className="text-sm font-semibold text-foreground">{t("inventory.migrateTitle")}</p>
               <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-                Digər sistemdən (Excel, CSV, Zoho, QuickBooks) məhsul kataloqu və qalıqları köçürün.
+                {t("inventory.migrateDesc")}
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={() => setMigrateOpen(true)} className="mt-1">
-              Məlumatları Miqrasiya Et
+              {t("inventory.migrateTitle")}
             </Button>
           </div>
         </div>
@@ -105,14 +106,14 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
       <div className="flex items-center justify-between gap-3">
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Məhsul, SKU, barkod axtar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
+          <Input placeholder={t("inventory.searchProductHint")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setMigrateOpen(true)} className="gap-1.5">
-            <UploadCloud className="h-4 w-4" /> Miqrasiya Et
+            <UploadCloud className="h-4 w-4" /> {t("inventory.migrateTitle")}
           </Button>
           <Button onClick={onOpenAdjustment} className="gap-1.5">
-            <PackagePlus className="h-4 w-4" /> Stok Tənzimləməsi
+            <PackagePlus className="h-4 w-4" /> {t("inventory.stockAdjustment")}
           </Button>
         </div>
       </div>
@@ -121,19 +122,19 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Məhsul</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Kateqoriya</TableHead>
-              <TableHead>Ümumi miqdar</TableHead>
-              <TableHead>Min. stok</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t("inventory.product")}</TableHead>
+              <TableHead>{t("inventory.sku")}</TableHead>
+              <TableHead>{t("inventory.category")}</TableHead>
+              <TableHead>{t("inventory.totalQuantity")}</TableHead>
+              <TableHead>{t("inventory.minStock")}</TableHead>
+              <TableHead>{t("inventory.status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
-                  Axtarışa uyğun məhsul tapılmadı
+                  {t("inventory.noProduct")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -166,7 +167,7 @@ export function InventoryOverviewTab({ products, loading, hasAnyDocument, onOpen
                           low ? "border-red-200 bg-red-50 text-red-600" : "border-emerald-200 bg-emerald-50 text-emerald-600"
                         )}
                       >
-                        {low ? "Stok azdır" : "Stokda var"}
+                        {low ? t("inventory.lowStock") : t("inventory.inStock")}
                       </Badge>
                     </TableCell>
                   </TableRow>

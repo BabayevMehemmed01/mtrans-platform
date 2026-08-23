@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { Rocket, Megaphone, Camera, Users2, LayoutTemplate } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import { useMarketingData } from "@/components/marketing/useMarketingData";
 import { MarketingStartTab } from "@/components/marketing/MarketingStartTab";
 import { MarketingCampaignsTab } from "@/components/marketing/MarketingCampaignsTab";
@@ -22,6 +23,7 @@ const TAB_TRIGGER_CLASS = cn(
 );
 
 export default function MarketingClient({ config }: { config: MarketingConfigClient }) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState("start");
   const board = useMarketingData();
 
@@ -41,19 +43,19 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
         <div className="flex justify-center border-b border-border">
           <TabsList className="h-auto w-full justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="start" className={TAB_TRIGGER_CLASS}>
-              <Rocket className="mr-1.5 h-3.5 w-3.5" /> Start
+              <Rocket className="mr-1.5 h-3.5 w-3.5" /> {t("marketing.tabStart")}
             </TabsTrigger>
             <TabsTrigger value="campaigns" className={TAB_TRIGGER_CLASS}>
-              <Megaphone className="mr-1.5 h-3.5 w-3.5" /> Campaigns
+              <Megaphone className="mr-1.5 h-3.5 w-3.5" /> {t("marketing.tabCampaigns")}
             </TabsTrigger>
             <TabsTrigger value="ads" className={TAB_TRIGGER_CLASS}>
-              <Camera className="mr-1.5 h-3.5 w-3.5" /> Ads
+              <Camera className="mr-1.5 h-3.5 w-3.5" /> {t("marketing.tabAds")}
             </TabsTrigger>
             <TabsTrigger value="segments" className={TAB_TRIGGER_CLASS}>
-              <Users2 className="mr-1.5 h-3.5 w-3.5" /> Segments
+              <Users2 className="mr-1.5 h-3.5 w-3.5" /> {t("marketing.tabSegments")}
             </TabsTrigger>
             <TabsTrigger value="templates" className={TAB_TRIGGER_CLASS}>
-              <LayoutTemplate className="mr-1.5 h-3.5 w-3.5" /> Templates
+              <LayoutTemplate className="mr-1.5 h-3.5 w-3.5" /> {t("marketing.tabTemplates")}
             </TabsTrigger>
           </TabsList>
         </div>
@@ -105,8 +107,8 @@ export default function MarketingClient({ config }: { config: MarketingConfigCli
           <MarketingTemplatesTab
             templates={board.templates}
             loading={board.loading}
-            onCreated={(t) => board.setTemplates((prev) => [...prev, t])}
-            onUpdated={(t) => board.setTemplates((prev) => prev.map((x) => (x.id === t.id ? t : x)))}
+            onCreated={(tpl) => board.setTemplates((prev) => [...prev, tpl])}
+            onUpdated={(tpl) => board.setTemplates((prev) => prev.map((x) => (x.id === tpl.id ? tpl : x)))}
             onDeleted={(id) => board.setTemplates((prev) => prev.filter((x) => x.id !== id))}
           />
         </TabsContent>

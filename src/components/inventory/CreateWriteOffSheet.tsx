@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useT } from "@/hooks/useT";
 import { ProductLinesTable } from "./ProductLinesTable";
 import { emptyLine } from "./types";
 import type { ProductLite, StockMovementLineDraft, WarehouseLite } from "./types";
@@ -43,6 +44,7 @@ export function CreateWriteOffSheet({
   onWarehouseCreated,
   onCreated,
 }: CreateWriteOffSheetProps) {
+  const t = useT();
   const [documentName, setDocumentName] = useState("");
   const [reason, setReason] = useState("");
   const [lines, setLines] = useState<StockMovementLineDraft[]>([emptyLine()]);
@@ -57,7 +59,7 @@ export function CreateWriteOffSheet({
   const handleSubmit = async (status: "DRAFT" | "COMPLETED") => {
     const validLines = lines.filter((l) => l.productId && l.warehouseId && l.quantity > 0);
     if (validLines.length === 0) {
-      toast.error("Ən azı bir sətirdə məhsul, anbar və miqdar doldurulmalıdır");
+      toast.error(t("inventory.lineRequired"));
       return;
     }
 
@@ -80,16 +82,18 @@ export function CreateWriteOffSheet({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Silinmə sənədi yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.writeOffCreateFailed"));
 
       toast.success(
-        status === "COMPLETED" ? `Silinmə icra olundu (${data.reference})` : `Qaralama yadda saxlanıldı (${data.reference})`
+        status === "COMPLETED"
+          ? t("inventory.writeOffCompleted").replace("{ref}", data.reference)
+          : t("inventory.writeOffDraftSaved").replace("{ref}", data.reference)
       );
       onCreated();
       onOpenChange(false);
       resetState();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -106,32 +110,32 @@ export function CreateWriteOffSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <Trash2 className="h-4.5 w-4.5 text-destructive" /> Yeni silinmə
+            <Trash2 className="h-4.5 w-4.5 text-destructive" /> {t("inventory.newWriteOffTitle")}
           </SheetTitle>
-          <SheetDescription>Yararsız və ya zay olmuş məhsulları anbar qalığından silin.</SheetDescription>
+          <SheetDescription>{t("inventory.writeOffDesc")}</SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1">
           <div className="space-y-5 px-6 py-5">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="wof-name">Sənəd adı</Label>
+                <Label htmlFor="wof-name">{t("inventory.documentName")}</Label>
                 <Input
                   id="wof-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Silinmə №"
+                  placeholder={t("inventory.writeOffNamePrefix")}
                   autoFocus
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wof-reason">Səbəb / Şərh</Label>
+              <Label htmlFor="wof-reason">{t("inventory.reason")}</Label>
               <Textarea
                 id="wof-reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Məsələn: son istifadə tarixi keçib, zədələnib..."
+                placeholder={t("inventory.noteWriteOffPlaceholder")}
                 className="min-h-20"
               />
             </div>
@@ -145,8 +149,8 @@ export function CreateWriteOffSheet({
               onWarehouseCreated={onWarehouseCreated}
               showPrices
               warehouseMode="single"
-              warehouseLabel="Anbar"
-              quantityLabel="Silinəcək miqdar"
+              warehouseLabel={t("inventory.warehouse")}
+              quantityLabel={t("inventory.quantity")}
             />
           </div>
         </ScrollArea>
@@ -154,15 +158,15 @@ export function CreateWriteOffSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Ləğv et
+              {t("inventory.cancel")}
             </Button>
             <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Yadda saxla
+              {t("inventory.saveDraft")}
             </Button>
             <Button variant="destructive" onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Saxla və icra et
+              {t("inventory.saveAndProcess")}
             </Button>
           </div>
         </SheetFooter>

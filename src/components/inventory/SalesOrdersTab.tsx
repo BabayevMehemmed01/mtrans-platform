@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/hooks/useT";
 import { InventoryEmptyState, InventoryTableSkeleton } from "./InventoryEmptyState";
 import { MovementStatusBadge } from "./movementMeta";
 import type { StockMovementLite } from "./types";
@@ -36,6 +37,7 @@ interface SalesOrdersTabProps {
 }
 
 export function SalesOrdersTab({ movements, loading, onOpenCreate, onChanged }: SalesOrdersTabProps) {
+  const t = useT();
   const [busyId, setBusyId] = useState<string | null>(null);
   const orders = movements.filter((m) => m.type === "OUTBOUND");
 
@@ -48,11 +50,11 @@ export function SalesOrdersTab({ movements, loading, onOpenCreate, onChanged }: 
         body: JSON.stringify({ action }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Əməliyyat uğursuz oldu");
-      toast.success(action === "process" ? "Göndərmə icra olundu, qalıqlar yeniləndi" : "Göndərmə ləğv edildi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.actionFailed"));
+      toast.success(action === "process" ? t("inventory.outboundProcessed") : t("inventory.outboundCancelled"));
       onChanged();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setBusyId(null);
     }
@@ -70,9 +72,9 @@ export function SalesOrdersTab({ movements, loading, onOpenCreate, onChanged }: 
     return (
       <InventoryEmptyState
         icon={ShoppingCart}
-        title="Hələ satış sifarişi yoxdur"
-        description="Müştəriyə göndərilən stok hərəkətləri (OUTBOUND) burada görünəcək."
-        actionLabel="Yeni Göndərmə"
+        title={t("inventory.noSalesOrders")}
+        description={t("inventory.noSalesOrdersHint")}
+        actionLabel={t("inventory.newOutbound")}
         onAction={onOpenCreate}
         className="min-h-[45vh]"
       />
@@ -83,7 +85,7 @@ export function SalesOrdersTab({ movements, loading, onOpenCreate, onChanged }: 
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         <Button onClick={onOpenCreate} className="gap-1.5">
-          <ShoppingCart className="h-4 w-4" /> Yeni Göndərmə
+          <ShoppingCart className="h-4 w-4" /> {t("inventory.newOutbound")}
         </Button>
       </div>
 
@@ -91,13 +93,13 @@ export function SalesOrdersTab({ movements, loading, onOpenCreate, onChanged }: 
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Sənəd №</TableHead>
-              <TableHead>Məhsul</TableHead>
-              <TableHead>Mənbə anbar</TableHead>
-              <TableHead>Miqdar</TableHead>
-              <TableHead>Cəmi</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Tarix</TableHead>
+              <TableHead>{t("inventory.docNo")}</TableHead>
+              <TableHead>{t("inventory.product")}</TableHead>
+              <TableHead>{t("inventory.sourceWarehouse")}</TableHead>
+              <TableHead>{t("inventory.quantity")}</TableHead>
+              <TableHead>{t("inventory.total")}</TableHead>
+              <TableHead>{t("inventory.status")}</TableHead>
+              <TableHead>{t("inventory.date")}</TableHead>
               <TableHead className="w-[56px]" />
             </TableRow>
           </TableHeader>
@@ -129,10 +131,10 @@ export function SalesOrdersTab({ movements, loading, onOpenCreate, onChanged }: 
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem className="gap-2" onClick={() => handleAction(m.id, "process")}>
-                          <Play className="h-4 w-4" /> İcra et
+                          <Play className="h-4 w-4" /> {t("inventory.process")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleAction(m.id, "cancel")}>
-                          <X className="h-4 w-4" /> Ləğv et
+                          <X className="h-4 w-4" /> {t("inventory.cancel")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

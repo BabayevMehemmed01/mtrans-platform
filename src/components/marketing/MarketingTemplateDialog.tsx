@@ -23,14 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CHANNEL_META, CHANNEL_ORDER } from "./channelMeta";
+import { useT } from "@/hooks/useT";
+import { CHANNEL_META, CHANNEL_ORDER, channelCopy } from "./channelMeta";
 import type { CampaignType, MarketingTemplateLite } from "./types";
-
-// =============================================================================
-// MarketingTemplateDialog — Marketinq şablonunun (Email/SMS/WhatsApp/Instagram
-// məzmunu) yaratma/redaktə formu. isSystem şablonlar da sərbəst redaktə oluna
-// bilər — yalnız silinmə qadağandır (API tərəfində qorunur).
-// =============================================================================
 
 interface MarketingTemplateDialogProps {
   open: boolean;
@@ -55,6 +50,7 @@ export function MarketingTemplateDialog({
   onCreated,
   onUpdated,
 }: MarketingTemplateDialogProps) {
+  const t = useT();
   const [form, setForm] = useState(emptyForm(defaultType));
   const [saving, setSaving] = useState(false);
 
@@ -77,7 +73,7 @@ export function MarketingTemplateDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error("Şablon adı tələb olunur");
+      toast.error(t("marketing.templateNameRequired"));
       return;
     }
     setSaving(true);
@@ -96,18 +92,18 @@ export function MarketingTemplateDialog({
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Xəta baş verdi");
+      if (!res.ok) throw new Error(data?.error || t("marketing.errorGeneric"));
 
       if (mode === "edit") {
         onUpdated(data);
-        toast.success("Şablon yeniləndi");
+        toast.success(t("marketing.templateUpdated"));
       } else {
         onCreated(data);
-        toast.success("Şablon yaradıldı");
+        toast.success(t("marketing.templateCreated"));
       }
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("marketing.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -121,23 +117,21 @@ export function MarketingTemplateDialog({
             <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", meta.softBg)}>
               <meta.icon className={cn("h-4.5 w-4.5", meta.accent)} />
             </div>
-            <DialogTitle>{mode === "create" ? "Yeni Şablon" : "Şablonu Redaktə Et"}</DialogTitle>
+            <DialogTitle>{mode === "create" ? t("marketing.newTemplateTitle") : t("marketing.editTemplateTitle")}</DialogTitle>
           </div>
           <DialogDescription>
-            {mode === "create"
-              ? "Bu şablon kampaniya yaradarkən seçim üçün mövcud olacaq."
-              : "Dəyişikliklər yalnız bu şablona aiddir — əvvəllər göndərilmiş kampaniyalara təsir etməz."}
+            {mode === "create" ? t("marketing.templateCreateHint") : t("marketing.templateEditHint")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Şablon adı</Label>
+              <Label>{t("marketing.templateName")}</Label>
               <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} autoFocus required />
             </div>
             <div className="space-y-1.5">
-              <Label>Kanal</Label>
+              <Label>{t("marketing.channel")}</Label>
               <Select value={form.type} onValueChange={(v) => v && setForm((p) => ({ ...p, type: v as CampaignType }))}>
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -145,7 +139,7 @@ export function MarketingTemplateDialog({
                 <SelectContent>
                   {CHANNEL_ORDER.map((type) => (
                     <SelectItem key={type} value={type}>
-                      {CHANNEL_META[type].shortLabel}
+                      {channelCopy(t, type).shortLabel}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -155,28 +149,28 @@ export function MarketingTemplateDialog({
 
           {form.type === "EMAIL" && (
             <div className="space-y-1.5">
-              <Label>Mövzu (Subject)</Label>
+              <Label>{t("marketing.subject")}</Label>
               <Input
                 value={form.subject}
                 onChange={(e) => setForm((p) => ({ ...p, subject: e.target.value }))}
-                placeholder="Email mövzu sətri"
+                placeholder={t("marketing.subjectPlaceholder")}
               />
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label>Məzmun</Label>
+            <Label>{t("marketing.content")}</Label>
             <Textarea
               value={form.content}
               onChange={(e) => setForm((p) => ({ ...p, content: e.target.value }))}
-              placeholder="Kampaniya yaradılarkən bu mətn avtomatik köçürüləcək. {{name}}, {{link}} kimi dəyişənlər istifadə edə bilərsiniz..."
+              placeholder={t("marketing.contentTemplatePlaceholder")}
               className="min-h-32"
             />
           </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Ləğv et
+              {t("marketing.cancel")}
             </Button>
             <Button type="submit" disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}

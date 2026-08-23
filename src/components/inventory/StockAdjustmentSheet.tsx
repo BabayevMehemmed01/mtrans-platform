@@ -18,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useT } from "@/hooks/useT";
 import { ProductLinesTable } from "./ProductLinesTable";
 import { emptyLine } from "./types";
 import type { ProductLite, StockMovementLineDraft, WarehouseLite } from "./types";
@@ -50,6 +51,7 @@ export function StockAdjustmentSheet({
   onWarehouseCreated,
   onCreated,
 }: StockAdjustmentSheetProps) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState("general");
   const [documentName, setDocumentName] = useState("");
   const [currency, setCurrency] = useState("AZN");
@@ -72,7 +74,7 @@ export function StockAdjustmentSheet({
   const handleSubmit = async (status: "DRAFT" | "COMPLETED") => {
     const validLines = lines.filter((l) => l.productId && l.warehouseId && l.quantity > 0);
     if (validLines.length === 0) {
-      toast.error("Ən azı bir düzgün doldurulmuş məhsul sətri tələb olunur (məhsul, anbar, miqdar)");
+      toast.error(t("inventory.lineRequired"));
       setActiveTab("products");
       return;
     }
@@ -98,18 +100,18 @@ export function StockAdjustmentSheet({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Sənəd yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.adjustmentCreateFailed"));
 
       toast.success(
         status === "COMPLETED"
-          ? `Sənəd icra olundu, qalıqlar yeniləndi (${data.reference})`
-          : `Qaralama yadda saxlanıldı (${data.reference})`
+          ? t("inventory.adjustmentCompleted").replace("{ref}", data.reference)
+          : t("inventory.adjustmentDraftSaved").replace("{ref}", data.reference)
       );
       onCreated();
       onOpenChange(false);
       resetState();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -126,10 +128,10 @@ export function StockAdjustmentSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <ClipboardEdit className="h-4.5 w-4.5 text-primary" /> Stok Tənzimləməsi
+            <ClipboardEdit className="h-4.5 w-4.5 text-primary" /> {t("inventory.stockAdjustment")}
           </SheetTitle>
           <SheetDescription>
-            Anbar qalıqlarını ilkin quraşdırın və ya inventarlaşdırma nəticəsində tənzimləyin.
+            {t("inventory.adjustmentDesc")}
           </SheetDescription>
         </SheetHeader>
 
@@ -140,13 +142,13 @@ export function StockAdjustmentSheet({
                 value="general"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                Ümumi
+                {t("inventory.tabGeneral")}
               </TabsTrigger>
               <TabsTrigger
                 value="products"
                 className="rounded-none border-b-2 border-transparent bg-transparent px-3 py-2.5 shadow-none data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
               >
-                Məhsullar {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
+                {t("inventory.tabProducts")} {lines.filter((l) => l.productId).length > 0 && `(${lines.filter((l) => l.productId).length})`}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -154,19 +156,19 @@ export function StockAdjustmentSheet({
           <ScrollArea className="flex-1">
             <TabsContent value="general" className="m-0 space-y-4 px-6 py-5">
               <div className="space-y-1.5">
-                <Label htmlFor="doc-name">Sənəd adı</Label>
+                <Label htmlFor="doc-name">{t("inventory.documentName")}</Label>
                 <Input
                   id="doc-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Stok tənzimləməsi №"
+                  placeholder={t("inventory.adjustmentNamePrefix")}
                   autoFocus
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <Label>Valyuta</Label>
+                  <Label>{t("inventory.currency")}</Label>
                   <Select value={currency} onValueChange={(v) => setCurrency(v ?? "AZN")}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -181,26 +183,26 @@ export function StockAdjustmentSheet({
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Mərhələ</Label>
+                  <Label>{t("inventory.stage")}</Label>
                   <Select value={stage} onValueChange={(v) => setStage((v as "DRAFT" | "COMPLETED") ?? "DRAFT")}>
                     <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="DRAFT">Qaralama</SelectItem>
-                      <SelectItem value="COMPLETED">İcra olunub</SelectItem>
+                      <SelectItem value="DRAFT">{t("inventory.statusDraft")}</SelectItem>
+                      <SelectItem value="COMPLETED">{t("inventory.statusCompleted")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="doc-comment">Şərh</Label>
+                <Label htmlFor="doc-comment">{t("inventory.comment")}</Label>
                 <Textarea
                   id="doc-comment"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Bu tənzimləmə ilə bağlı qeyd..."
+                  placeholder={t("inventory.noteAdjustmentPlaceholder")}
                   className="min-h-24"
                 />
               </div>
@@ -216,8 +218,8 @@ export function StockAdjustmentSheet({
                 onWarehouseCreated={onWarehouseCreated}
                 showPrices
                 warehouseMode="single"
-                warehouseLabel="Anbar"
-                quantityLabel="Gələn miqdar"
+                warehouseLabel={t("inventory.warehouse")}
+                quantityLabel={t("inventory.incomingQty")}
               />
             </TabsContent>
           </ScrollArea>
@@ -226,22 +228,22 @@ export function StockAdjustmentSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-between">
             <p className="text-sm">
-              <span className="text-muted-foreground">Ümumi məbləğ: </span>
+              <span className="text-muted-foreground">{t("inventory.totalAmount")} </span>
               <span className="font-semibold text-foreground">
                 {totalAmount.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
               </span>
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-                Ləğv et
+                {t("inventory.cancel")}
               </Button>
               <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Yadda saxla
+                {t("inventory.saveDraft")}
               </Button>
               <Button onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Saxla və icra et
+                {t("inventory.saveAndProcess")}
               </Button>
             </div>
           </div>

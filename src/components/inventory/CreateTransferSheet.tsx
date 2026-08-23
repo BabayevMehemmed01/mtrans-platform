@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useT } from "@/hooks/useT";
 import { ProductLinesTable } from "./ProductLinesTable";
 import { emptyLine } from "./types";
 import type { ProductLite, StockMovementLineDraft, WarehouseLite } from "./types";
@@ -43,6 +44,7 @@ export function CreateTransferSheet({
   onWarehouseCreated,
   onCreated,
 }: CreateTransferSheetProps) {
+  const t = useT();
   const [documentName, setDocumentName] = useState("");
   const [comment, setComment] = useState("");
   const [lines, setLines] = useState<StockMovementLineDraft[]>([emptyLine()]);
@@ -59,12 +61,12 @@ export function CreateTransferSheet({
       (l) => l.productId && l.fromWarehouseId && l.toWarehouseId && l.quantity > 0
     );
     if (validLines.length === 0) {
-      toast.error("Ən azı bir sətirdə məhsul, haradan/haraya anbar və miqdar doldurulmalıdır");
+      toast.error(t("inventory.lineRequired"));
       return;
     }
     const sameWarehouse = validLines.find((l) => l.fromWarehouseId === l.toWarehouseId);
     if (sameWarehouse) {
-      toast.error("Mənbə və hədəf anbar eyni ola bilməz");
+      toast.error(t("inventory.sameWarehouseError"));
       return;
     }
 
@@ -87,16 +89,18 @@ export function CreateTransferSheet({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Köçürmə yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.transferCreateFailed"));
 
       toast.success(
-        status === "COMPLETED" ? `Köçürmə icra olundu (${data.reference})` : `Qaralama yadda saxlanıldı (${data.reference})`
+        status === "COMPLETED"
+          ? t("inventory.transferCompleted").replace("{ref}", data.reference)
+          : t("inventory.transferDraftSaved").replace("{ref}", data.reference)
       );
       onCreated();
       onOpenChange(false);
       resetState();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -113,31 +117,31 @@ export function CreateTransferSheet({
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-4xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <ArrowLeftRight className="h-4.5 w-4.5 text-primary" /> Yeni köçürmə
+            <ArrowLeftRight className="h-4.5 w-4.5 text-primary" /> {t("inventory.newTransferTitle")}
           </SheetTitle>
-          <SheetDescription>Anbarlar/hüceyrələr arası daxili stok köçürməsi yaradın.</SheetDescription>
+          <SheetDescription>{t("inventory.transferDesc")}</SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1">
           <div className="space-y-5 px-6 py-5">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="transfer-name">Sənəd adı</Label>
+                <Label htmlFor="transfer-name">{t("inventory.documentName")}</Label>
                 <Input
                   id="transfer-name"
                   value={documentName}
                   onChange={(e) => setDocumentName(e.target.value)}
-                  placeholder="Köçürmə №"
+                  placeholder={t("inventory.transferNamePrefix")}
                   autoFocus
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="transfer-comment">Şərh</Label>
+                <Label htmlFor="transfer-comment">{t("inventory.comment")}</Label>
                 <Input
                   id="transfer-comment"
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="İxtiyari qeyd"
+                  placeholder={t("inventory.noteTransferPlaceholder")}
                 />
               </div>
             </div>
@@ -151,7 +155,7 @@ export function CreateTransferSheet({
               onWarehouseCreated={onWarehouseCreated}
               showPrices={false}
               warehouseMode="transfer"
-              quantityLabel="Miqdar"
+              quantityLabel={t("inventory.quantity")}
             />
           </div>
         </ScrollArea>
@@ -159,15 +163,15 @@ export function CreateTransferSheet({
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-              Ləğv et
+              {t("inventory.cancel")}
             </Button>
             <Button variant="secondary" onClick={() => handleSubmit("DRAFT")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Yadda saxla
+              {t("inventory.saveDraft")}
             </Button>
             <Button onClick={() => handleSubmit("COMPLETED")} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Saxla və icra et
+              {t("inventory.saveAndProcess")}
             </Button>
           </div>
         </SheetFooter>

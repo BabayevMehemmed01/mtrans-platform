@@ -9,6 +9,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { useT } from "@/hooks/useT";
 import type { TasksTrendPoint } from "./types";
 
 const ACCENT = "#2563eb";
@@ -22,22 +23,26 @@ function CustomTooltip({
   payload?: Array<{ value: number }>;
   label?: string;
 }) {
+  const t = useT();
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 text-xs shadow-md">
       <p className="font-medium text-foreground">{label}</p>
-      <p className="mt-0.5 text-muted-foreground">{payload[0].value} tapşırıq tamamlandı</p>
+      <p className="mt-0.5 text-muted-foreground">
+        {t("reportsPage.tasksCompleted").replace("{count}", String(payload[0].value))}
+      </p>
     </div>
   );
 }
 
 export function TasksTrendChart({ data }: { data: TasksTrendPoint[] }) {
+  const t = useT();
   const hasData = data.some((d) => d.count > 0);
 
   if (!hasData) {
     return (
       <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 text-sm text-muted-foreground">
-        Son {data.length} gündə tamamlanmış tapşırıq yoxdur
+        {t("reportsPage.noCompletedInDays").replace("{days}", String(data.length))}
       </div>
     );
   }

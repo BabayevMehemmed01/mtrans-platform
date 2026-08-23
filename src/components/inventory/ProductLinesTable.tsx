@@ -13,6 +13,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
+import { useT } from "@/hooks/useT";
 import { ProductCombobox } from "./ProductCombobox";
 import { WarehouseSelect } from "./WarehouseSelect";
 import { emptyLine } from "./types";
@@ -46,9 +47,13 @@ export function ProductLinesTable({
   onWarehouseCreated,
   showPrices = true,
   warehouseMode = "single",
-  warehouseLabel = "Anbar",
-  quantityLabel = "Miqdar",
+  warehouseLabel,
+  quantityLabel,
 }: ProductLinesTableProps) {
+  const t = useT();
+  const resolvedWarehouseLabel = warehouseLabel ?? t("inventory.warehouse");
+  const resolvedQuantityLabel = quantityLabel ?? t("inventory.quantity");
+
   const updateLine = (key: string, patch: Partial<StockMovementLineDraft>) => {
     onLinesChange(lines.map((l) => (l.key === key ? { ...l, ...patch } : l)));
   };
@@ -80,12 +85,12 @@ export function ProductLinesTable({
         body: JSON.stringify({ sku: `SKU-${Date.now().toString(36).toUpperCase()}`, name }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Məhsul yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.productCreateFailed"));
       onProductCreated(data);
       applyProduct(key, data);
-      toast.success("Yeni məhsul kataloqa əlavə edildi");
+      toast.success(t("inventory.productCreated"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     }
   };
 
@@ -95,13 +100,13 @@ export function ProductLinesTable({
       const res = await fetch(`/api/inventory/products?barcode=${encodeURIComponent(barcode.trim())}`);
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data?.error || "Bu barkodla məhsul tapılmadı");
+        toast.error(data?.error || t("inventory.barcodeNotFound"));
         return;
       }
       applyProduct(key, data);
-      toast.success(`Tapıldı: ${data.name}`);
+      toast.success(t("inventory.barcodeFound").replace("{name}", data.name));
     } catch {
-      toast.error("Barkod axtarışında xəta baş verdi");
+      toast.error(t("inventory.barcodeError"));
     }
   };
 
@@ -113,17 +118,17 @@ export function ProductLinesTable({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="min-w-[200px]">Məhsul</TableHead>
-              <TableHead className="min-w-[160px]">Barkod</TableHead>
-              {showPrices && <TableHead className="w-[120px]">Alış qiyməti</TableHead>}
-              {showPrices && <TableHead className="w-[120px]">Satış qiyməti</TableHead>}
-              <TableHead className="w-[110px]">{quantityLabel}</TableHead>
+              <TableHead className="min-w-[200px]">{t("inventory.product")}</TableHead>
+              <TableHead className="min-w-[160px]">{t("inventory.barcode")}</TableHead>
+              {showPrices && <TableHead className="w-[120px]">{t("inventory.purchasePrice")}</TableHead>}
+              {showPrices && <TableHead className="w-[120px]">{t("inventory.salePrice")}</TableHead>}
+              <TableHead className="w-[110px]">{resolvedQuantityLabel}</TableHead>
               {warehouseMode === "single" ? (
-                <TableHead className="min-w-[180px]">{warehouseLabel}</TableHead>
+                <TableHead className="min-w-[180px]">{resolvedWarehouseLabel}</TableHead>
               ) : (
                 <>
-                  <TableHead className="min-w-[160px]">Haradan</TableHead>
-                  <TableHead className="min-w-[160px]">Haraya</TableHead>
+                  <TableHead className="min-w-[160px]">{t("inventory.from")}</TableHead>
+                  <TableHead className="min-w-[160px]">{t("inventory.to")}</TableHead>
                 </>
               )}
               <TableHead className="w-[44px]" />
@@ -133,7 +138,7 @@ export function ProductLinesTable({
             {lines.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
-                  Hələ məhsul əlavə edilməyib. Aşağıdakı «Məhsul əlavə et» düyməsi ilə başlayın.
+                  {t("inventory.noProductLines")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -153,7 +158,7 @@ export function ProductLinesTable({
                         <ScanBarcode className="h-3.5 w-3.5" />
                       </InputGroupAddon>
                       <InputGroupInput
-                        placeholder="Barkod oxudun və ya yazın..."
+                        placeholder={t("inventory.barcodePlaceholder")}
                         value={line.barcode}
                         onChange={(e) => updateLine(line.key, { barcode: e.target.value })}
                         onKeyDown={(e) => {
@@ -216,7 +221,7 @@ export function ProductLinesTable({
                           value={line.fromWarehouseId}
                           onChange={(id) => updateLine(line.key, { fromWarehouseId: id })}
                           onCreated={onWarehouseCreated}
-                          placeholder="Haradan"
+                          placeholder={t("inventory.from")}
                         />
                       </TableCell>
                       <TableCell>
@@ -225,7 +230,7 @@ export function ProductLinesTable({
                           value={line.toWarehouseId}
                           onChange={(id) => updateLine(line.key, { toWarehouseId: id })}
                           onCreated={onWarehouseCreated}
-                          placeholder="Haraya"
+                          placeholder={t("inventory.to")}
                         />
                       </TableCell>
                     </>
@@ -243,12 +248,12 @@ export function ProductLinesTable({
       </div>
 
       <Button variant="outline" size="sm" onClick={addLine} className="gap-1.5">
-        <Plus className="h-3.5 w-3.5" /> Məhsul əlavə et
+        <Plus className="h-3.5 w-3.5" /> {t("inventory.addProduct")}
       </Button>
 
       {showPrices && (
         <div className="flex items-center justify-end gap-2 border-t border-border/60 pt-3 text-sm">
-          <span className="text-muted-foreground">Ümumi məbləğ:</span>
+          <span className="text-muted-foreground">{t("inventory.totalAmount")}</span>
           <span className="text-base font-semibold">{total.toLocaleString("az-AZ", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
         </div>
       )}

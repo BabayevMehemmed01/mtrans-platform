@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/hooks/useT";
 import type { SupplierLite } from "./types";
 
 // =============================================================================
@@ -40,7 +41,8 @@ interface SupplierSelectProps {
   placeholder?: string;
 }
 
-export function SupplierSelect({ suppliers, value, onChange, onCreated, placeholder = "Təchizatçı" }: SupplierSelectProps) {
+export function SupplierSelect({ suppliers, value, onChange, onCreated, placeholder }: SupplierSelectProps) {
+  const t = useT();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -59,7 +61,7 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      toast.error("Təchizatçı adı tələb olunur");
+      toast.error(t("inventory.supplierNameRequired"));
       return;
     }
     setSaving(true);
@@ -70,17 +72,17 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
         body: JSON.stringify({ name: name.trim(), phone: phone.trim() || undefined, email: email.trim() || undefined }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Təchizatçı yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.supplierCreateFailed"));
 
       onCreated(data);
       onChange(data.id);
-      toast.success("Təchizatçı uğurla yaradıldı");
+      toast.success(t("inventory.supplierCreateSuccess"));
       setDialogOpen(false);
       setName("");
       setPhone("");
       setEmail("");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -91,7 +93,7 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
       <Select value={value || undefined} onValueChange={handleValueChange}>
         <SelectTrigger className="h-9 w-full">
           <Truck className="h-3.5 w-3.5 text-muted-foreground" />
-          <SelectValue placeholder={placeholder} />
+          <SelectValue placeholder={placeholder ?? t("inventory.supplier")} />
         </SelectTrigger>
         <SelectContent>
           {activeSuppliers.map((s) => (
@@ -101,7 +103,7 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
           ))}
           {activeSuppliers.length > 0 && <SelectSeparator />}
           <SelectItem value={CREATE_NEW_VALUE} className="text-primary">
-            <Plus className="h-3.5 w-3.5" /> Yeni təchizatçı yarat
+            <Plus className="h-3.5 w-3.5" /> {t("inventory.createSupplier")}
           </SelectItem>
         </SelectContent>
       </Select>
@@ -109,32 +111,32 @@ export function SupplierSelect({ suppliers, value, onChange, onCreated, placehol
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
-            <DialogTitle>Yeni Təchizatçı</DialogTitle>
-            <DialogDescription>Təchizatçı yaradıldıqdan sonra dərhal seçim üçün mövcud olacaq.</DialogDescription>
+            <DialogTitle>{t("inventory.newSupplier")}</DialogTitle>
+            <DialogDescription>{t("inventory.supplierAfterCreate")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="sup-name">Ad</Label>
-              <Input id="sup-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Məsələn: ABC Təchizat MMC" autoFocus />
+              <Label htmlFor="sup-name">{t("inventory.name")}</Label>
+              <Input id="sup-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("inventory.supplierNamePlaceholder")} autoFocus />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="sup-phone">Telefon (ixtiyari)</Label>
+                <Label htmlFor="sup-phone">{t("inventory.phoneOptional")}</Label>
                 <Input id="sup-phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+994 50 000 00 00" />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="sup-email">Email (ixtiyari)</Label>
+                <Label htmlFor="sup-email">{t("inventory.emailOptional")}</Label>
                 <Input id="sup-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="info@company.com" />
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={saving}>
-              Ləğv et
+              {t("inventory.cancel")}
             </Button>
             <Button onClick={handleCreate} disabled={saving}>
               {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-              Yarat
+              {t("inventory.create")}
             </Button>
           </DialogFooter>
         </DialogContent>

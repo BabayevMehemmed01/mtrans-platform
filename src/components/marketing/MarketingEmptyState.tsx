@@ -1,8 +1,11 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { Inbox } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 
 // =============================================================================
 // Premium boş ekran (empty state) + yüklənmə (skeleton) vəziyyətləri.
@@ -11,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 export function MarketingEmptyState({
   icon: Icon = Inbox,
-  title = "Məlumat tapılmadı",
+  title,
   description,
   actionLabel,
   onAction,
@@ -24,13 +27,15 @@ export function MarketingEmptyState({
   onAction?: () => void;
   className?: string;
 }) {
+  const t = useT();
+  const resolvedTitle = title ?? t("marketing.noDataFound");
   return (
     <div className={cn("flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-border/70 bg-muted/20 px-6 py-14 text-center", className)}>
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-background shadow-sm ring-1 ring-foreground/10">
         <Icon className="h-6 w-6 text-muted-foreground" />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-sm font-semibold text-foreground">{resolvedTitle}</p>
         {description && (
           <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">{description}</p>
         )}

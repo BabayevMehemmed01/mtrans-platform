@@ -33,7 +33,8 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { CHANNEL_META, isChannelActiveFor } from "./channelMeta";
+import { useT } from "@/hooks/useT";
+import { CHANNEL_META, channelCopy, isChannelActiveFor } from "./channelMeta";
 import { CampaignStatusBadge } from "./StatusBadge";
 import { MarketingEmptyState, MarketingTableSkeleton } from "./MarketingEmptyState";
 import type { CampaignType, MarketingCampaignLite, MarketingConfigClient } from "./types";
@@ -59,6 +60,7 @@ export function MarketingCampaignsTab({
   onCampaignDeleted,
   typeFilter,
 }: MarketingCampaignsTabProps) {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [sendingId, setSendingId] = useState<string | null>(null);
 
@@ -72,8 +74,9 @@ export function MarketingCampaignsTab({
   const handleCreateClick = (type: CampaignType) => {
     if (!isChannelActiveFor(type, config)) {
       const meta = CHANNEL_META[type];
+      const copy = channelCopy(t, type);
       toast.error(
-        `${meta.shortLabel} kanalı aktiv deyil. Lütfən .env faylına API məlumatlarını (${meta.envHint}) daxil edin.`
+        t("marketing.channelInactive").replace("{channel}", copy.shortLabel).replace("{env}", meta.envHint)
       );
       return;
     }
@@ -85,25 +88,25 @@ export function MarketingCampaignsTab({
     try {
       const res = await fetch(`/api/marketing/campaigns/${campaign.id}/send`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Kampaniya göndərilə bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("marketing.sendFailed"));
       onCampaignUpdated(data);
-      toast.success("Kampaniya uğurla göndərildi");
+      toast.success(t("marketing.sendSuccess"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("marketing.errorGeneric"));
     } finally {
       setSendingId(null);
     }
   };
 
   const handleDelete = async (campaign: MarketingCampaignLite) => {
-    if (!confirm(`"${campaign.name}" kampaniyasını silmək istədiyinizə əminsiniz?`)) return;
+    if (!confirm(t("marketing.confirmDeleteCampaign").replace("{name}", campaign.name))) return;
     try {
       const res = await fetch(`/api/marketing/campaigns/${campaign.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       onCampaignDeleted(campaign.id);
-      toast.success("Kampaniya silindi");
+      toast.success(t("marketing.campaignDeleted"));
     } catch {
-      toast.error("Kampaniya silinə bilmədi");
+      toast.error(t("marketing.deleteFailed"));
     }
   };
 
@@ -113,7 +116,7 @@ export function MarketingCampaignsTab({
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Kampaniya axtar..."
+            placeholder={t("marketing.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8"
@@ -123,14 +126,15 @@ export function MarketingCampaignsTab({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button className="gap-1.5 bg-emerald-600 text-white hover:bg-emerald-600/90">
-              <Plus className="h-4 w-4" /> Kampaniya yarat <ChevronDown className="h-3.5 w-3.5" />
+              <Plus className="h-4 w-4" /> {t("marketing.createCampaign")} <ChevronDown className="h-3.5 w-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 rounded-xl">
-            <DropdownMenuLabel>Kanal seçin</DropdownMenuLabel>
+            <DropdownMenuLabel>{t("marketing.selectChannel")}</DropdownMenuLabel>
             <DropdownMenuSeparator />
             {CREATABLE_TYPES.map((type) => {
               const meta = CHANNEL_META[type];
+              const copy = channelCopy(t, type);
               const Icon = meta.icon;
               const active = isChannelActiveFor(type, config);
               return (
@@ -140,7 +144,7 @@ export function MarketingCampaignsTab({
                   className="flex items-center gap-2 py-2"
                 >
                   <Icon className={cn("h-4 w-4", active ? meta.accent : "text-muted-foreground")} />
-                  <span className={cn(!active && "text-muted-foreground")}>{meta.label}</span>
+                  <span className={cn(!active && "text-muted-foreground")}>{copy.label}</span>
                   {!active && <Lock className="ml-auto h-3 w-3 text-orange-500" />}
                 </DropdownMenuItem>
               );
@@ -154,10 +158,10 @@ export function MarketingCampaignsTab({
           <TableHeader>
             <TableRow>
               <TableHead>Ad</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Statistika</TableHead>
-              <TableHead>Yaradılma tarixi</TableHead>
-              <TableHead className="w-[64px]">Əməliyyatlar</TableHead>
+              <TableHead>{t("marketing.thStatus")}</TableHead>
+              <TableHead>{t("marketing.thStats")}</TableHead>
+              <TableHead>{t("marketing.thCreatedAt")}</TableHead>
+              <TableHead className="w-[64px]">{t("marketing.thActions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,14 +176,15 @@ export function MarketingCampaignsTab({
                 <TableCell colSpan={5} className="p-0">
                   <MarketingEmptyState
                     icon={Megaphone}
-                    title="Məlumat tapılmadı"
-                    description="Hələ heç bir kampaniya yaradılmayıb. Yuxarıdakı «Kampaniya yarat» düyməsi ilə başlayın."
+                    title={t("marketing.noDataFound")}
+                    description={t("marketing.noCampaignsHint")}
                   />
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((c) => {
                 const meta = CHANNEL_META[c.type];
+                const copy = channelCopy(t, c.type);
                 const Icon = meta.icon;
                 const canSend = c.status !== "COMPLETED" && c.status !== "IN_PROGRESS";
                 return (
@@ -192,7 +197,7 @@ export function MarketingCampaignsTab({
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{c.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {meta.shortLabel}
+                            {copy.shortLabel}
                             {c.segment ? ` · ${c.segment.name}` : ""}
                           </p>
                         </div>
@@ -231,11 +236,11 @@ export function MarketingCampaignsTab({
                               onClick={() => handleSend(c)}
                               className="gap-2"
                             >
-                              <Send className="h-4 w-4" /> {sendingId === c.id ? "Göndərilir..." : "İndi Göndər"}
+                              <Send className="h-4 w-4" /> {sendingId === c.id ? t("marketing.sending") : t("marketing.sendNow")}
                             </DropdownMenuItem>
                           )}
                           <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleDelete(c)}>
-                            <Trash2 className="h-4 w-4" /> Sil
+                            <Trash2 className="h-4 w-4" /> {t("marketing.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -7,6 +7,7 @@ import { Header } from "@/components/layout/Header";
 import { CommandPalette } from "@/components/layout/CommandPalette";
 import { PageTransition } from "@/components/layout/PageTransition";
 import { CallOverlay } from "@/components/chat/CallOverlay";
+import { FloatingChatbot } from "@/components/ai/FloatingChatbot";
 
 // =============================================================================
 // Dashboard Layout — Server Component
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
         <div className="flex h-screen overflow-hidden bg-background">
           <CommandPalette />
           <CallOverlay />
+          <FloatingChatbot />
           <Sidebar />
 
           <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-background">

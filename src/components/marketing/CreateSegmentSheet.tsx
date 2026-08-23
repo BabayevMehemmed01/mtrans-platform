@@ -20,6 +20,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import type { CustomRecipient, MarketingCustomerLite, MarketingSegmentLite } from "./types";
 
 interface CreateSegmentSheetProps {
@@ -64,6 +65,7 @@ function parseRecipientsText(text: string): CustomRecipient[] {
 }
 
 export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }: CreateSegmentSheetProps) {
+  const t = useT();
   const [name, setName] = useState("");
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -95,11 +97,11 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
   const handleImport = () => {
     const parsed = parseRecipientsText(importText);
     if (parsed.length === 0) {
-      toast.error("Heç bir düzgün email/telefon tapılmadı");
+      toast.error(t("marketing.noValidContacts"));
       return;
     }
     setImportedRecipients(parsed);
-    toast.success(`${parsed.length} alıcı import edildi`);
+    toast.success(t("marketing.importedCount").replace("{count}", String(parsed.length)));
   };
 
   const removeImported = (idx: number) => {
@@ -118,7 +120,7 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error("Seqment adı tələb olunur");
+      toast.error(t("marketing.segmentNameRequired"));
       return;
     }
     setSaving(true);
@@ -133,14 +135,14 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Seqment yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("marketing.segmentCreateFailed"));
 
       onCreated(data);
-      toast.success("Seqment uğurla yaradıldı");
+      toast.success(t("marketing.segmentCreateSuccess"));
       onOpenChange(false);
       resetState();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("marketing.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -157,22 +159,22 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-2xl">
         <SheetHeader className="border-b border-border/60 px-6 py-5">
           <SheetTitle className="flex items-center gap-2">
-            <Users className="h-4.5 w-4.5 text-primary" /> Yeni Auditoriya Seqmenti
+            <Users className="h-4.5 w-4.5 text-primary" /> {t("marketing.newSegmentTitle")}
           </SheetTitle>
           <SheetDescription>
-            Mövcud müştərilərdən seçin və ya statik siyahı (CSV / kopyala-yapışdır) import edin.
+            {t("marketing.segmentDesc")}
           </SheetDescription>
         </SheetHeader>
 
         <ScrollArea className="flex-1">
           <div className="space-y-6 px-6 py-5">
             <div className="space-y-1.5">
-              <Label htmlFor="segment-name">Seqment adı</Label>
+              <Label htmlFor="segment-name">{t("marketing.segmentName")}</Label>
               <Input
                 id="segment-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Məsələn: VIP Müştərilər — Bakı"
+                placeholder={t("marketing.segmentNamePlaceholder")}
                 autoFocus
               />
             </div>
@@ -181,20 +183,20 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
             <div className="space-y-2 rounded-2xl border border-border/60 bg-muted/20 p-4">
               <div className="flex items-center justify-between">
                 <Label className="flex items-center gap-1.5 text-sm font-semibold">
-                  <UserCheck className="h-4 w-4 text-primary" /> Clients / Contacts
+                  <UserCheck className="h-4 w-4 text-primary" /> {t("marketing.clientsContacts")}
                 </Label>
                 {selectedIds.size > 0 && (
                   <Badge variant="secondary" className="rounded-full">
-                    {selectedIds.size} seçilib
+                    {t("marketing.selectedCount").replace("{count}", String(selectedIds.size))}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground">Mövcud müştəri kartlarından (Customer) çoxlu seçim edin.</p>
+              <p className="text-xs text-muted-foreground">{t("marketing.clientsHint")}</p>
 
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
-                  placeholder="Ad, email və ya telefon axtar..."
+                  placeholder={t("marketing.searchCustomer")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-8"
@@ -203,7 +205,7 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
 
               <div className="max-h-64 overflow-y-auto rounded-xl border border-border/50 bg-background">
                 {filteredCustomers.length === 0 ? (
-                  <p className="p-4 text-center text-xs text-muted-foreground">Müştəri tapılmadı</p>
+                  <p className="p-4 text-center text-xs text-muted-foreground">{t("marketing.noCustomers")}</p>
                 ) : (
                   <ul className="divide-y divide-border/50">
                     {filteredCustomers.map((c) => {
@@ -233,27 +235,27 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
             {/* Custom recipient list import */}
             <div className="space-y-2 rounded-2xl border border-border/60 bg-muted/20 p-4">
               <Label className="flex items-center gap-1.5 text-sm font-semibold">
-                <FileSpreadsheet className="h-4 w-4 text-primary" /> Custom Recipient List
+                <FileSpreadsheet className="h-4 w-4 text-primary" /> {t("marketing.customList")}
               </Label>
               <p className="text-xs text-muted-foreground">
-                .csv faylınızı və ya cədvəli kopyalayıb yapıştırın. Hər sətir: <span className="font-mono">Ad, email, telefon</span>
+                {t("marketing.importFileHint")} <span className="font-mono">{t("marketing.importHint")}</span>
               </p>
 
               <Textarea
                 value={importText}
                 onChange={(e) => setImportText(e.target.value)}
-                placeholder={"Əli Məmmədov, ali@example.com, +994501234567\nleyla@example.com\n+994551112233"}
+                placeholder={t("marketing.importPlaceholder")}
                 className="min-h-24 font-mono text-xs"
               />
 
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
                   {importedRecipients.length > 0
-                    ? `${importedRecipients.length} alıcı import edildi`
-                    : "Hələ heç nə import edilməyib"}
+                    ? t("marketing.importedCount").replace("{count}", String(importedRecipients.length))
+                    : t("marketing.nothingImported")}
                 </p>
                 <Button type="button" size="sm" variant="outline" onClick={handleImport} disabled={!importText.trim()}>
-                  Import et
+                  {t("marketing.import")}
                 </Button>
               </div>
 
@@ -280,15 +282,15 @@ export function CreateSegmentSheet({ open, onOpenChange, customers, onCreated }:
         <SheetFooter className="border-t border-border/60 px-6 py-4">
           <div className="flex w-full items-center justify-between">
             <p className="text-xs text-muted-foreground">
-              Ümumi alıcı sayı: <span className="font-semibold text-foreground">{totalRecipients}</span>
+              {t("marketing.totalRecipients")} <span className="font-semibold text-foreground">{totalRecipients}</span>
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-                Ləğv et
+                {t("marketing.cancel")}
               </Button>
               <Button onClick={handleSubmit} disabled={saving}>
                 {saving && <Loader2 className="h-4 w-4 animate-spin" />}
-                Seqmenti Yarat
+                {t("marketing.createSegment")}
               </Button>
             </div>
           </div>

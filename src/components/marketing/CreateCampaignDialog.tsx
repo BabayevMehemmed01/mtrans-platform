@@ -23,7 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import { CHANNEL_META } from "./channelMeta";
+import { useT } from "@/hooks/useT";
+import { CHANNEL_META, channelCopy } from "./channelMeta";
 import type { CampaignType, MarketingCampaignLite, MarketingSegmentLite, MarketingTemplateLite } from "./types";
 
 interface CreateCampaignDialogProps {
@@ -46,7 +47,9 @@ export function CreateCampaignDialog({
   templates,
   onCreated,
 }: CreateCampaignDialogProps) {
+  const t = useT();
   const meta = CHANNEL_META[type];
+  const copy = channelCopy(t, type);
   const Icon = meta.icon;
 
   const [name, setName] = useState("");
@@ -57,7 +60,7 @@ export function CreateCampaignDialog({
   const [scheduledAt, setScheduledAt] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const availableTemplates = templates.filter((t) => t.type === type);
+  const availableTemplates = templates.filter((tpl) => tpl.type === type);
 
   useEffect(() => {
     if (open) {
@@ -73,7 +76,7 @@ export function CreateCampaignDialog({
   const applyTemplate = (id: string) => {
     setTemplateId(id);
     if (id === NO_TEMPLATE_VALUE) return;
-    const tpl = templates.find((t) => t.id === id);
+    const tpl = templates.find((item) => item.id === id);
     if (!tpl) return;
     // Şablon KLONLANIR — bu, sadəcə başlanğıc dəyərləri köçürür, sonrakı
     // redaktə nə kampaniyaya, nə də master şablona təsir etmir.
@@ -84,7 +87,7 @@ export function CreateCampaignDialog({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error("Kampaniya adı tələb olunur");
+      toast.error(t("marketing.nameRequired"));
       return;
     }
     setSaving(true);
@@ -103,13 +106,13 @@ export function CreateCampaignDialog({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Kampaniya yaradıla bilmədi");
+      if (!res.ok) throw new Error(data?.error || t("marketing.createFailed"));
 
       onCreated(data);
-      toast.success("Kampaniya uğurla yaradıldı");
+      toast.success(t("marketing.createSuccess"));
       onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("marketing.errorGeneric"));
     } finally {
       setSaving(false);
     }
@@ -123,37 +126,37 @@ export function CreateCampaignDialog({
             <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl", meta.softBg)}>
               <Icon className={cn("h-4.5 w-4.5", meta.accent)} />
             </div>
-            <DialogTitle>Yeni {meta.label}</DialogTitle>
+            <DialogTitle>{t("marketing.newCampaignTitle").replace("{channel}", copy.label)}</DialogTitle>
           </div>
           <DialogDescription>
-            Kampaniyanı qaralama (draft) kimi yaradın, sonra Kampaniyalar cədvəlindən istədiyiniz vaxt göndərin.
+            {t("marketing.draftHint")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="campaign-name">Kampaniya adı</Label>
+            <Label htmlFor="campaign-name">{t("marketing.campaignName")}</Label>
             <Input
               id="campaign-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={`Məsələn: ${meta.shortLabel} — Yay Endirimi 2026`}
+              placeholder={t("marketing.campaignNamePlaceholder").replace("{channel}", copy.shortLabel)}
               autoFocus
             />
           </div>
 
           {availableTemplates.length > 0 && (
             <div className="space-y-1.5">
-              <Label>Şablon (ixtiyari)</Label>
+              <Label>{t("marketing.templateOptional")}</Label>
               <Select value={templateId} onValueChange={(value) => applyTemplate(value ?? NO_TEMPLATE_VALUE)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Hazır şablondan başlayın" />
+                  <SelectValue placeholder={t("marketing.startFromTemplate")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_TEMPLATE_VALUE}>Şablonsuz (boş) başla</SelectItem>
-                  {availableTemplates.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
+                  <SelectItem value={NO_TEMPLATE_VALUE}>{t("marketing.startBlank")}</SelectItem>
+                  {availableTemplates.map((tpl) => (
+                    <SelectItem key={tpl.id} value={tpl.id}>
+                      {tpl.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -163,28 +166,28 @@ export function CreateCampaignDialog({
 
           {type === "EMAIL" && (
             <div className="space-y-1.5">
-              <Label htmlFor="campaign-subject">Mövzu (Subject)</Label>
+              <Label htmlFor="campaign-subject">{t("marketing.subject")}</Label>
               <Input
                 id="campaign-subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                placeholder="Email mövzu sətri"
+                placeholder={t("marketing.subjectPlaceholder")}
               />
             </div>
           )}
 
           <div className="space-y-1.5">
-            <Label htmlFor="campaign-content">Məzmun</Label>
+            <Label htmlFor="campaign-content">{t("marketing.content")}</Label>
             <Textarea
               id="campaign-content"
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder={
                 type === "EMAIL"
-                  ? "Email HTML/mətn məzmunu..."
+                  ? t("marketing.contentEmailPlaceholder")
                   : type === "INSTAGRAM"
-                    ? "Reklam mətni / creative təsviri..."
-                    : "Mesaj mətni..."
+                    ? t("marketing.contentAdPlaceholder")
+                    : t("marketing.contentMessagePlaceholder")
               }
               className="min-h-28"
             />
@@ -192,13 +195,13 @@ export function CreateCampaignDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>Auditoriya Seqmenti</Label>
+              <Label>{t("marketing.audienceSegment")}</Label>
               <Select value={segmentId} onValueChange={(value) => setSegmentId(value ?? NO_SEGMENT_VALUE)}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Seqment seçin" />
+                  <SelectValue placeholder={t("marketing.selectSegment")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={NO_SEGMENT_VALUE}>Seqment yoxdur</SelectItem>
+                  <SelectItem value={NO_SEGMENT_VALUE}>{t("marketing.noSegment")}</SelectItem>
                   {segments.map((s) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
@@ -209,7 +212,7 @@ export function CreateCampaignDialog({
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="campaign-schedule">Planlaşdır (ixtiyari)</Label>
+              <Label htmlFor="campaign-schedule">{t("marketing.scheduleOptional")}</Label>
               <Input
                 id="campaign-schedule"
                 type="datetime-local"
@@ -221,14 +224,14 @@ export function CreateCampaignDialog({
 
           {segments.length === 0 && (
             <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Sparkles className="h-3 w-3" /> Seqment yoxdur — &ldquo;Seqmentlər&rdquo; tabından auditoriya yarada bilərsiniz.
+              <Sparkles className="h-3 w-3" /> {t("marketing.noSegmentHint")}
             </p>
           )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Ləğv et
+            {t("marketing.cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={saving}>
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}

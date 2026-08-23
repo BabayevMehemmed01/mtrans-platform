@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import { InventoryCardSkeleton, InventoryEmptyState } from "./InventoryEmptyState";
 import type { AnalyticsSnapshot } from "./types";
 
@@ -54,6 +55,8 @@ function StatCard({ icon: Icon, label, value, accent }: { icon: React.ComponentT
 }
 
 export function AnalyticsTab({ analytics, loading }: AnalyticsTabProps) {
+  const t = useT();
+
   if (loading || !analytics) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -70,8 +73,8 @@ export function AnalyticsTab({ analytics, loading }: AnalyticsTabProps) {
     return (
       <InventoryEmptyState
         icon={TrendingUp}
-        title="Analitika üçün məlumat yoxdur"
-        description="Məhsul kataloqu və stok hərəkətləri yarandıqdan sonra ABC analizi, dövriyyə və real-time qalıq burada göstəriləcək."
+        title={t("inventory.noAnalytics")}
+        description={t("inventory.noAnalyticsHint")}
         className="min-h-[45vh]"
       />
     );
@@ -81,31 +84,29 @@ export function AnalyticsTab({ analytics, loading }: AnalyticsTabProps) {
     .map((cat) => ({ name: cat, value: abcSummary[cat] }))
     .filter((d) => d.value > 0);
 
-  const turnoverChartData = turnover.slice(0, 8).map((t) => ({ name: t.sku, ratio: Number(t.turnoverRatio.toFixed(2)) }));
+  const turnoverChartData = turnover.slice(0, 8).map((row) => ({ name: row.sku, ratio: Number(row.turnoverRatio.toFixed(2)) }));
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard icon={Boxes} label="Ümumi məhsul" value={String(totals.totalProducts)} accent="bg-blue-50 text-blue-600" />
-        <StatCard icon={Layers} label="Ümumi miqdar" value={totals.totalQuantity.toLocaleString("az-AZ")} accent="bg-purple-50 text-purple-600" />
+        <StatCard icon={Boxes} label={t("inventory.totalProducts")} value={String(totals.totalProducts)} accent="bg-blue-50 text-blue-600" />
+        <StatCard icon={Layers} label={t("inventory.totalQuantity")} value={totals.totalQuantity.toLocaleString("az-AZ")} accent="bg-purple-50 text-purple-600" />
         <StatCard
           icon={TrendingUp}
-          label="Ümumi dəyər"
+          label={t("inventory.totalValue")}
           value={`${totals.totalValuation.toLocaleString("az-AZ", { maximumFractionDigits: 0 })} AZN`}
           accent="bg-emerald-50 text-emerald-600"
         />
-        <StatCard icon={PackageX} label="Az qalıqlı" value={String(totals.lowStockCount)} accent="bg-red-50 text-red-600" />
-        <StatCard icon={Warehouse} label="Anbarlar" value={String(totals.warehouseCount)} accent="bg-amber-50 text-amber-600" />
+        <StatCard icon={PackageX} label={t("inventory.lowStock")} value={String(totals.lowStockCount)} accent="bg-red-50 text-red-600" />
+        <StatCard icon={Warehouse} label={t("reportsPage.warehouses")} value={String(totals.warehouseCount)} accent="bg-amber-50 text-amber-600" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
-          <p className="mb-1 text-sm font-semibold">ABC analizi</p>
-          <p className="mb-4 text-xs text-muted-foreground">
-            Məhsulların dəyər üzrə A (yüksək) / B (orta) / C (aşağı) kateqoriyaları
-          </p>
+          <p className="mb-1 text-sm font-semibold">{t("inventory.abcAnalysis")}</p>
+          <p className="mb-4 text-xs text-muted-foreground">{t("inventory.abcAnalysisDesc")}</p>
           {abcPieData.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Kifayət qədər məlumat yoxdur</p>
+            <p className="py-10 text-center text-sm text-muted-foreground">{t("inventory.notEnoughData")}</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -122,10 +123,12 @@ export function AnalyticsTab({ analytics, loading }: AnalyticsTabProps) {
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
-          <p className="mb-1 text-sm font-semibold">Stok dövriyyəsi (ilk 8)</p>
-          <p className="mb-4 text-xs text-muted-foreground">Son {analytics.periodDays} gün: OUTBOUND/SCRAP miqdarı ÷ orta qalıq</p>
+          <p className="mb-1 text-sm font-semibold">{t("inventory.stockTurnover")}</p>
+          <p className="mb-4 text-xs text-muted-foreground">
+            {t("inventory.stockTurnoverDesc").replace("{days}", String(analytics.periodDays))}
+          </p>
           {turnoverChartData.length === 0 ? (
-            <p className="py-10 text-center text-sm text-muted-foreground">Kifayət qədər məlumat yoxdur</p>
+            <p className="py-10 text-center text-sm text-muted-foreground">{t("inventory.notEnoughData")}</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={turnoverChartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
@@ -141,23 +144,23 @@ export function AnalyticsTab({ analytics, loading }: AnalyticsTabProps) {
       </div>
 
       <div className="rounded-2xl shadow-sm">
-        <p className="px-1 pb-2 text-sm font-semibold">ABC analizi — Detallar</p>
+        <p className="px-1 pb-2 text-sm font-semibold">{t("inventory.abcDetails")}</p>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Məhsul</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Dəyər</TableHead>
-              <TableHead>Ümumi %</TableHead>
-              <TableHead>Yığılmış %</TableHead>
-              <TableHead>Kateqoriya</TableHead>
+              <TableHead>{t("inventory.product")}</TableHead>
+              <TableHead>{t("inventory.sku")}</TableHead>
+              <TableHead>{t("inventory.value")}</TableHead>
+              <TableHead>{t("inventory.sharePercent")}</TableHead>
+              <TableHead>{t("inventory.accumulated")}</TableHead>
+              <TableHead>{t("inventory.category")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {abc.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
-                  Məlumat yoxdur
+                  {t("inventory.noData")}
                 </TableCell>
               </TableRow>
             ) : (

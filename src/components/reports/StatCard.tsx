@@ -1,5 +1,8 @@
+"use client";
+
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 
 interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -58,6 +61,7 @@ export function ChartCard({
   );
 }
 
-export function EmptyChartState({ label = "Kifayət qədər məlumat yoxdur" }: { label?: string }) {
-  return <p className="py-10 text-center text-sm text-muted-foreground">{label}</p>;
+export function EmptyChartState({ label }: { label?: string }) {
+  const t = useT();
+  return <p className="py-10 text-center text-sm text-muted-foreground">{label ?? t("reportsPage.notEnoughData")}</p>;
 }

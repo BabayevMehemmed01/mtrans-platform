@@ -67,6 +67,12 @@ export const CHANNEL_META: Record<CampaignType, ChannelMeta> = {
 
 export const CHANNEL_ORDER: CampaignType[] = ["EMAIL", "SMS", "WHATSAPP", "INSTAGRAM"];
 
+export function channelCopy(t: (k: string) => string, type: CampaignType) {
+  const keys = { EMAIL: "Email", SMS: "Sms", WHATSAPP: "Whatsapp", INSTAGRAM: "Instagram" } as const;
+  const k = keys[type];
+  return { label: t(`marketing.channel${k}Label`), shortLabel: t(`marketing.channel${k}Short`), description: t(`marketing.channel${k}Desc`) };
+}
+
 export function isChannelActiveFor(type: CampaignType, config: {
   isEmailActive: boolean;
   isSmsActive: boolean;

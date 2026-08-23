@@ -5,17 +5,11 @@ import toast from "react-hot-toast";
 import { LayoutTemplate, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { CHANNEL_META, CHANNEL_ORDER } from "./channelMeta";
+import { useT } from "@/hooks/useT";
+import { CHANNEL_META, CHANNEL_ORDER, channelCopy } from "./channelMeta";
 import { MarketingEmptyState, MarketingCardSkeleton } from "./MarketingEmptyState";
 import { MarketingTemplateDialog } from "./MarketingTemplateDialog";
 import type { CampaignType, MarketingTemplateLite } from "./types";
-
-// =============================================================================
-// MarketingTemplatesTab — Email/SMS/WhatsApp/Instagram kampaniyaları üçün
-// təkrar istifadə edilə bilən məzmun şablonlarının tam idarəetməsi. Settings →
-// Şablonlar tab-ındakı eyni "master şablon" fəlsəfəsini izləyir: kampaniya
-// yaradılarkən şablon KLONLANIR, sonrakı redaktə əvvəlki kampaniyalara toxunmur.
-// =============================================================================
 
 interface MarketingTemplatesTabProps {
   templates: MarketingTemplateLite[];
@@ -26,6 +20,7 @@ interface MarketingTemplatesTabProps {
 }
 
 export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated, onDeleted }: MarketingTemplatesTabProps) {
+  const t = useT();
   const [activeType, setActiveType] = useState<CampaignType>("EMAIL");
   const [dialogState, setDialogState] = useState<{ open: boolean; mode: "create" | "edit"; template: MarketingTemplateLite | null }>({
     open: false,
@@ -33,29 +28,30 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
     template: null,
   });
 
-  const visibleTemplates = useMemo(() => templates.filter((t) => t.type === activeType), [templates, activeType]);
+  const visibleTemplates = useMemo(() => templates.filter((tpl) => tpl.type === activeType), [templates, activeType]);
   const meta = CHANNEL_META[activeType];
+  const copy = channelCopy(t, activeType);
 
   const openCreate = () => setDialogState({ open: true, mode: "create", template: null });
   const openEdit = (template: MarketingTemplateLite) => setDialogState({ open: true, mode: "edit", template });
 
   const handleDelete = async (template: MarketingTemplateLite) => {
     if (template.isSystem) {
-      toast.error("Standart (default) şablonlar silinə bilməz — lakin redaktə edilə bilər");
+      toast.error(t("marketing.cannotDeleteDefault"));
       return;
     }
-    if (!confirm(`"${template.name}" şablonunu silmək istədiyinizə əminsiniz?`)) return;
+    if (!confirm(t("marketing.confirmDeleteTemplate").replace("{name}", template.name))) return;
     try {
       const res = await fetch(`/api/marketing/templates/${template.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json();
-        toast.error(data.error || "Silinmədi");
+        toast.error(data.error || t("marketing.deleteFailedGeneric"));
         return;
       }
       onDeleted(template.id);
-      toast.success("Şablon silindi");
+      toast.success(t("marketing.templateDeleted"));
     } catch {
-      toast.error("Şəbəkə xətası");
+      toast.error(t("marketing.networkError"));
     }
   };
 
@@ -64,8 +60,9 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
       <div className="flex flex-wrap gap-2">
         {CHANNEL_ORDER.map((type) => {
           const m = CHANNEL_META[type];
+          const channel = channelCopy(t, type);
           const Icon = m.icon;
-          const count = templates.filter((t) => t.type === type).length;
+          const count = templates.filter((tpl) => tpl.type === type).length;
           return (
             <button
               key={type}
@@ -79,7 +76,7 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
               )}
             >
               <Icon className="w-4 h-4" />
-              {m.shortLabel}
+              {channel.shortLabel}
               {count > 0 && (
                 <span
                   className={cn(
@@ -96,9 +93,9 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
       </div>
 
       <div className="flex items-center justify-between gap-4 flex-wrap">
-        <p className="text-[13px] font-medium text-muted-foreground max-w-lg">{meta.description}</p>
+        <p className="text-[13px] font-medium text-muted-foreground max-w-lg">{copy.description}</p>
         <Button onClick={openCreate} className="gap-1.5 rounded-xl font-bold">
-          <Plus className="w-4 h-4" /> Yeni Şablon
+          <Plus className="w-4 h-4" /> {t("marketing.newTemplate")}
         </Button>
       </div>
 
@@ -111,9 +108,9 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
       ) : visibleTemplates.length === 0 ? (
         <MarketingEmptyState
           icon={LayoutTemplate}
-          title="Şablon tapılmadı"
-          description={`${meta.shortLabel} kanalı üçün hələ şablon yoxdur. "Yeni Şablon" düyməsi ilə başlayın.`}
-          actionLabel="Yeni Şablon"
+          title={t("marketing.noTemplates")}
+          description={t("marketing.noTemplatesForChannel").replace("{channel}", copy.shortLabel)}
+          actionLabel={t("marketing.newTemplate")}
           onAction={openCreate}
         />
       ) : (
@@ -132,7 +129,7 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
                 </div>
                 {tpl.isSystem && (
                   <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300 px-2 py-0.5 rounded-full flex-shrink-0">
-                    <Lock className="w-2.5 h-2.5" /> Standart
+                    <Lock className="w-2.5 h-2.5" /> {t("marketing.defaultBadge")}
                   </span>
                 )}
               </div>
@@ -141,7 +138,7 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
               <p className="text-[12.5px] text-muted-foreground line-clamp-3 whitespace-pre-line">{tpl.content || "—"}</p>
 
               <div className="mt-auto pt-2 border-t border-border flex items-center justify-end gap-1">
-                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(tpl)} title="Redaktə et">
+                <Button variant="ghost" size="icon-sm" onClick={() => openEdit(tpl)} title={t("marketing.editBtn")}>
                   <Pencil className="w-3.5 h-3.5" />
                 </Button>
                 <Button
@@ -150,7 +147,7 @@ export function MarketingTemplatesTab({ templates, loading, onCreated, onUpdated
                   onClick={() => handleDelete(tpl)}
                   disabled={tpl.isSystem}
                   className="text-destructive hover:text-destructive disabled:opacity-30"
-                  title={tpl.isSystem ? "Standart şablon silinə bilməz" : "Sil"}
+                  title={tpl.isSystem ? t("marketing.cannotDeleteDefaultTitle") : t("marketing.delete")}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>

@@ -25,13 +25,14 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/hooks/useT";
 import { StatCard, ChartCard, EmptyChartState } from "./StatCard";
 import type { ReportsCrmData } from "./types";
 
-const STATUS_META: Record<string, { label: string; color: string }> = {
-  OPEN: { label: "Açıq", color: "#2563eb" },
-  WON: { label: "Qazanılıb", color: "#16a34a" },
-  LOST: { label: "İtirilib", color: "#dc2626" },
+const STATUS_COLORS: Record<string, string> = {
+  OPEN: "#2563eb",
+  WON: "#16a34a",
+  LOST: "#dc2626",
 };
 
 function formatMoney(value: number) {
@@ -39,22 +40,31 @@ function formatMoney(value: number) {
 }
 
 export function ReportsCrmTab({ data }: { data: ReportsCrmData }) {
+  const t = useT();
+
+  const statusLabel = (status: string) => {
+    if (status === "OPEN") return t("reportsPage.open");
+    if (status === "WON") return t("reportsPage.won");
+    if (status === "LOST") return t("reportsPage.lost");
+    return status;
+  };
+
   const stageData = data.stageBreakdown.filter((s) => s.count > 0);
   const statusPieData = data.statusBreakdown
-    .map((s) => ({ name: STATUS_META[s.status]?.label ?? s.status, key: s.status, value: s.count }))
+    .map((s) => ({ name: statusLabel(s.status), key: s.status, value: s.count }))
     .filter((s) => s.value > 0);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={Wallet} label="Ümumi Pipeline Dəyəri" value={`${formatMoney(data.totalPipelineValue)} AZN`} accent="text-blue-600" bg="bg-blue-50" />
-        <StatCard icon={Handshake} label="Açıq Sövdələşmələr" value={data.openDealsCount} accent="text-amber-600" bg="bg-amber-50" />
-        <StatCard icon={Trophy} label="Bu Ay Qazanılıb" value={`${data.wonThisMonthCount} (${formatMoney(data.wonThisMonthValue)} AZN)`} accent="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard icon={Percent} label="Qazanma Faizi" value={`${data.winRate}%`} accent="text-purple-600" bg="bg-purple-50" />
+        <StatCard icon={Wallet} label={t("reportsPage.pipelineValue")} value={`${formatMoney(data.totalPipelineValue)} AZN`} accent="text-blue-600" bg="bg-blue-50" />
+        <StatCard icon={Handshake} label={t("reportsPage.openDeals")} value={data.openDealsCount} accent="text-amber-600" bg="bg-amber-50" />
+        <StatCard icon={Trophy} label={t("reportsPage.wonThisMonth")} value={`${data.wonThisMonthCount} (${formatMoney(data.wonThisMonthValue)} AZN)`} accent="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard icon={Percent} label={t("reportsPage.winRate")} value={`${data.winRate}%`} accent="text-purple-600" bg="bg-purple-50" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Mərhələlər üzrə Pipeline" description="Hər mərhələdəki sövdələşmə dəyəri (AZN)">
+        <ChartCard title={t("reportsPage.pipelineByStage")} description={t("reportsPage.pipelineByStageDesc")}>
           {stageData.length === 0 ? (
             <EmptyChartState />
           ) : (
@@ -74,7 +84,7 @@ export function ReportsCrmTab({ data }: { data: ReportsCrmData }) {
           )}
         </ChartCard>
 
-        <ChartCard title="Status Bölgüsü" description="Sövdələşmələrin Açıq / Qazanılıb / İtirilib payı">
+        <ChartCard title={t("reportsPage.dealStatusBreakdown")} description={t("reportsPage.dealStatusBreakdownDesc")}>
           {statusPieData.length === 0 ? (
             <EmptyChartState />
           ) : (
@@ -82,7 +92,7 @@ export function ReportsCrmTab({ data }: { data: ReportsCrmData }) {
               <PieChart>
                 <Pie data={statusPieData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
                   {statusPieData.map((entry) => (
-                    <Cell key={entry.key} fill={STATUS_META[entry.key]?.color ?? "#94a3b8"} />
+                    <Cell key={entry.key} fill={STATUS_COLORS[entry.key] ?? "#94a3b8"} />
                   ))}
                 </Pie>
                 <Tooltip />
@@ -93,7 +103,7 @@ export function ReportsCrmTab({ data }: { data: ReportsCrmData }) {
         </ChartCard>
       </div>
 
-      <ChartCard title="Aylıq Sövdələşmə Trendi (6 ay)" description="Yaradılan sövdələşmələr və qazanılan dəyər">
+      <ChartCard title={t("reportsPage.monthlyDealTrend")} description={t("reportsPage.monthlyDealTrendDesc")}>
         {data.monthlyTrend.every((m) => m.created === 0 && m.won === 0) ? (
           <EmptyChartState />
         ) : (
@@ -114,29 +124,29 @@ export function ReportsCrmTab({ data }: { data: ReportsCrmData }) {
               <YAxis allowDecimals={false} tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
               <Tooltip />
               <Legend />
-              <Area type="monotone" dataKey="created" name="Yaradılıb" stroke="#2563eb" strokeWidth={2} fill="url(#crmCreatedFill)" />
-              <Area type="monotone" dataKey="won" name="Qazanılıb" stroke="#16a34a" strokeWidth={2} fill="url(#crmWonFill)" />
+              <Area type="monotone" dataKey="created" name={t("reportsPage.created")} stroke="#2563eb" strokeWidth={2} fill="url(#crmCreatedFill)" />
+              <Area type="monotone" dataKey="won" name={t("reportsPage.won")} stroke="#16a34a" strokeWidth={2} fill="url(#crmWonFill)" />
             </AreaChart>
           </ResponsiveContainer>
         )}
       </ChartCard>
 
       <div className="rounded-2xl shadow-sm">
-        <p className="px-1 pb-2 text-sm font-semibold">Ən Dəyərli Açıq Sövdələşmələr</p>
+        <p className="px-1 pb-2 text-sm font-semibold">{t("reportsPage.topOpenDeals")}</p>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Sövdələşmə</TableHead>
-              <TableHead>Müştəri</TableHead>
-              <TableHead>Mərhələ</TableHead>
-              <TableHead className="text-right">Dəyər</TableHead>
+              <TableHead>{t("reportsPage.deal")}</TableHead>
+              <TableHead>{t("reportsPage.client")}</TableHead>
+              <TableHead>{t("reportsPage.stage")}</TableHead>
+              <TableHead className="text-right">{t("reportsPage.value")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.topDeals.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} className="py-8 text-center text-sm text-muted-foreground">
-                  Açıq sövdələşmə yoxdur
+                  {t("reportsPage.noOpenDeals")}
                 </TableCell>
               </TableRow>
             ) : (

@@ -1,8 +1,11 @@
+"use client";
+
 import type { LucideIcon } from "lucide-react";
 import { PackageSearch } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 
 // =============================================================================
 // WMS modulunun boş ekran (empty state) və yüklənmə (skeleton) vəziyyətləri.
@@ -11,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 export function InventoryEmptyState({
   icon: Icon = PackageSearch,
-  title = "Məlumat tapılmadı",
+  title,
   description,
   actionLabel,
   onAction,
@@ -28,6 +31,8 @@ export function InventoryEmptyState({
   onSecondary?: () => void;
   className?: string;
 }) {
+  const t = useT();
+  const resolvedTitle = title ?? t("inventory.noData");
   return (
     <div
       className={cn(
@@ -39,7 +44,7 @@ export function InventoryEmptyState({
         <Icon className="h-6 w-6 text-muted-foreground" />
       </div>
       <div className="space-y-1">
-        <p className="text-sm font-semibold text-foreground">{title}</p>
+        <p className="text-sm font-semibold text-foreground">{resolvedTitle}</p>
         {description && (
           <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">{description}</p>
         )}

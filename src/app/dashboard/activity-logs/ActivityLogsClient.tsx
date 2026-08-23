@@ -68,15 +68,19 @@ type LogsResponse = {
   limit: number;
 };
 
-function formatDuration(ms: number | null) {
+function formatDuration(ms: number | null, t: (key: string) => string) {
   if (ms == null || ms < 0) return "—";
   const totalSec = Math.floor(ms / 1000);
   const hours = Math.floor(totalSec / 3600);
   const minutes = Math.floor((totalSec % 3600) / 60);
   const seconds = totalSec % 60;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${seconds}s`;
-  return `${seconds}s`;
+  if (hours > 0) {
+    return t("activityLogs.durationHours").replace("{h}", String(hours)).replace("{m}", String(minutes));
+  }
+  if (minutes > 0) {
+    return t("activityLogs.durationMinutes").replace("{m}", String(minutes)).replace("{s}", String(seconds));
+  }
+  return t("activityLogs.durationSeconds").replace("{s}", String(seconds));
 }
 
 function csvEscape(value: string) {
@@ -147,7 +151,7 @@ export function ActivityLogsClient() {
       describeAuditLog(log),
       log.ipAddress ?? "",
       format(new Date(log.createdAt), "dd.MM.yyyy HH:mm"),
-      formatDuration(log.sessionDurationMs),
+      formatDuration(log.sessionDurationMs, t),
     ]);
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => csvEscape(String(cell))).join(","))
@@ -300,7 +304,7 @@ export function ActivityLogsClient() {
                           {format(new Date(log.createdAt), "dd.MM.yyyy HH:mm")}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground">
-                          {log.action === "LOGOUT" ? formatDuration(log.sessionDurationMs) : "—"}
+                          {log.action === "LOGOUT" ? formatDuration(log.sessionDurationMs, t) : "—"}
                         </TableCell>
                       </TableRow>
                     );

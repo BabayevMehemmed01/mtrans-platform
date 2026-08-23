@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/hooks/useT";
 import type { SupplierLite } from "./types";
 
 // =============================================================================
@@ -27,6 +28,7 @@ function emptyForm() {
 }
 
 export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, onUpdated }: SupplierDialogProps) {
+  const t = useT();
   const [form, setForm] = useState(emptyForm());
   const [loading, setLoading] = useState(false);
   const [toggling, setToggling] = useState(false);
@@ -50,7 +52,7 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name.trim()) {
-      toast.error("Təchizatçı adı tələb olunur");
+      toast.error(t("inventory.supplierNameRequired"));
       return;
     }
     setLoading(true);
@@ -63,17 +65,17 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Xəta baş verdi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.errorGeneric"));
       if (mode === "create") {
         onCreated(data);
-        toast.success("Təchizatçı yaradıldı");
+        toast.success(t("inventory.supplierCreated"));
       } else {
         onUpdated(data);
-        toast.success("Təchizatçı yeniləndi");
+        toast.success(t("inventory.supplierUpdated"));
       }
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Xəta baş verdi");
+      toast.error(err instanceof Error ? err.message : t("inventory.errorGeneric"));
     } finally {
       setLoading(false);
     }
@@ -90,12 +92,12 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
         body: JSON.stringify({ isActive: nextActive }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Xəta baş verdi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.errorGeneric"));
       onUpdated(data);
-      toast.success(nextActive ? "Təchizatçı aktivləşdirildi" : "Təchizatçı deaktiv edildi");
+      toast.success(nextActive ? t("inventory.supplierActivated") : t("inventory.supplierDeactivated"));
       onOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Xəta baş verdi");
+      toast.error(err instanceof Error ? err.message : t("inventory.errorGeneric"));
     } finally {
       setToggling(false);
     }
@@ -105,43 +107,41 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Yeni Təchizatçı" : "Təchizatçını Redaktə Et"}</DialogTitle>
+          <DialogTitle>{mode === "create" ? t("inventory.newSupplier") : t("inventory.editSupplier")}</DialogTitle>
           <DialogDescription>
-            {mode === "create"
-              ? "Yeni təchizatçı yaradın — dərhal qəbul sənədlərində istifadə edilə bilər."
-              : "Dəyişikliklər yalnız bu təchizatçıya aiddir, əvvəlki sənədlərə təsir etməz."}
+            {mode === "create" ? t("inventory.supplierCreateHint") : t("inventory.supplierEditHint")}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2 col-span-2">
-              <Label>Şirkət adı *</Label>
+              <Label>{t("inventory.companyNameRequired")}</Label>
               <Input
                 value={form.name}
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-                placeholder="Məsələn: ABC Təchizat MMC"
+                placeholder={t("inventory.supplierNamePlaceholder")}
                 autoFocus
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label>Əlaqədar şəxs</Label>
-              <Input value={form.contactName} onChange={(e) => setForm((p) => ({ ...p, contactName: e.target.value }))} placeholder="Məs: Anar Əliyev" />
+              <Label>{t("inventory.contactPerson")}</Label>
+              <Input value={form.contactName} onChange={(e) => setForm((p) => ({ ...p, contactName: e.target.value }))} placeholder={t("inventory.contactPlaceholder")} />
             </div>
             <div className="space-y-2">
-              <Label>VÖEN</Label>
+              <Label>{t("inventory.taxId")}</Label>
               <Input value={form.taxId} onChange={(e) => setForm((p) => ({ ...p, taxId: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label>Telefon</Label>
+              <Label>{t("inventory.phone")}</Label>
               <Input value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} placeholder="+994 50 000 00 00" />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{t("inventory.email")}</Label>
               <Input type="email" value={form.email} onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))} placeholder="info@company.com" />
             </div>
             <div className="space-y-2 col-span-2">
-              <Label>Ünvan</Label>
+              <Label>{t("inventory.address")}</Label>
               <Input value={form.address} onChange={(e) => setForm((p) => ({ ...p, address: e.target.value }))} />
             </div>
           </div>
@@ -156,14 +156,14 @@ export function SupplierDialog({ open, onOpenChange, mode, supplier, onCreated, 
                 className={supplier.isActive ? "text-destructive hover:text-destructive" : "text-emerald-600 hover:text-emerald-600"}
               >
                 {toggling ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : supplier.isActive ? <Trash2 className="mr-2 h-4 w-4" /> : <Power className="mr-2 h-4 w-4" />}
-                {supplier.isActive ? "Deaktiv et" : "Aktivləşdir"}
+                {supplier.isActive ? t("inventory.deactivate") : t("inventory.activate")}
               </Button>
             ) : (
               <span />
             )}
             <Button type="submit" disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Yadda saxla
+              {t("inventory.save")}
             </Button>
           </div>
         </form>

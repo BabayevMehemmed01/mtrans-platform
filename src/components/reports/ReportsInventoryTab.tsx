@@ -20,15 +20,24 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/hooks/useT";
 import { StatCard, ChartCard, EmptyChartState } from "./StatCard";
 import type { ReportsInventoryData } from "./types";
 
-const MOVEMENT_META: Record<string, { label: string; color: string }> = {
-  INBOUND: { label: "Qəbul", color: "#059669" },
-  OUTBOUND: { label: "Satış", color: "#2563eb" },
-  TRANSFER: { label: "Transfer", color: "#9333ea" },
-  ADJUSTMENT: { label: "Tənzimləmə", color: "#f59e0b" },
-  SCRAP: { label: "Silinmə", color: "#dc2626" },
+const MOVEMENT_COLORS: Record<string, string> = {
+  INBOUND: "#059669",
+  OUTBOUND: "#2563eb",
+  TRANSFER: "#9333ea",
+  ADJUSTMENT: "#f59e0b",
+  SCRAP: "#dc2626",
+};
+
+const MOVEMENT_KEYS: Record<string, string> = {
+  INBOUND: "reportsPage.inbound",
+  OUTBOUND: "reportsPage.outbound",
+  TRANSFER: "reportsPage.transfer",
+  ADJUSTMENT: "reportsPage.adjustment",
+  SCRAP: "reportsPage.scrap",
 };
 
 function formatMoney(value: number) {
@@ -36,22 +45,26 @@ function formatMoney(value: number) {
 }
 
 export function ReportsInventoryTab({ data }: { data: ReportsInventoryData }) {
+  const t = useT();
+
+  const movementLabel = (type: string) => t(MOVEMENT_KEYS[type] ?? "") || type;
+
   const movementData = data.movementBreakdown
-    .map((m) => ({ name: MOVEMENT_META[m.type]?.label ?? m.type, key: m.type, count: m.count }))
+    .map((m) => ({ name: movementLabel(m.type), key: m.type, count: m.count }))
     .filter((m) => m.count > 0);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <StatCard icon={Boxes} label="Cəmi Məhsul" value={data.totalProducts} accent="text-blue-600" bg="bg-blue-50" />
-        <StatCard icon={Layers} label="Cəmi Miqdar" value={data.totalQuantity.toLocaleString("az-AZ")} accent="text-purple-600" bg="bg-purple-50" />
-        <StatCard icon={TrendingUp} label="Ümumi Dəyər" value={`${formatMoney(data.totalValuation)} AZN`} accent="text-emerald-600" bg="bg-emerald-50" />
-        <StatCard icon={PackageX} label="Aşağı Qalıq" value={data.lowStockCount} accent="text-red-600" bg="bg-red-50" />
-        <StatCard icon={Warehouse} label="Anbarlar" value={data.warehouseCount} accent="text-amber-600" bg="bg-amber-50" />
+        <StatCard icon={Boxes} label={t("reportsPage.totalProducts")} value={data.totalProducts} accent="text-blue-600" bg="bg-blue-50" />
+        <StatCard icon={Layers} label={t("reportsPage.totalQuantity")} value={data.totalQuantity.toLocaleString("az-AZ")} accent="text-purple-600" bg="bg-purple-50" />
+        <StatCard icon={TrendingUp} label={t("reportsPage.totalValuation")} value={`${formatMoney(data.totalValuation)} AZN`} accent="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard icon={PackageX} label={t("reportsPage.lowStock")} value={data.lowStockCount} accent="text-red-600" bg="bg-red-50" />
+        <StatCard icon={Warehouse} label={t("reportsPage.warehouses")} value={data.warehouseCount} accent="text-amber-600" bg="bg-amber-50" />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Stok Hərəkətləri (30 gün)" description="Son 30 gündə sənəd növü üzrə hərəkət sayı">
+        <ChartCard title={t("reportsPage.stockMovements")} description={t("reportsPage.stockMovementsDesc")}>
           {movementData.length === 0 ? (
             <EmptyChartState />
           ) : (
@@ -63,7 +76,7 @@ export function ReportsInventoryTab({ data }: { data: ReportsInventoryData }) {
                 <Tooltip />
                 <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={44}>
                   {movementData.map((entry) => (
-                    <Cell key={entry.key} fill={MOVEMENT_META[entry.key]?.color ?? "#64748b"} />
+                    <Cell key={entry.key} fill={MOVEMENT_COLORS[entry.key] ?? "#64748b"} />
                   ))}
                 </Bar>
               </BarChart>
@@ -71,17 +84,17 @@ export function ReportsInventoryTab({ data }: { data: ReportsInventoryData }) {
           )}
         </ChartCard>
 
-        <ChartCard title="Aşağı Qalıqlı Məhsullar" description="Minimum limitə ən yaxın 8 məhsul">
+        <ChartCard title={t("reportsPage.lowStockProducts")} description={t("reportsPage.lowStockProductsDesc")}>
           {data.lowStockItems.length === 0 ? (
-            <EmptyChartState label="Aşağı qalıqlı məhsul yoxdur" />
+            <EmptyChartState label={t("reportsPage.noLowStock")} />
           ) : (
             <div className="max-h-[220px] overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Məhsul</TableHead>
-                    <TableHead className="text-right">Qalıq</TableHead>
-                    <TableHead className="text-right">Limit</TableHead>
+                    <TableHead>{t("reportsPage.product")}</TableHead>
+                    <TableHead className="text-right">{t("reportsPage.remaining")}</TableHead>
+                    <TableHead className="text-right">{t("reportsPage.limit")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

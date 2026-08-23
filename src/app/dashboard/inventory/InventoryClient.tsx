@@ -5,6 +5,7 @@ import { Toaster } from "react-hot-toast";
 import { Boxes, ShoppingCart, ArrowLeftRight, ArrowDownToLine, Trash2, BarChart3, Truck } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import { useInventoryData } from "@/components/inventory/useInventoryData";
 import { InventoryOverviewTab } from "@/components/inventory/InventoryOverviewTab";
 import { ReceivingTab } from "@/components/inventory/ReceivingTab";
@@ -31,6 +32,7 @@ const TAB_TRIGGER_CLASS = cn(
 );
 
 export default function InventoryClient() {
+  const t = useT();
   const [activeTab, setActiveTab] = useState("inventory");
   const board = useInventoryData();
 
@@ -52,25 +54,25 @@ export default function InventoryClient() {
         <div className="flex justify-center overflow-x-auto border-b border-border">
           <TabsList className="h-auto w-full min-w-max justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="inventory" className={TAB_TRIGGER_CLASS}>
-              <Boxes className="mr-1.5 h-3.5 w-3.5" /> Anbar
+              <Boxes className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabInventory")}
             </TabsTrigger>
             <TabsTrigger value="receiving" className={TAB_TRIGGER_CLASS}>
-              <ArrowDownToLine className="mr-1.5 h-3.5 w-3.5" /> Qəbul
+              <ArrowDownToLine className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabReceiving")}
             </TabsTrigger>
             <TabsTrigger value="sales-orders" className={TAB_TRIGGER_CLASS}>
-              <ShoppingCart className="mr-1.5 h-3.5 w-3.5" /> Satış sifarişləri
+              <ShoppingCart className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabSalesOrders")}
             </TabsTrigger>
             <TabsTrigger value="transfers" className={TAB_TRIGGER_CLASS}>
-              <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" /> Köçürmələr
+              <ArrowLeftRight className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabTransfers")}
             </TabsTrigger>
             <TabsTrigger value="write-offs" className={TAB_TRIGGER_CLASS}>
-              <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Silinmələr
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabWriteOffs")}
             </TabsTrigger>
             <TabsTrigger value="suppliers" className={TAB_TRIGGER_CLASS}>
-              <Truck className="mr-1.5 h-3.5 w-3.5" /> Təchizatçılar
+              <Truck className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabSuppliers")}
             </TabsTrigger>
             <TabsTrigger value="analytics" className={TAB_TRIGGER_CLASS}>
-              <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> Analitika
+              <BarChart3 className="mr-1.5 h-3.5 w-3.5" /> {t("inventory.tabAnalytics")}
             </TabsTrigger>
           </TabsList>
         </div>

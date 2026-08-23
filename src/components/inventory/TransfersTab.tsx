@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/hooks/useT";
 import { InventoryEmptyState, InventoryTableSkeleton } from "./InventoryEmptyState";
 import { MovementStatusBadge } from "./movementMeta";
 import type { StockMovementLite } from "./types";
@@ -34,6 +35,7 @@ interface TransfersTabProps {
 }
 
 export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: TransfersTabProps) {
+  const t = useT();
   const [busyId, setBusyId] = useState<string | null>(null);
   const transfers = movements.filter((m) => m.type === "TRANSFER");
 
@@ -46,11 +48,11 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
         body: JSON.stringify({ action }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Əməliyyat uğursuz oldu");
-      toast.success(action === "process" ? "Köçürmə icra olundu, qalıqlar yeniləndi" : "Köçürmə ləğv edildi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.actionFailed"));
+      toast.success(action === "process" ? t("inventory.transferProcessed") : t("inventory.transferCancelled"));
       onChanged();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setBusyId(null);
     }
@@ -68,9 +70,9 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
     return (
       <InventoryEmptyState
         icon={ArrowLeftRight}
-        title="Hələ köçürmə yoxdur"
-        description="Anbarlar/hüceyrələr arası daxili köçürmələr burada görünəcək."
-        actionLabel="Yeni köçürmə"
+        title={t("inventory.noTransfers")}
+        description={t("inventory.noTransfersHint")}
+        actionLabel={t("inventory.newTransfer")}
         onAction={onOpenCreate}
         className="min-h-[45vh]"
       />
@@ -81,7 +83,7 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         <Button onClick={onOpenCreate} className="gap-1.5">
-          <ArrowLeftRight className="h-4 w-4" /> Yeni köçürmə
+          <ArrowLeftRight className="h-4 w-4" /> {t("inventory.newTransfer")}
         </Button>
       </div>
 
@@ -89,12 +91,12 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>İstinad</TableHead>
-              <TableHead>Məhsul</TableHead>
-              <TableHead>Haradan</TableHead>
-              <TableHead>Haraya</TableHead>
-              <TableHead>Miqdar</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t("inventory.reference")}</TableHead>
+              <TableHead>{t("inventory.product")}</TableHead>
+              <TableHead>{t("inventory.from")}</TableHead>
+              <TableHead>{t("inventory.to")}</TableHead>
+              <TableHead>{t("inventory.quantity")}</TableHead>
+              <TableHead>{t("inventory.status")}</TableHead>
               <TableHead className="w-[56px]" />
             </TableRow>
           </TableHeader>
@@ -121,10 +123,10 @@ export function TransfersTab({ movements, loading, onOpenCreate, onChanged }: Tr
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem className="gap-2" onClick={() => handleAction(m.id, "process")}>
-                          <Play className="h-4 w-4" /> İcra et
+                          <Play className="h-4 w-4" /> {t("inventory.process")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleAction(m.id, "cancel")}>
-                          <X className="h-4 w-4" /> Ləğv et
+                          <X className="h-4 w-4" /> {t("inventory.cancel")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

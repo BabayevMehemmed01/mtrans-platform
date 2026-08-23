@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 
 // =============================================================================
 // <MigrateDataDialog /> — Anbar (WMS) məlumatlarını xarici mənbədən köçürmək
@@ -27,41 +28,15 @@ type MigrateSource = "excel" | "csv" | "zoho" | "quickbooks";
 const SOURCES: {
   id: MigrateSource;
   label: string;
-  description: string;
+  descKey: string;
   icon: typeof FileSpreadsheet;
   kind: "file" | "api";
   accept?: string;
 }[] = [
-  {
-    id: "excel",
-    label: "Excel",
-    description: "Məhsul kataloqu və qalıqları .xlsx / .xls faylından idxal edin.",
-    icon: FileSpreadsheet,
-    kind: "file",
-    accept: ".xlsx,.xls",
-  },
-  {
-    id: "csv",
-    label: "CSV",
-    description: "Vergüllə ayrılmış (.csv) fayldan idxal edin.",
-    icon: FileText,
-    kind: "file",
-    accept: ".csv",
-  },
-  {
-    id: "zoho",
-    label: "Zoho Inventory",
-    description: "Zoho Inventory hesabınıza qoşularaq kataloqu avtomatik sinxronlaşdırın.",
-    icon: Link2,
-    kind: "api",
-  },
-  {
-    id: "quickbooks",
-    label: "QuickBooks",
-    description: "QuickBooks Online hesabınızdan məhsul və qalıq siyahısını köçürün.",
-    icon: Link2,
-    kind: "api",
-  },
+  { id: "excel", label: "Excel", descKey: "inventory.migrateExcelDesc", icon: FileSpreadsheet, kind: "file", accept: ".xlsx,.xls" },
+  { id: "csv", label: "CSV", descKey: "inventory.migrateCsvDesc", icon: FileText, kind: "file", accept: ".csv" },
+  { id: "zoho", label: "Zoho Inventory", descKey: "inventory.migrateZohoDesc", icon: Link2, kind: "api" },
+  { id: "quickbooks", label: "QuickBooks", descKey: "inventory.migrateQbDesc", icon: Link2, kind: "api" },
 ];
 
 const ENV_HINT: Record<Extract<MigrateSource, "zoho" | "quickbooks">, string> = {
@@ -75,6 +50,7 @@ interface MigrateDataDialogProps {
 }
 
 export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps) {
+  const t = useT();
   const [source, setSource] = useState<MigrateSource>("excel");
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -111,7 +87,7 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
       const mockCount = Math.floor(Math.random() * 80) + 20;
       setImportedCount(mockCount);
       setStatus("done");
-      toast.success(`${mockCount} məhsul uğurla idxal edildi`);
+      toast.success(t("inventory.migrateSuccess").replace("{count}", String(mockCount)));
     }, 1500);
   };
 
@@ -119,9 +95,9 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Məlumatları Miqrasiya Et</DialogTitle>
+          <DialogTitle>{t("inventory.migrateDialogTitle")}</DialogTitle>
           <DialogDescription>
-            Digər sistemdən məhsul kataloqunu və qalıqları anbara köçürün.
+            {t("inventory.migrateDialogDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -131,9 +107,11 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
               <CheckCircle2 className="size-7 text-emerald-600" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-foreground">İdxal tamamlandı</p>
+              <p className="text-sm font-semibold text-foreground">{t("inventory.migrateDone")}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                {activeSource.label} mənbəyindən {importedCount} məhsul uğurla əlavə edildi.
+                {t("inventory.migrateDoneDesc")
+                  .replace("{source}", activeSource.label)
+                  .replace("{count}", String(importedCount))}
               </p>
             </div>
           </div>
@@ -165,7 +143,7 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
               })}
             </div>
 
-            <p className="text-xs text-muted-foreground">{activeSource.description}</p>
+            <p className="text-xs text-muted-foreground">{t(activeSource.descKey)}</p>
 
             {activeSource.kind === "file" ? (
               <div
@@ -203,15 +181,15 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
                         setFile(null);
                       }}
                     >
-                      <X className="size-3.5" /> Faylı sil
+                      <X className="size-3.5" /> {t("inventory.migrateRemoveFile")}
                     </Button>
                   </>
                 ) : (
                   <>
                     <UploadCloud className="size-8 text-muted-foreground" />
-                    <p className="text-sm font-medium text-foreground">Faylı bura sürüşdürün və ya seçmək üçün klikləyin</p>
+                    <p className="text-sm font-medium text-foreground">{t("inventory.migrateDrop")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Dəstəklənən format: {activeSource.accept}
+                      {t("inventory.migrateFormats").replace("{accept}", activeSource.accept ?? "")}
                     </p>
                   </>
                 )}
@@ -220,11 +198,14 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
               <div className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-border p-8 text-center">
                 <Link2 className="size-8 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">{activeSource.label} hesabına qoşulun</p>
+                  <p className="text-sm font-medium text-foreground">
+                    {t("inventory.migrateConnectTitle").replace("{source}", activeSource.label)}
+                  </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Qoşulma üçün açarlar hələ <code className="rounded bg-muted px-1 py-0.5 text-[11px]">.env</code> faylında
-                    konfiqurasiya olunmayıb: <span className="font-medium text-foreground">{ENV_HINT[activeSource.id as "zoho" | "quickbooks"]}</span>.
-                    Hələlik "Qoşul və İdxal Et" nümunəvi (demo) məlumatla işləyir.
+                    {t("inventory.migrateConnectHint").replace(
+                      "{env}",
+                      ENV_HINT[activeSource.id as "zoho" | "quickbooks"]
+                    )}
                   </p>
                 </div>
               </div>
@@ -235,12 +216,12 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
         <DialogFooter>
           {status === "done" ? (
             <Button onClick={() => handleClose(false)} className="w-full">
-              Bağla
+              {t("inventory.migrateClose")}
             </Button>
           ) : (
             <>
               <Button variant="outline" onClick={() => handleClose(false)}>
-                Ləğv et
+                {t("inventory.cancel")}
               </Button>
               <Button
                 onClick={startImport}
@@ -248,7 +229,7 @@ export function MigrateDataDialog({ open, onOpenChange }: MigrateDataDialogProps
                 className="gap-1.5"
               >
                 {status === "loading" && <Loader2 className="size-4 animate-spin" />}
-                {activeSource.kind === "file" ? "İdxal Et" : "Qoşul və İdxal Et"}
+                {activeSource.kind === "file" ? t("inventory.migrateImport") : t("inventory.migrateConnectImport")}
               </Button>
             </>
           )}

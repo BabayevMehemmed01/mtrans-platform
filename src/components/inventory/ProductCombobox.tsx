@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/command";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import type { ProductLite } from "./types";
 
 // =============================================================================
@@ -29,7 +30,8 @@ interface ProductComboboxProps {
   placeholder?: string;
 }
 
-export function ProductCombobox({ products, value, onSelect, onCreateNew, placeholder = "Məhsul axtar..." }: ProductComboboxProps) {
+export function ProductCombobox({ products, value, onSelect, onCreateNew, placeholder }: ProductComboboxProps) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
@@ -67,14 +69,14 @@ export function ProductCombobox({ products, value, onSelect, onCreateNew, placeh
           {selected ? (
             <span className="truncate">{selected.name}</span>
           ) : (
-            <span className="text-muted-foreground">{placeholder}</span>
+            <span className="text-muted-foreground">{placeholder ?? t("inventory.searchProduct")}</span>
           )}
         </span>
         <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
       </PopoverTrigger>
       <PopoverContent className="w-[320px] p-0" align="start">
         <Command shouldFilter={false}>
-          <CommandInput placeholder="Ad, SKU və ya barkod axtar..." value={search} onValueChange={setSearch} />
+          <CommandInput placeholder={t("inventory.searchProductHint")} value={search} onValueChange={setSearch} />
           <CommandList>
             <CommandEmpty>
               {onCreateNew ? (
@@ -85,10 +87,10 @@ export function ProductCombobox({ products, value, onSelect, onCreateNew, placeh
                   className="flex w-full items-center gap-2 px-2 py-1.5 text-sm text-primary hover:underline disabled:opacity-50"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  {creating ? "Yaradılır..." : `"${search}" adlı yeni məhsul yarat`}
+                  {creating ? t("inventory.creating") : t("inventory.createNamedProduct").replace("{name}", search)}
                 </button>
               ) : (
-                "Məhsul tapılmadı"
+                t("inventory.noProduct")
               )}
             </CommandEmpty>
             <CommandGroup>

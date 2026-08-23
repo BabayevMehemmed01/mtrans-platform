@@ -19,6 +19,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/hooks/useT";
 import { SegmentStatusBadge } from "./StatusBadge";
 import { MarketingEmptyState, MarketingTableSkeleton } from "./MarketingEmptyState";
 import { segmentRecipientCount } from "./types";
@@ -32,6 +33,7 @@ interface MarketingSegmentsTabProps {
 }
 
 export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmentDeleted }: MarketingSegmentsTabProps) {
+  const t = useT();
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(
@@ -40,14 +42,14 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
   );
 
   const handleDelete = async (segment: MarketingSegmentLite) => {
-    if (!confirm(`"${segment.name}" seqmentini silmək istədiyinizə əminsiniz?`)) return;
+    if (!confirm(t("marketing.confirmDeleteSegment").replace("{name}", segment.name))) return;
     try {
       const res = await fetch(`/api/marketing/segments/${segment.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error();
       onSegmentDeleted(segment.id);
-      toast.success("Seqment silindi");
+      toast.success(t("marketing.segmentDeleted"));
     } catch {
-      toast.error("Seqment silinə bilmədi (kampaniyaya bağlı ola bilər)");
+      toast.error(t("marketing.segmentDeleteFailed"));
     }
   };
 
@@ -57,14 +59,14 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Seqment axtar..."
+            placeholder={t("marketing.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-8"
           />
         </div>
         <Button onClick={onOpenCreate} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Seqment yarat
+          <Plus className="h-4 w-4" /> {t("marketing.createSegment")}
         </Button>
       </div>
 
@@ -73,10 +75,10 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
           <TableHeader>
             <TableRow>
               <TableHead>Ad</TableHead>
-              <TableHead>İstifadə sayı</TableHead>
-              <TableHead>Alıcılar</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="w-[64px]">Əməliyyatlar</TableHead>
+              <TableHead>{t("marketing.thUsage")}</TableHead>
+              <TableHead>{t("marketing.thRecipients")}</TableHead>
+              <TableHead>{t("marketing.thStatus")}</TableHead>
+              <TableHead className="w-[64px]">{t("marketing.thActions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,8 +93,8 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
                 <TableCell colSpan={5} className="p-0">
                   <MarketingEmptyState
                     icon={Layers}
-                    title="Məlumat tapılmadı"
-                    description="Hələ heç bir auditoriya seqmenti yaradılmayıb. «Seqment yarat» düyməsi ilə başlayın."
+                    title={t("marketing.noDataFound")}
+                    description={t("marketing.noSegmentsHint")}
                   />
                 </TableCell>
               </TableRow>
@@ -123,7 +125,7 @@ export function MarketingSegmentsTab({ segments, loading, onOpenCreate, onSegmen
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="rounded-xl">
                           <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleDelete(s)}>
-                            <Trash2 className="h-4 w-4" /> Sil
+                            <Trash2 className="h-4 w-4" /> {t("marketing.delete")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

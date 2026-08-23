@@ -14,6 +14,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/useT";
 import { InventoryEmptyState, InventoryTableSkeleton } from "./InventoryEmptyState";
 import { SupplierDialog } from "./SupplierDialog";
 import type { SupplierLite } from "./types";
@@ -31,6 +32,7 @@ interface SuppliersTabProps {
 }
 
 export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: SuppliersTabProps) {
+  const t = useT();
   const [search, setSearch] = useState("");
   const [dialogState, setDialogState] = useState<{ open: boolean; mode: "create" | "edit"; supplier: SupplierLite | null }>({
     open: false,
@@ -67,9 +69,9 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
       <>
         <InventoryEmptyState
           icon={Truck}
-          title="Hələ təchizatçı yoxdur"
-          description="Məhsul qəbulu sənədləri üçün təchizatçı əlavə edin."
-          actionLabel="Yeni Təchizatçı"
+          title={t("inventory.noSuppliers")}
+          description={t("inventory.noSuppliersHint")}
+          actionLabel={t("inventory.newSupplier")}
           onAction={openCreate}
           className="min-h-[45vh]"
         />
@@ -90,10 +92,10 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
       <div className="flex items-center justify-between gap-3">
         <div className="relative w-72">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Təchizatçı axtar..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
+          <Input placeholder={t("inventory.searchSupplier")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8" />
         </div>
         <Button onClick={openCreate} className="gap-1.5">
-          <Plus className="h-4 w-4" /> Yeni Təchizatçı
+          <Plus className="h-4 w-4" /> {t("inventory.newSupplier")}
         </Button>
       </div>
 
@@ -101,11 +103,11 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Təchizatçı</TableHead>
-              <TableHead>Əlaqə</TableHead>
-              <TableHead>Ünvan</TableHead>
-              <TableHead>Sənədlər</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t("inventory.supplier")}</TableHead>
+              <TableHead>{t("inventory.contact")}</TableHead>
+              <TableHead>{t("inventory.address")}</TableHead>
+              <TableHead>{t("inventory.documents")}</TableHead>
+              <TableHead>{t("inventory.status")}</TableHead>
               <TableHead className="w-[44px]" />
             </TableRow>
           </TableHeader>
@@ -113,7 +115,7 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
             {filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-10 text-center text-sm text-muted-foreground">
-                  Axtarışa uyğun təchizatçı tapılmadı
+                  {t("inventory.noSupplierMatch")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -163,7 +165,7 @@ export function SuppliersTab({ suppliers, loading, onCreated, onUpdated }: Suppl
                         s.isActive ? "border-emerald-200 bg-emerald-50 text-emerald-600" : "border-slate-200 bg-slate-100 text-slate-500"
                       )}
                     >
-                      {s.isActive ? "Aktiv" : "Deaktiv"}
+                      {s.isActive ? t("marketing.statusActive") : t("marketing.inactive")}
                     </Badge>
                   </TableCell>
                   <TableCell>

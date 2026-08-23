@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useT } from "@/hooks/useT";
 import { InventoryEmptyState, InventoryTableSkeleton } from "./InventoryEmptyState";
 import { MovementStatusBadge } from "./movementMeta";
 import type { StockMovementLite } from "./types";
@@ -34,6 +35,7 @@ interface WriteOffsTabProps {
 }
 
 export function WriteOffsTab({ movements, loading, onOpenCreate, onChanged }: WriteOffsTabProps) {
+  const t = useT();
   const [busyId, setBusyId] = useState<string | null>(null);
   const writeOffs = movements.filter((m) => m.type === "SCRAP");
 
@@ -46,11 +48,11 @@ export function WriteOffsTab({ movements, loading, onOpenCreate, onChanged }: Wr
         body: JSON.stringify({ action }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Əməliyyat uğursuz oldu");
-      toast.success(action === "process" ? "Silinmə icra olundu, qalıqlar yeniləndi" : "Sənəd ləğv edildi");
+      if (!res.ok) throw new Error(data?.error || t("inventory.actionFailed"));
+      toast.success(action === "process" ? t("inventory.writeOffProcessed") : t("inventory.writeOffCancelled"));
       onChanged();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Xəta baş verdi");
+      toast.error(error instanceof Error ? error.message : t("inventory.errorGeneric"));
     } finally {
       setBusyId(null);
     }
@@ -68,9 +70,9 @@ export function WriteOffsTab({ movements, loading, onOpenCreate, onChanged }: Wr
     return (
       <InventoryEmptyState
         icon={Trash2}
-        title="Hələ silinmə sənədi yoxdur"
-        description="Yararsız/zay olmuş məhsulların silinmə sənədləri burada görünəcək."
-        actionLabel="Yeni silinmə"
+        title={t("inventory.noWriteOffs")}
+        description={t("inventory.noWriteOffsHint")}
+        actionLabel={t("inventory.newWriteOff")}
         onAction={onOpenCreate}
         className="min-h-[45vh]"
       />
@@ -81,7 +83,7 @@ export function WriteOffsTab({ movements, loading, onOpenCreate, onChanged }: Wr
     <div className="space-y-4">
       <div className="flex items-center justify-end">
         <Button onClick={onOpenCreate} variant="destructive" className="gap-1.5">
-          <Trash2 className="h-4 w-4" /> Yeni silinmə
+          <Trash2 className="h-4 w-4" /> {t("inventory.newWriteOff")}
         </Button>
       </div>
 
@@ -89,13 +91,13 @@ export function WriteOffsTab({ movements, loading, onOpenCreate, onChanged }: Wr
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>İstinad</TableHead>
-              <TableHead>Məhsul</TableHead>
-              <TableHead>Anbar</TableHead>
-              <TableHead>Miqdar</TableHead>
-              <TableHead>Dəyər</TableHead>
-              <TableHead>Səbəb</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>{t("inventory.reference")}</TableHead>
+              <TableHead>{t("inventory.product")}</TableHead>
+              <TableHead>{t("inventory.warehouse")}</TableHead>
+              <TableHead>{t("inventory.quantity")}</TableHead>
+              <TableHead>{t("inventory.value")}</TableHead>
+              <TableHead>{t("inventory.reason")}</TableHead>
+              <TableHead>{t("inventory.status")}</TableHead>
               <TableHead className="w-[56px]" />
             </TableRow>
           </TableHeader>
@@ -125,10 +127,10 @@ export function WriteOffsTab({ movements, loading, onOpenCreate, onChanged }: Wr
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="rounded-xl">
                         <DropdownMenuItem className="gap-2" onClick={() => handleAction(m.id, "process")}>
-                          <Play className="h-4 w-4" /> İcra et
+                          <Play className="h-4 w-4" /> {t("inventory.process")}
                         </DropdownMenuItem>
                         <DropdownMenuItem className="gap-2 text-destructive" onClick={() => handleAction(m.id, "cancel")}>
-                          <X className="h-4 w-4" /> Ləğv et
+                          <X className="h-4 w-4" /> {t("inventory.cancel")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

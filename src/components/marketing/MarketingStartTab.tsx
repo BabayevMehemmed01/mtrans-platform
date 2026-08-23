@@ -6,7 +6,8 @@ import { Rocket, Sparkles, Lock, ArrowUpRight, Megaphone, Users2, Send, Trending
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CHANNEL_META, CHANNEL_ORDER, isChannelActiveFor } from "./channelMeta";
+import { useT } from "@/hooks/useT";
+import { CHANNEL_META, CHANNEL_ORDER, channelCopy, isChannelActiveFor } from "./channelMeta";
 import { CampaignStatusBadge } from "./StatusBadge";
 import { MarketingEmptyState } from "./MarketingEmptyState";
 import type { CampaignType, MarketingCampaignLite, MarketingConfigClient, MarketingSegmentLite } from "./types";
@@ -28,6 +29,7 @@ export function MarketingStartTab({
   onCreateCampaign,
   onGoToCampaigns,
 }: MarketingStartTabProps) {
+  const t = useT();
   const stats = useMemo(() => {
     const total = campaigns.length;
     const active = campaigns.filter((c) => c.status === "IN_PROGRESS" || c.status === "SCHEDULED").length;
@@ -45,8 +47,9 @@ export function MarketingStartTab({
     const active = isChannelActiveFor(type, config);
     if (!active) {
       const meta = CHANNEL_META[type];
+      const copy = channelCopy(t, type);
       toast.error(
-        `${meta.shortLabel} kanalı aktiv deyil. Lütfən .env faylına API məlumatlarını (${meta.envHint}) daxil edin.`,
+        t("marketing.channelInactive").replace("{channel}", copy.shortLabel).replace("{env}", meta.envHint),
         { duration: 4500 }
       );
       return;
@@ -58,23 +61,24 @@ export function MarketingStartTab({
     <div className="space-y-6">
       {/* Stat overview */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard icon={Megaphone} label="Cəmi Kampaniya" value={stats.total} accent="text-blue-600" bg="bg-blue-50" />
-        <StatCard icon={Send} label="Aktiv / Planlaşdırılan" value={stats.active} accent="text-amber-600" bg="bg-amber-50" />
-        <StatCard icon={Users2} label="Auditoriya Seqmenti" value={stats.segments} accent="text-purple-600" bg="bg-purple-50" />
-        <StatCard icon={TrendingUp} label="Orta Açılma Faizi" value={`${stats.avgOpenRate}%`} accent="text-emerald-600" bg="bg-emerald-50" />
+        <StatCard icon={Megaphone} label={t("marketing.totalCampaigns")} value={stats.total} accent="text-blue-600" bg="bg-blue-50" />
+        <StatCard icon={Send} label={t("marketing.activeScheduled")} value={stats.active} accent="text-amber-600" bg="bg-amber-50" />
+        <StatCard icon={Users2} label={t("marketing.audienceSegments")} value={stats.segments} accent="text-purple-600" bg="bg-purple-50" />
+        <StatCard icon={TrendingUp} label={t("marketing.avgOpenRate")} value={`${stats.avgOpenRate}%`} accent="text-emerald-600" bg="bg-emerald-50" />
       </div>
 
       {/* Create Campaign section */}
       <div>
         <div className="mb-3 flex items-center gap-2">
           <Rocket className="h-4.5 w-4.5 text-primary" />
-          <h3 className="text-base font-semibold tracking-tight">Kampaniya Yarat</h3>
+          <h3 className="text-base font-semibold tracking-tight">{t("marketing.createCampaign")}</h3>
           <Sparkles className="h-4 w-4 text-yellow-500" />
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {CHANNEL_ORDER.map((type) => {
             const meta = CHANNEL_META[type];
+            const copy = channelCopy(t, type);
             const active = isChannelActiveFor(type, config);
             const Icon = meta.icon;
 
@@ -95,7 +99,7 @@ export function MarketingStartTab({
                     variant="outline"
                     className="absolute right-3 top-3 gap-1 rounded-full border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-medium text-orange-600"
                   >
-                    <Lock className="h-2.5 w-2.5" /> Quraşdırma Tələb Olunur
+                    <Lock className="h-2.5 w-2.5" /> {t("marketing.setupRequired")}
                   </Badge>
                 )}
 
@@ -104,8 +108,8 @@ export function MarketingStartTab({
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-sm font-semibold text-foreground">{meta.label}</p>
-                  <p className="text-xs leading-relaxed text-muted-foreground">{meta.description}</p>
+                  <p className="text-sm font-semibold text-foreground">{copy.label}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{copy.description}</p>
                 </div>
 
                 <div
@@ -114,7 +118,7 @@ export function MarketingStartTab({
                     active ? meta.accent : "text-muted-foreground"
                   )}
                 >
-                  {active ? "Kampaniya Yarat" : "Deaktiv"}
+                  {active ? t("marketing.createCampaign") : t("marketing.inactive")}
                   <ArrowUpRight className="h-3 w-3" />
                 </div>
               </button>
@@ -127,12 +131,12 @@ export function MarketingStartTab({
       <Card className="rounded-2xl shadow-sm">
         <CardContent className="px-5">
           <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-semibold tracking-tight">Son Kampaniyalar</h3>
+            <h3 className="text-sm font-semibold tracking-tight">{t("marketing.recentCampaigns")}</h3>
             <button
               onClick={onGoToCampaigns}
               className="text-xs font-medium text-primary hover:underline"
             >
-              Hamısına bax
+              {t("marketing.viewAll")}
             </button>
           </div>
 
@@ -144,13 +148,14 @@ export function MarketingStartTab({
             </div>
           ) : recent.length === 0 ? (
             <MarketingEmptyState
-              title="Məlumat tapılmadı"
-              description="Hələ heç bir kampaniya yaradılmayıb. Yuxarıdaki kanallardan birini seçərək ilk kampaniyanızı yaradın."
+              title={t("marketing.noDataFound")}
+              description={t("marketing.noCampaignsYet")}
             />
           ) : (
             <div className="divide-y divide-border/60">
               {recent.map((c) => {
                 const meta = CHANNEL_META[c.type];
+                const copy = channelCopy(t, c.type);
                 const Icon = meta.icon;
                 return (
                   <div key={c.id} className="flex items-center gap-3 py-2.5">
@@ -159,7 +164,7 @@ export function MarketingStartTab({
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{c.name}</p>
-                      <p className="text-xs text-muted-foreground">{meta.shortLabel}{c.segment ? ` · ${c.segment.name}` : ""}</p>
+                      <p className="text-xs text-muted-foreground">{copy.shortLabel}{c.segment ? ` · ${c.segment.name}` : ""}</p>
                     </div>
                     <CampaignStatusBadge status={c.status} />
                   </div>

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { CustomizeMenu, type CustomizeMenuItem } from "@/components/layout/CustomizeMenu";
 import { useCustomization, type VisibilityMap } from "@/hooks/useCustomization";
+import { useT } from "@/hooks/useT";
 import { ReportsOverviewTab } from "@/components/reports/ReportsOverviewTab";
 import { ReportsCrmTab } from "@/components/reports/ReportsCrmTab";
 import { ReportsMarketingTab } from "@/components/reports/ReportsMarketingTab";
@@ -20,12 +21,6 @@ const TAB_TRIGGER_CLASS = cn(
 
 const SCOPE = "reports-overview";
 
-const WIDGET_ITEMS: CustomizeMenuItem[] = [
-  { key: "statCards", label: "Statistik Kartlar" },
-  { key: "statusTrend", label: "Status və Trend Qrafikləri" },
-  { key: "priorityDept", label: "Prioritet və Şöbə Qrafikləri" },
-];
-
 export function ReportsClient({
   data,
   initialPreferences,
@@ -33,8 +28,15 @@ export function ReportsClient({
   data: ReportsData;
   initialPreferences: VisibilityMap;
 }) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState("overview");
   const { isVisible, setVisible } = useCustomization(SCOPE, initialPreferences);
+
+  const widgetItems: CustomizeMenuItem[] = [
+    { key: "statCards", label: t("reportsPage.widgetStatCards") },
+    { key: "statusTrend", label: t("reportsPage.widgetStatusTrend") },
+    { key: "priorityDept", label: t("reportsPage.widgetPriorityDept") },
+  ];
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
@@ -42,25 +44,25 @@ export function ReportsClient({
         <div className="flex-1 overflow-x-auto">
           <TabsList className="h-auto w-max justify-start gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="overview" className={TAB_TRIGGER_CLASS}>
-              <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" /> Ümumi Baxış
+              <LayoutDashboard className="mr-1.5 h-3.5 w-3.5" /> {t("reportsPage.tabOverview")}
             </TabsTrigger>
             <TabsTrigger value="crm" className={TAB_TRIGGER_CLASS}>
-              <Contact className="mr-1.5 h-3.5 w-3.5" /> CRM
+              <Contact className="mr-1.5 h-3.5 w-3.5" /> {t("reportsPage.tabCrm")}
             </TabsTrigger>
             <TabsTrigger value="marketing" className={TAB_TRIGGER_CLASS}>
-              <Megaphone className="mr-1.5 h-3.5 w-3.5" /> Marketinq
+              <Megaphone className="mr-1.5 h-3.5 w-3.5" /> {t("reportsPage.tabMarketing")}
             </TabsTrigger>
             <TabsTrigger value="inventory" className={TAB_TRIGGER_CLASS}>
-              <Boxes className="mr-1.5 h-3.5 w-3.5" /> Anbar
+              <Boxes className="mr-1.5 h-3.5 w-3.5" /> {t("reportsPage.tabInventory")}
             </TabsTrigger>
           </TabsList>
         </div>
         {activeTab === "overview" && (
           <CustomizeMenu
-            items={WIDGET_ITEMS}
+            items={widgetItems}
             isVisible={isVisible}
             setVisible={setVisible}
-            title="Vidjetləri fərdiləşdir"
+            title={t("reportsPage.customizeWidgets")}
             triggerLabel=""
           />
         )}
