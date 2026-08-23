@@ -1681,6 +1681,7 @@
     "typing": "yazır...",
     "welcome": "Salam! Mən WorkSpace-in rəsmi daxili assistentiyəm. CRM, Marketinq, Anbar və ya digər modullar üzrə necə kömək edə bilim?",
     "error": "Assistent indi əlçatan deyil. Yenidən cəhd edin.",
+    "unavailable": "Asistent əlçatan deyil",
     "emptyKey": "GEMINI_API_KEY tənzimlənməyib."
   }
 }

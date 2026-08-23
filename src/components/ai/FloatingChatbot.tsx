@@ -57,6 +57,7 @@ export function FloatingChatbot() {
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           messages: nextMessages
@@ -66,7 +67,7 @@ export function FloatingChatbot() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error(data.error || t("aiAssistant.error"));
+        throw new Error(data.error || `${res.status} ${res.statusText || "Internal Error"}`);
       }
       setMessages((prev) => [
         ...prev,
@@ -76,10 +77,17 @@ export function FloatingChatbot() {
           content: data.message || t("aiAssistant.error"),
         },
       ]);
-    } catch {
+    } catch (error) {
+      const reason = error instanceof Error && error.message.trim()
+        ? error.message
+        : t("aiAssistant.error");
       setMessages((prev) => [
         ...prev,
-        { id: `e-${Date.now()}`, role: "assistant", content: t("aiAssistant.error") },
+        {
+          id: `e-${Date.now()}`,
+          role: "assistant",
+          content: `${t("aiAssistant.unavailable")}: ${reason}`,
+        },
       ]);
     } finally {
       setSending(false);

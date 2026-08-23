@@ -1681,6 +1681,7 @@
     "typing": "typing...",
     "welcome": "Hi! I am the official WorkSpace assistant. How can I help you with CRM, Marketing, Inventory or other modules?",
     "error": "The assistant is unavailable right now. Please try again.",
+    "unavailable": "Assistant is unavailable",
     "emptyKey": "GEMINI_API_KEY is not configured."
   }
 }
