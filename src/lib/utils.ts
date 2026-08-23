@@ -33,15 +33,15 @@ export function timeAgo(date: string | Date) {
 export function getPriorityColor(priority: string) {
   switch (priority) {
     case 'LOW':
-      return 'text-slate-500 bg-slate-100 border-slate-200';
+      return 'text-muted-foreground bg-muted border-border';
     case 'MEDIUM':
-      return 'text-blue-600 bg-blue-50 border-blue-200';
+      return 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/30 dark:border-blue-900/40';
     case 'HIGH':
-      return 'text-amber-600 bg-amber-50 border-amber-200';
+      return 'text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-950/30 dark:border-amber-900/40';
     case 'URGENT':
-      return 'text-red-600 bg-red-50 border-red-200';
+      return 'text-red-600 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-950/30 dark:border-red-900/40';
     default:
-      return 'text-slate-500 bg-slate-100 border-slate-200';
+      return 'text-muted-foreground bg-muted border-border';
   }
 }
 
@@ -50,17 +50,17 @@ export function getStatusColor(status: string) {
     case 'NOT_PLANNED':
     case 'BACKLOG':
     case 'TODO':
-      return 'text-slate-600 bg-slate-100 border-slate-200';
+      return 'text-muted-foreground bg-muted border-border';
     case 'IN_PROGRESS':
-      return 'text-blue-600 bg-blue-50 border-blue-200';
+      return 'text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-950/30 dark:border-blue-900/40';
     case 'REVIEW':
     case 'IN_REVIEW':
-      return 'text-purple-600 bg-purple-50 border-purple-200';
+      return 'text-purple-600 bg-purple-50 border-purple-200 dark:text-purple-300 dark:bg-purple-950/30 dark:border-purple-900/40';
     case 'DONE':
-      return 'text-green-600 bg-green-50 border-green-200';
+      return 'text-green-600 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-950/30 dark:border-green-900/40';
     case 'CANCELLED':
-      return 'text-red-600 bg-red-50 border-red-200';
+      return 'text-red-600 bg-red-50 border-red-200 dark:text-red-300 dark:bg-red-950/30 dark:border-red-900/40';
     default:
-      return 'text-slate-600 bg-slate-100 border-slate-200';
+      return 'text-muted-foreground bg-muted border-border';
   }
 }

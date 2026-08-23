@@ -4,7 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n"; // YENİ
 import {
-  X, Loader2, Trash2, Calendar, User, Tag, Clock,
+  X, Loader2, Trash2, Calendar, User, Clock,
   MessageSquare, Paperclip, CheckSquare, AlertTriangle,
   Edit2, Check, Plus, FileText, Timer, Send,
   Reply, Pencil, Archive, ArchiveRestore, MoreVertical,
@@ -23,8 +23,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { UploadButton } from "@/utils/uploadthing";
-import type { KanbanTask, TaskMember, KanbanLabel } from "./types";
+import type { KanbanTask, TaskMember } from "./types";
 import { ObserverMultiSelect } from "./ObserverMultiSelect";
 
 // ─── Constants (Dynamic) ───────────────────────────────────────────────────
@@ -90,7 +97,7 @@ function renderMentionedContent(content: string, mentionedUserIds: string[], mem
 
   return parts.map((part, i) =>
     sorted.some((n) => part === `@${n}`) ? (
-      <strong key={i} className="text-blue-600 bg-blue-50 rounded px-1 font-semibold">
+      <strong key={i} className="text-primary bg-primary/10 rounded px-1 font-semibold">
         {part}
       </strong>
     ) : (
@@ -103,7 +110,6 @@ function renderMentionedContent(content: string, mentionedUserIds: string[], mem
 interface TaskDetailSheetProps {
   task: KanbanTask;
   members: TaskMember[];
-  labels: KanbanLabel[];
   onUpdated: (task: KanbanTask) => void;
   onDeleted: (taskId: string) => void;
   onClose: () => void;
@@ -113,7 +119,6 @@ interface TaskDetailSheetProps {
 export function TaskDetailSheet({
   task,
   members,
-  labels,
   onUpdated,
   onDeleted,
   onClose,
@@ -139,7 +144,6 @@ export function TaskDetailSheet({
     observerIds: (task.observers ?? []).map((o) => o.id),
     dueDate: formatDate(task.dueDate),
     estimatedHours: task.estimatedHours ?? null,
-    labelIds: task.labels.map((l) => l.label.id),
   });
 
   const STATUS_OPTIONS = getStatusOptions(t, form.status);
@@ -180,18 +184,15 @@ export function TaskDetailSheet({
     await patchField(field, val);
   };
 
+  const handleSelectField = (field: string) => async (val: string) => {
+    setForm((p) => ({ ...p, [field]: val }));
+    await patchField(field, val);
+  };
+
   const handleTitleSave = async () => {
     if (!form.title.trim()) return;
     setEditingTitle(false);
     await patchField("title", form.title.trim());
-  };
-
-  const toggleLabel = async (labelId: string) => {
-    const newIds = form.labelIds.includes(labelId)
-      ? form.labelIds.filter((id) => id !== labelId)
-      : [...form.labelIds, labelId];
-    setForm((p) => ({ ...p, labelIds: newIds }));
-    await patchField("labelIds", newIds);
   };
 
   const handleDelete = async () => {
@@ -230,7 +231,7 @@ export function TaskDetailSheet({
       <SheetContent side="right" className="flex flex-col p-0 w-full sm:max-w-2xl">
 
         {/* ─── Header ──────────────────────────────────────────── */}
-        <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-gray-100">
+        <div className="flex-shrink-0 px-6 pt-5 pb-4 border-b border-border">
           <SheetTitle className="sr-only">{t("taskDetailSheet.srOnlyTitle") || "Tapşırıq Detalları"}</SheetTitle>
 
           {/* Title row */}
@@ -245,7 +246,7 @@ export function TaskDetailSheet({
               }}
             >
               {form.status === "DONE" ? (
-                <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
                   <Check className="w-3 h-3 text-white" strokeWidth={3} />
                 </div>
               ) : (
@@ -265,14 +266,14 @@ export function TaskDetailSheet({
                     onKeyDown={(e) => e.key === "Enter" && handleTitleSave()}
                     onBlur={handleTitleSave}
                     autoFocus
-                    className="w-full text-lg font-semibold bg-transparent border-b-2 border-blue-500 outline-none"
+                    className="w-full text-lg font-semibold bg-transparent border-b-2 border-primary outline-none text-foreground"
                   />
                 </div>
               ) : (
                 <h2
                   className={cn(
-                    "text-lg font-semibold cursor-pointer group flex items-center gap-2 hover:text-blue-600 transition-colors",
-                    form.status === "DONE" && "line-through text-gray-400"
+                    "text-lg font-semibold cursor-pointer group flex items-center gap-2 hover:text-primary transition-colors text-foreground",
+                    form.status === "DONE" && "line-through text-muted-foreground"
                   )}
                   onClick={() => setEditingTitle(true)}
                 >
@@ -281,10 +282,10 @@ export function TaskDetailSheet({
                 </h2>
               )}
               {/* Meta row under title */}
-              <div className="flex items-center gap-3 mt-2 text-xs text-gray-400">
+              <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
                 {task.createdAt && <span>{t("taskDetailSheet.createdText") || "Yaradılıb"} {timeAgo(new Date(task.createdAt))}</span>}
                 {task.isArchived && (
-                  <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-medium">
+                  <span className="px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400 font-medium">
                     {t("taskDetailSheet.archived") || "Arxivləşdirilib"}
                   </span>
                 )}
@@ -298,7 +299,7 @@ export function TaskDetailSheet({
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-red-500 hover:bg-red-50 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-destructive hover:bg-destructive/10 transition-colors"
             >
               {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
               {t("taskDetailSheet.deleteBtn") || "Sil"}
@@ -306,7 +307,7 @@ export function TaskDetailSheet({
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium text-gray-500 hover:bg-gray-100 transition-colors">
+                <button className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent transition-colors">
                   <MoreVertical className="w-3.5 h-3.5" />
                 </button>
               </DropdownMenuTrigger>
@@ -328,7 +329,7 @@ export function TaskDetailSheet({
         </div>
 
         {/* ─── Tab Bar ─────────────────────────────────────────── */}
-        <div className="flex-shrink-0 border-b border-gray-100 bg-gray-50/50 px-6">
+        <div className="flex-shrink-0 border-b border-border bg-muted/30 px-6">
           <div className="flex items-center gap-0.5 -mb-px">
             {SHEET_TABS.map((tab) => {
               const Icon = tab.icon;
@@ -345,8 +346,8 @@ export function TaskDetailSheet({
                   className={cn(
                     "inline-flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium border-b-2 transition-all whitespace-nowrap",
                     isActive
-                      ? "border-blue-600 text-blue-600"
-                      : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                   )}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -354,7 +355,7 @@ export function TaskDetailSheet({
                   {count !== null && count > 0 && (
                     <span className={cn(
                       "px-1.5 py-0.5 rounded-full text-[10px] font-semibold",
-                      isActive ? "bg-blue-100 text-blue-700" : "bg-gray-200 text-gray-600"
+                      isActive ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
                     )}>
                       {count}
                     </span>
@@ -372,12 +373,11 @@ export function TaskDetailSheet({
               form={form}
               setForm={setForm}
               members={members}
-              labels={labels}
               currentStatus={currentStatus}
               currentPriority={currentPriority}
               handleChange={handleChange}
+              handleSelectField={handleSelectField}
               patchField={patchField}
-              toggleLabel={toggleLabel}
               task={task}
               t={t}
             />
@@ -421,8 +421,8 @@ export function TaskDetailSheet({
 // TAB: Details
 // ═══════════════════════════════════════════════════════════════════════════
 function DetailsTab({
-  form, setForm, members, labels, currentStatus, currentPriority,
-  handleChange, patchField, toggleLabel, task, t
+  form, setForm, members, currentStatus, currentPriority,
+  handleChange, handleSelectField, patchField, task, t
 }: any) {
   const STATUS_OPTIONS = getStatusOptions(t, form.status);
   const PRIORITY_OPTIONS = getPriorityOptions(t);
@@ -431,49 +431,55 @@ function DetailsTab({
     <div className="p-6 space-y-6">
       {/* ── Properties Grid ──────────────────────────────────── */}
       <div className="space-y-4">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {t("taskDetailSheet.features") || "Xüsusiyyətlər"}
         </h3>
 
         <div className="grid grid-cols-2 gap-3">
           {/* Status */}
           <PropertyField label={t("taskDetailSheet.statusLabel") || "Status"} icon={<AlertTriangle className="w-3.5 h-3.5" />}>
-            <select
-              value={form.status}
-              onChange={handleChange("status")}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <Select value={form.status} onValueChange={handleSelectField("status")}>
+              <SelectTrigger className="w-full bg-background border-input text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </PropertyField>
 
           {/* Priority */}
           <PropertyField label={t("taskDetailSheet.priorityLabel") || "Prioritet"} icon={<AlertTriangle className="w-3.5 h-3.5" />}>
-            <select
-              value={form.priority}
-              onChange={handleChange("priority")}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
-            >
-              {PRIORITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <Select value={form.priority} onValueChange={handleSelectField("priority")}>
+              <SelectTrigger className="w-full bg-background border-input text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </PropertyField>
 
           {/* Assignee */}
           <PropertyField label={t("taskDetailSheet.assigneeLabel") || "İcraçı"} icon={<User className="w-3.5 h-3.5" />}>
-            <select
-              value={form.assigneeId}
-              onChange={handleChange("assigneeId")}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+            <Select
+              value={form.assigneeId || "__none__"}
+              onValueChange={(v) => handleSelectField("assigneeId")(v === "__none__" ? "" : v)}
             >
-              <option value="">{t("taskDetailSheet.notSelected") || "Seçilməyib"}</option>
-              {members.map((m: TaskMember) => (
-                <option key={m.id} value={m.id}>{m.name}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full bg-background border-input text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">{t("taskDetailSheet.notSelected") || "Seçilməyib"}</SelectItem>
+                {members.map((m: TaskMember) => (
+                  <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </PropertyField>
 
           {/* Observers */}
@@ -498,7 +504,7 @@ function DetailsTab({
               type="date"
               value={form.dueDate}
               onChange={handleChange("dueDate")}
-              className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all"
             />
           </PropertyField>
         </div>
@@ -506,7 +512,7 @@ function DetailsTab({
 
       {/* ── Description ──────────────────────────────────────── */}
       <div className="space-y-2">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {t("taskDetailSheet.description") || "Təsvir"}
         </h3>
         <textarea
@@ -515,37 +521,9 @@ function DetailsTab({
           onBlur={() => patchField("description", form.description)}
           rows={5}
           placeholder={t("taskDetailSheet.descPlaceholder") || "Tapşırıq haqqında ətraflı yazın..."}
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white transition-all resize-none leading-relaxed"
+          className="w-full px-4 py-3 rounded-xl border border-input bg-muted/40 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary focus:bg-background transition-all resize-none leading-relaxed"
         />
       </div>
-
-      {/* ── Labels ────────────────────────────────────────────── */}
-      {labels.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-            <Tag className="w-3 h-3" /> {t("taskDetailSheet.labels") || "Etiketlər"}
-          </h3>
-          <div className="flex flex-wrap gap-1.5">
-            {labels.map((label: KanbanLabel) => {
-              const selected = form.labelIds.includes(label.id);
-              return (
-                <button
-                  key={label.id}
-                  onClick={() => toggleLabel(label.id)}
-                  className="text-xs px-3 py-1.5 rounded-full font-medium transition-all hover:scale-105"
-                  style={{
-                    backgroundColor: selected ? label.color : `${label.color}15`,
-                    color: selected ? "white" : label.color,
-                    border: `1.5px solid ${label.color}`,
-                  }}
-                >
-                  {label.name}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       {/* ── Estimated Hours ──────────────────────────────────── */}
       <PropertyField label={t("taskDetailSheet.estimatedTime") || "Təxmini Vaxt (saat)"} icon={<Clock className="w-3.5 h-3.5" />}>
@@ -556,7 +534,7 @@ function DetailsTab({
           defaultValue={task.estimatedHours ?? ""}
           onBlur={(e) => patchField("estimatedHours", e.target.value ? Number(e.target.value) : null)}
           placeholder="0"
-          className="w-32 px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all"
+          className="w-32 px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all"
         />
       </PropertyField>
     </div>
@@ -685,41 +663,41 @@ function SubtasksTab({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-4">
-      <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+      <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
         {(t("taskDetailSheet.subtasksTitle") || "Alt Tapşırıqlar ({count})").replace("{count}", String(subtasks.length))}
       </h3>
 
       {/* Existing subtasks */}
       <div className="space-y-1">
         {subtasks.map((sub) => (
-          <div key={sub.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gray-50 transition-colors group">
+          <div key={sub.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-accent transition-colors group">
             <button
               onClick={() => toggleSubtask(sub)}
               className={cn(
                 "w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 cursor-pointer",
                 sub.status === "DONE"
-                  ? "bg-green-500 border-green-500"
-                  : "border-gray-300 group-hover:border-blue-400"
+                  ? "bg-emerald-500 border-emerald-500"
+                  : "border-muted-foreground/40 group-hover:border-primary"
               )}
             >
               {sub.status === "DONE" && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
             </button>
             <span className={cn(
-              "text-sm flex-1",
-              sub.status === "DONE" && "line-through text-gray-400"
+              "text-sm flex-1 text-foreground",
+              sub.status === "DONE" && "line-through text-muted-foreground"
             )}>
               {sub.title}
             </span>
             <button
               onClick={() => deleteSubtask(sub)}
-              className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
               title={t("taskDetailSheet.deleteBtn") || "Sil"}
             >
               <Trash2 className="w-3.5 h-3.5" />
@@ -729,18 +707,18 @@ function SubtasksTab({
       </div>
 
       {/* Add subtask */}
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 hover:border-blue-400 hover:bg-blue-50/30 transition-colors">
+      <div className="flex items-center gap-2 px-3 py-2 rounded-xl border border-dashed border-border bg-muted/30 hover:border-primary hover:bg-primary/5 transition-colors">
         {creating ? (
-          <Loader2 className="w-4 h-4 text-blue-400 flex-shrink-0 animate-spin" />
+          <Loader2 className="w-4 h-4 text-primary flex-shrink-0 animate-spin" />
         ) : (
-          <Plus className="w-4 h-4 text-gray-400 flex-shrink-0" />
+          <Plus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         )}
         <input
           value={subtaskTitle}
           onChange={(e) => setSubtaskTitle(e.target.value)}
           placeholder={t("taskDetailSheet.addSubtaskPlaceholder") || "Alt tapşırıq əlavə et..."}
           disabled={creating}
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400"
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground text-foreground"
           onKeyDown={(e) => {
             if (e.key === "Enter") addSubtask();
           }}
@@ -807,13 +785,13 @@ function MentionTextarea({
   return (
     <div className="relative flex-1">
       {showMentions && filteredMembers.length > 0 && (
-        <div className="absolute bottom-full left-0 mb-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg z-30 py-1 max-h-40 overflow-y-auto">
+        <div className="absolute bottom-full left-0 mb-1 w-56 bg-popover border border-border rounded-lg shadow-lg z-30 py-1 max-h-40 overflow-y-auto">
           {filteredMembers.map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => insertMention(m.name)}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-gray-50 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-left hover:bg-accent transition-colors text-foreground"
             >
               <Avatar className="w-5 h-5">
                 <AvatarImage src={m.avatar ?? undefined} />
@@ -838,7 +816,7 @@ function MentionTextarea({
           }
           if (e.key === "Escape") setShowMentions(false);
         }}
-        className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all resize-none"
+        className="w-full px-3 py-2 rounded-xl border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-primary transition-all resize-none"
       />
     </div>
   );
@@ -998,7 +976,7 @@ function CommentsTab({
   if (loading) {
     return (
       <div className="flex items-center justify-center p-12">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -1022,9 +1000,9 @@ function CommentsTab({
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-semibold text-gray-800">{comment.author?.name}</span>
-            <span className="text-[10px] text-gray-400">{timeAgo(new Date(comment.createdAt))}</span>
-            {comment.isEdited && <span className="text-[10px] text-gray-400">{t("taskDetailSheet.edited") || "(redaktə edilib)"}</span>}
+            <span className="text-xs font-semibold text-foreground">{comment.author?.name}</span>
+            <span className="text-[10px] text-muted-foreground">{timeAgo(new Date(comment.createdAt))}</span>
+            {comment.isEdited && <span className="text-[10px] text-muted-foreground">{t("taskDetailSheet.edited") || "(redaktə edilib)"}</span>}
           </div>
 
           {isEditing ? (
@@ -1041,20 +1019,20 @@ function CommentsTab({
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => saveEdit(comment)}
-                  className="text-xs font-medium text-blue-600 hover:underline"
+                  className="text-xs font-medium text-primary hover:underline"
                 >
                   {t("taskDetailSheet.save") || "Yadda saxla"}
                 </button>
                 <button
                   onClick={() => setEditingId(null)}
-                  className="text-xs font-medium text-gray-400 hover:underline"
+                  className="text-xs font-medium text-muted-foreground hover:underline"
                 >
                   {t("taskDetailSheet.cancel") || "Ləğv et"}
                 </button>
               </div>
             </div>
           ) : (
-            <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
               {renderMentionedContent(comment.content, comment.mentionedUserIds, members)}
             </p>
           )}
@@ -1064,7 +1042,7 @@ function CommentsTab({
               {depth === 0 && (
                 <button
                   onClick={() => { setReplyingTo(isReplying ? null : comment.id); setReplyText(""); }}
-                  className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Reply className="w-3 h-3" /> {t("taskDetailSheet.reply") || "Cavab yaz"}
                 </button>
@@ -1072,7 +1050,7 @@ function CommentsTab({
               {isOwn && (
                 <button
                   onClick={() => { setEditingId(comment.id); setEditText(comment.content); }}
-                  className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-blue-600 transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-primary transition-colors"
                 >
                   <Pencil className="w-3 h-3" /> {t("taskDetailSheet.edit") || "Redaktə et"}
                 </button>
@@ -1080,7 +1058,7 @@ function CommentsTab({
               {canDelete && (
                 <button
                   onClick={() => deleteComment(comment)}
-                  className="flex items-center gap-1 text-[11px] font-medium text-gray-400 hover:text-red-500 transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="w-3 h-3" /> {t("taskDetailSheet.deleteBtn") || "Sil"}
                 </button>
@@ -1112,7 +1090,7 @@ function CommentsTab({
                     setReplyingTo(null);
                   })
                 }
-                className="p-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+                className="p-2 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
@@ -1131,7 +1109,7 @@ function CommentsTab({
       {/* Comments list */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {topLevel.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-muted-foreground">
             <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
             <p className="text-sm">{t("taskDetailSheet.noComments") || "Hələ heç bir şərh yoxdur"}</p>
           </div>
@@ -1141,7 +1119,7 @@ function CommentsTab({
       </div>
 
       {/* New comment input */}
-      <div className="flex-shrink-0 border-t border-gray-100 p-4 bg-gray-50/50">
+      <div className="flex-shrink-0 border-t border-border p-4 bg-muted/30">
         <div className="flex items-end gap-2">
           <MentionTextarea
             value={newComment}
@@ -1154,7 +1132,7 @@ function CommentsTab({
           <button
             disabled={!newComment.trim() || submitting}
             onClick={() => submitComment(newComment, null, () => setNewComment(""))}
-            className="p-2.5 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
+            className="p-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex-shrink-0"
           >
             <Send className="w-4 h-4" />
           </button>
@@ -1267,7 +1245,7 @@ function FilesTab({
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           {(t("taskDetailSheet.filesTitle") || "Fayllar ({count})").replace("{count}", String(attachments.length))}
         </h3>
         <UploadButton
@@ -1276,7 +1254,7 @@ function FilesTab({
           onUploadError={(e: Error) => setError(e.message)}
           appearance={{
             button:
-              "text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 focus-within:ring-0 after:bg-transparent text-white font-medium",
+              "text-xs px-3 py-1.5 rounded-lg bg-primary hover:bg-primary/90 focus-within:ring-0 after:bg-transparent text-primary-foreground font-medium",
             allowedContent: "hidden",
           }}
           content={{ button: t("taskDetailSheet.addFileBtn") || "Fayl əlavə et" }}
@@ -1284,15 +1262,15 @@ function FilesTab({
       </div>
 
       {error && (
-        <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">⚠️ {error}</p>
+        <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-lg">⚠️ {error}</p>
       )}
 
       {loading ? (
         <div className="flex items-center justify-center p-12">
-          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
         </div>
       ) : attachments.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
+        <div className="text-center py-12 text-muted-foreground">
           <Paperclip className="w-8 h-8 mx-auto mb-2 opacity-30" />
           <p className="text-sm">{t("taskDetailSheet.noFiles") || "Hələ heç bir fayl əlavə olunmayıb"}</p>
         </div>
@@ -1304,18 +1282,18 @@ function FilesTab({
             return (
               <div
                 key={att.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition-colors group"
               >
-                <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                   {isImage ? (
-                    <ImageIcon className="w-4 h-4 text-gray-500" />
+                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
                   ) : (
-                    <FileIcon className="w-4 h-4 text-gray-500" />
+                    <FileIcon className="w-4 h-4 text-muted-foreground" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{att.fileName}</p>
-                  <p className="text-[11px] text-gray-400">
+                  <p className="text-sm font-medium text-foreground truncate">{att.fileName}</p>
+                  <p className="text-[11px] text-muted-foreground">
                     {att.uploadedBy?.name} · {formatFileSize(att.fileSize)} · {timeAgo(new Date(att.createdAt))}
                   </p>
                 </div>
@@ -1324,7 +1302,7 @@ function FilesTab({
                   target="_blank"
                   rel="noopener noreferrer"
                   download
-                  className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors flex-shrink-0"
+                  className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors flex-shrink-0"
                   title={t("taskDetailSheet.download") || "Yüklə"}
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -1332,7 +1310,7 @@ function FilesTab({
                 {canDelete && (
                   <button
                     onClick={() => deleteAttachment(att)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all flex-shrink-0"
                     title={t("taskDetailSheet.deleteBtn") || "Sil"}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1353,20 +1331,20 @@ function FilesTab({
 function TimeTab({ estimatedHours, t }: { estimatedHours: number | null; t: any }) {
   return (
     <div className="p-6 space-y-6">
-      <div className="bg-gray-50 rounded-xl p-5 space-y-3">
-        <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">{t("taskDetailSheet.timeSummary") || "Vaxt Xülasəsi"}</h3>
+      <div className="bg-muted rounded-xl p-5 space-y-3">
+        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("taskDetailSheet.timeSummary") || "Vaxt Xülasəsi"}</h3>
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-lg p-4 border border-gray-100">
-            <p className="text-2xl font-bold text-gray-900">{estimatedHours ?? "—"}</p>
-            <p className="text-xs text-gray-400 mt-1">{t("taskDetailSheet.estHours") || "Təxmini saat"}</p>
+          <div className="bg-card rounded-lg p-4 border border-border">
+            <p className="text-2xl font-bold text-foreground">{estimatedHours ?? "—"}</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("taskDetailSheet.estHours") || "Təxmini saat"}</p>
           </div>
-          <div className="bg-white rounded-lg p-4 border border-gray-100">
-            <p className="text-2xl font-bold text-gray-900">—</p>
-            <p className="text-xs text-gray-400 mt-1">{t("taskDetailSheet.spentHours") || "Sərf olunan saat"}</p>
+          <div className="bg-card rounded-lg p-4 border border-border">
+            <p className="text-2xl font-bold text-foreground">—</p>
+            <p className="text-xs text-muted-foreground mt-1">{t("taskDetailSheet.spentHours") || "Sərf olunan saat"}</p>
           </div>
         </div>
       </div>
-      <p className="text-xs text-center text-gray-400">{t("taskDetailSheet.timeModuleSoon") || "Vaxt qeydiyyatı modulu tezliklə əlavə olunacaq"}</p>
+      <p className="text-xs text-center text-muted-foreground">{t("taskDetailSheet.timeModuleSoon") || "Vaxt qeydiyyatı modulu tezliklə əlavə olunacaq"}</p>
     </div>
   );
 }
@@ -1385,7 +1363,7 @@ function PropertyField({
 }) {
   return (
     <div className="space-y-1.5">
-      <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+      <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         {icon} {label}
       </label>
       {children}

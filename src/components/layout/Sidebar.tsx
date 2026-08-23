@@ -15,7 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  LayoutDashboard,
   FolderKanban,
   Users,
   Building2,
@@ -26,7 +25,6 @@ import {
   ChevronDown,
   Briefcase,
   BarChart3,
-  Tag,
   CircleUser,
   Contact,
   MessageSquare,
@@ -62,13 +60,6 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  {
-    title: "Ana Səhifə",
-    tKey: "menu.dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    exact: true,
-  },
   {
     title: "Mənim İşlərim",
     tKey: "menu.myWork",
@@ -175,12 +166,6 @@ const adminItems: NavItem[] = [
     tKey: "menu.roles",
     href: "/dashboard/roles",
     icon: ShieldCheck,
-  },
-  {
-    title: "Etiketlər",
-    tKey: "menu.labels",
-    href: "/dashboard/labels",
-    icon: Tag,
   },
   {
     title: "Sistem Qeydləri",

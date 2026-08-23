@@ -40,7 +40,7 @@ export function DepartmentProjectsTab({ departmentId, projects, canCreateProject
             const color = project.color || "#3b82f6";
             return (
               <Link key={project.id} href={`/dashboard/projects/${project.id}`} className="block group">
-                <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
+                <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                   <div
                     className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
                     style={{ backgroundColor: color }}
@@ -65,7 +65,7 @@ export function DepartmentProjectsTab({ departmentId, projects, canCreateProject
                       <span className="truncate text-sm text-muted-foreground">{project.owner.name}</span>
                     </div>
 
-                    <div className="mt-auto flex items-center gap-4 border-t border-[hsl(var(--border))] pt-3 text-sm text-muted-foreground">
+                    <div className="mt-auto flex items-center gap-4 border-t border-border pt-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <CheckSquare className="h-4 w-4" />
                         {(t("departmentProjectsTab.tasks") || "{count} tapşırıq").replace("{count}", String(project._count.tasks))}
@@ -82,7 +82,7 @@ export function DepartmentProjectsTab({ departmentId, projects, canCreateProject
           })}
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[hsl(var(--border))] py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <FolderKanban className="h-8 w-8 text-muted-foreground/60" />
           </div>

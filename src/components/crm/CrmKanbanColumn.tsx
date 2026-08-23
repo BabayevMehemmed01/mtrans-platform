@@ -27,7 +27,7 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
   const headerColor = getBitrixStageColor(stage);
 
   return (
-    <div className="flex flex-col w-72 flex-shrink-0 h-full rounded-xl overflow-hidden border border-[hsl(var(--border)/0.6)] bg-[hsl(var(--muted)/0.35)]">
+    <div className="flex flex-col w-72 flex-shrink-0 h-full rounded-xl overflow-hidden border border-border/60 bg-muted/35">
       {/* Bitrix24 solid-color column header */}
       <div
         className="flex items-center justify-between px-3 py-2.5 text-white"
@@ -56,7 +56,7 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
         className={cn(
           "flex-1 flex flex-col gap-2 overflow-y-auto p-2 transition-colors min-h-20",
           isOver
-            ? "bg-[hsl(var(--primary)/0.06)] ring-2 ring-inset ring-[hsl(var(--primary)/0.3)] ring-dashed"
+            ? "bg-primary/6 ring-2 ring-inset ring-primary/30 ring-dashed"
             : ""
         )}
       >
@@ -71,7 +71,7 @@ export function CrmKanbanColumn({ stage, deals, onAddDeal, onDealClick }: CrmKan
 
         {deals.length === 0 && !isOver && (
           <div
-            className="flex-1 flex items-center justify-center text-xs text-[hsl(var(--muted-foreground)/0.5)] py-8 cursor-pointer"
+            className="flex-1 flex items-center justify-center text-xs text-muted-foreground/50 py-8 cursor-pointer"
             onClick={onAddDeal}
           >
             {t("crmKanbanColumn.addDealEmpty") || "+ Əqd əlavə et"}

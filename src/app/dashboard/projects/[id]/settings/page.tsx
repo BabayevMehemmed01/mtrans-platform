@@ -54,7 +54,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
       <div className="flex items-start gap-3">
         <Link
           href={backHref}
-          className="mt-1 p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-slate-600"
+          className="mt-1 p-2 border border-border rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -62,7 +62,7 @@ export default async function ProjectSettingsPage({ params }: Props) {
           <h2 className="text-2xl font-bold tracking-tight">
             {t("projectSettings.title") || "Layihə Parametrləri"}
           </h2>
-          <p className="text-[hsl(var(--muted-foreground))]">{project.name}</p>
+          <p className="text-muted-foreground">{project.name}</p>
         </div>
       </div>
       <ProjectSettingsClient 

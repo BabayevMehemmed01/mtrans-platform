@@ -6,6 +6,13 @@ import { Loader2, Save } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n"; // YENİ
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COLOR_PRESETS = [
   "#6366f1", "#8b5cf6", "#ec4899", "#ef4444",
@@ -77,30 +84,30 @@ export function NewCollabForm() {
 
   return (
     <form onSubmit={handleSubmit} className="relative space-y-5 pb-32">
-      <div className="rounded-2xl border border-gray-200/80 bg-white p-6 space-y-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-6 space-y-5 shadow-sm">
         {error && (
-          <div className="px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-600 font-medium text-sm">
+          <div className="px-4 py-3 rounded-lg bg-destructive/5 border border-destructive/20 text-destructive font-medium text-sm">
             ⚠️ {error}
           </div>
         )}
 
         {/* Name */}
         <div>
-          <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
-            {t("newCollab.nameLabel") || "Layihə Adı"} <span className="text-red-500">*</span>
+          <label className="block text-[13px] font-bold text-foreground mb-1.5">
+            {t("newCollab.nameLabel") || "Layihə Adı"} <span className="text-destructive">*</span>
           </label>
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
             placeholder={t("newCollab.namePlaceholder") || "Məsələn: Qlobal Marketinq və Satış İnteqrasiyası"}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            className="w-full px-4 py-3 rounded-xl border border-border bg-muted text-sm font-medium text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-[13px] font-bold text-slate-700 mb-1.5">
+          <label className="block text-[13px] font-bold text-foreground mb-1.5">
             {t("newCollab.descLabel") || "Məqsəd və Təsvir"}
           </label>
           <textarea
@@ -109,68 +116,68 @@ export function NewCollabForm() {
             onChange={handleChange}
             rows={4}
             placeholder={t("newCollab.descPlaceholder") || "Bu ortaq layihənin məqsədi nədir?..."}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all resize-none"
+            className="w-full px-4 py-3 rounded-xl border border-border bg-muted text-sm font-medium text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
           />
         </div>
 
         {/* Status + Priority */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[13px] font-bold text-slate-700 mb-1.5">{t("newCollab.statusLabel") || "Status"}</label>
-            <select
-              name="status"
-              value={form.status}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-            >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <label className="block text-[13px] font-bold text-foreground mb-1.5">{t("newCollab.statusLabel") || "Status"}</label>
+            <Select value={form.status} onValueChange={(v) => v && setForm((prev) => ({ ...prev, status: v }))}>
+              <SelectTrigger className="w-full h-[46px] rounded-xl bg-muted">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
-            <label className="block text-[13px] font-bold text-slate-700 mb-1.5">{t("newCollab.priorityLabel") || "Prioritet"}</label>
-            <select
-              name="priority"
-              value={form.priority}
-              onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
-            >
-              {PRIORITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+            <label className="block text-[13px] font-bold text-foreground mb-1.5">{t("newCollab.priorityLabel") || "Prioritet"}</label>
+            <Select value={form.priority} onValueChange={(v) => v && setForm((prev) => ({ ...prev, priority: v }))}>
+              <SelectTrigger className="w-full h-[46px] rounded-xl bg-muted">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         {/* Start + End Date */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[13px] font-bold text-slate-700 mb-1.5">{t("newCollab.startDate") || "Başlama Tarixi"}</label>
+            <label className="block text-[13px] font-bold text-foreground mb-1.5">{t("newCollab.startDate") || "Başlama Tarixi"}</label>
             <input
               name="startDate"
               type="date"
               value={form.startDate}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-muted text-sm font-medium text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
           <div>
-            <label className="block text-[13px] font-bold text-slate-700 mb-1.5">{t("newCollab.endDate") || "Bitmə Tarixi"}</label>
+            <label className="block text-[13px] font-bold text-foreground mb-1.5">{t("newCollab.endDate") || "Bitmə Tarixi"}</label>
             <input
               name="endDate"
               type="date"
               value={form.endDate}
               onChange={handleChange}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-slate-50 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+              className="w-full px-4 py-3 rounded-xl border border-border bg-muted text-sm font-medium text-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
         </div>
 
         {/* Color */}
         <div>
-          <label className="block text-[13px] font-bold text-slate-700 mb-2">{t("newCollab.colorLabel") || "Layihə İkon Rəngi"}</label>
-          <div className="flex items-center gap-3 flex-wrap bg-slate-50 p-3 rounded-xl border border-gray-200">
+          <label className="block text-[13px] font-bold text-foreground mb-2">{t("newCollab.colorLabel") || "Layihə İkon Rəngi"}</label>
+          <div className="flex items-center gap-3 flex-wrap bg-muted p-3 rounded-xl border border-border">
             {COLOR_PRESETS.map((color) => (
               <button
                 key={color}
@@ -189,7 +196,7 @@ export function NewCollabForm() {
                 type="color"
                 value={form.color}
                 onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
-                className="w-8 h-8 rounded-lg cursor-pointer border border-gray-300 shadow-sm p-0.5"
+                className="w-8 h-8 rounded-lg cursor-pointer border border-border shadow-sm p-0.5"
                 title={t("newCollab.customColor") || "Özəl rəng seçin"}
               />
             </div>
@@ -198,18 +205,18 @@ export function NewCollabForm() {
       </div>
 
       {/* STICKY ACTIONS FOOTER */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-background p-4 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] md:left-64">
+      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background p-4 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] md:left-64">
         <div className="max-w-2xl mx-auto flex items-center justify-end gap-3">
           <Link
             href="/dashboard/collab"
-            className="px-5 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-slate-600 hover:bg-gray-50 transition-colors"
+            className="px-5 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted transition-colors"
           >
             {t("newCollab.cancel") || "Ləğv Et"}
           </Link>
           <button
             type="submit"
             disabled={loading}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-bold transition-colors shadow-md"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-bold transition-colors shadow-md"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {loading ? (t("newCollab.saving") || "Yaradılır...") : (t("newCollab.save") || "Yadda Saxla və Yarat")}

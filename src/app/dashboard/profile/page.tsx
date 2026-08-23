@@ -45,7 +45,7 @@ export default async function ProfilePage() {
         <h2 className="text-2xl font-bold tracking-tight">
           {t("profilePage.title") || "Profilim"}
         </h2>
-        <p className="text-[hsl(var(--muted-foreground))]">
+        <p className="text-muted-foreground">
           {t("profilePage.description") || "Şəxsi məlumatlarınızı və hesab təhlükəsizliyinizi idarə edin."}
         </p>
       </div>

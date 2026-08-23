@@ -48,9 +48,9 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative bg-white rounded-lg border border-[hsl(var(--border))]",
+        "group relative bg-card rounded-lg border border-border",
         "p-3 cursor-pointer select-none",
-        "hover:border-[hsl(var(--primary)/0.35)] hover:shadow-md transition-all duration-150",
+        "hover:border-primary/35 hover:shadow-md transition-all duration-150",
         (isSortableDragging || isDragging) && "opacity-40 shadow-2xl scale-105"
       )}
       onClick={onClick}
@@ -58,41 +58,41 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
       <div
         {...attributes}
         {...listeners}
-        className="absolute left-0.5 top-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 rounded text-[hsl(var(--muted-foreground))]"
+        className="absolute left-0.5 top-2 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing p-1 rounded text-muted-foreground"
         onClick={(e) => e.stopPropagation()}
       >
         <GripVertical className="w-3 h-3" />
       </div>
 
-      <p className="text-[13px] font-medium leading-snug mb-2 line-clamp-2 pl-3 pr-1 text-[hsl(var(--foreground))]">
+      <p className="text-[13px] font-medium leading-snug mb-2 line-clamp-2 pl-3 pr-1 text-foreground">
         {deal.title}
       </p>
 
       <div className="pl-3 space-y-0.5">
-        <p className="font-bold text-sm text-[hsl(var(--foreground))]">
+        <p className="font-bold text-sm text-foreground">
           {(deal.value ?? 0).toLocaleString()} {deal.currency}
         </p>
         {clientName && (
           <p className="font-bold text-[12px] leading-tight truncate">{clientName}</p>
         )}
         {clientCompany && (
-          <p className="font-bold text-[12px] leading-tight truncate text-[hsl(var(--foreground)/0.85)]">{clientCompany}</p>
+          <p className="font-bold text-[12px] leading-tight truncate text-foreground/85">{clientCompany}</p>
         )}
         {deal.clientPhone && (
-          <p className="font-light text-[11px] text-[hsl(var(--muted-foreground))] truncate">{deal.clientPhone}</p>
+          <p className="font-light text-[11px] text-muted-foreground truncate">{deal.clientPhone}</p>
         )}
         {deal.clientEmail && (
-          <p className="font-light text-[11px] text-[hsl(var(--muted-foreground))] truncate">{deal.clientEmail}</p>
+          <p className="font-light text-[11px] text-muted-foreground truncate">{deal.clientEmail}</p>
         )}
       </div>
 
-      <div className="flex items-end justify-between gap-2 mt-2.5 pt-2 border-t border-[hsl(var(--border)/0.6)] pl-3">
+      <div className="flex items-end justify-between gap-2 mt-2.5 pt-2 border-t border-border/60 pl-3">
         <div className="flex items-center gap-1 min-w-0">
-          <Calendar className={cn("w-3 h-3 flex-shrink-0", overdue ? "text-red-500" : "text-[hsl(var(--muted-foreground))]")} />
+          <Calendar className={cn("w-3 h-3 flex-shrink-0", overdue ? "text-red-500" : "text-muted-foreground")} />
           <span
             className={cn(
               "text-[10px] font-medium truncate",
-              overdue ? "text-red-600" : "text-[hsl(var(--muted-foreground))]"
+              overdue ? "text-red-600" : "text-muted-foreground"
             )}
           >
             {deal.deadline
@@ -115,7 +115,7 @@ export function CrmDealCard({ deal, isDragging, onClick }: CrmDealCardProps) {
           />
           {deal.assignee ? (
             <div
-              className="ml-1 w-6 h-6 rounded-full bg-[hsl(var(--primary))] flex items-center justify-center text-[10px] text-white font-bold"
+              className="ml-1 w-6 h-6 rounded-full bg-primary flex items-center justify-center text-[10px] text-white font-bold"
               title={deal.assignee.name ?? undefined}
             >
               {deal.assignee.name?.[0]}
@@ -161,7 +161,7 @@ function QuickAction({
       className={cn(
         "p-1 rounded-md transition-colors",
         enabled
-          ? "text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--primary))] hover:bg-[hsl(var(--accent))]"
+          ? "text-muted-foreground hover:text-primary hover:bg-accent"
           : "opacity-50 cursor-not-allowed pointer-events-none"
       )}
       onClick={(e) => {

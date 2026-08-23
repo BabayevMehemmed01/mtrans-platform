@@ -34,6 +34,7 @@
   },
   "header": {
     "search": "Поиск...",
+    "commandPlaceholder": "Поиск проектов, задач, людей...",
     "notifications": "Уведомления",
     "markAllRead": "Отметить все как прочитанные",
     "noNotifications": "Нет уведомлений",

@@ -129,8 +129,8 @@ export function AnalyticsTab({ analytics, loading }: AnalyticsTabProps) {
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={turnoverChartData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 3" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={{ stroke: "hsl(var(--border))" }} tickLine={false} />
+                <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={{ stroke: "var(--border)" }} tickLine={false} />
                 <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip />
                 <Bar dataKey="ratio" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={36} />

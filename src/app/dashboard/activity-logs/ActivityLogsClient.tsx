@@ -180,7 +180,7 @@ export function ActivityLogsClient() {
         </Button>
       </div>
 
-      <Card className="border-border bg-white shadow-sm ring-0 transition-all duration-300 hover:border-gray-300 hover:shadow-md dark:bg-card dark:hover:border-gray-700">
+      <Card className="border-border bg-card shadow-sm ring-0 transition-all duration-300 hover:shadow-md">
         <CardHeader className="px-4 py-3">
           <CardTitle className="text-sm">{t("activityLogs.filters") || "Filtrlər"}</CardTitle>
           <CardDescription>
@@ -234,7 +234,7 @@ export function ActivityLogsClient() {
         </CardContent>
       </Card>
 
-      <Card className="border-border bg-white shadow-sm ring-0 transition-all duration-300 hover:border-gray-300 hover:shadow-md dark:bg-card dark:hover:border-gray-700">
+      <Card className="border-border bg-card shadow-sm ring-0 transition-all duration-300 hover:shadow-md">
         <CardContent className="p-0">
           {isError ? (
             <p className="p-6 text-sm text-destructive">
@@ -280,7 +280,7 @@ export function ActivityLogsClient() {
                                 {getInitials(name)}
                               </AvatarFallback>
                             </Avatar>
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
+                            <span className="text-sm font-medium text-foreground">
                               {name}
                             </span>
                           </div>

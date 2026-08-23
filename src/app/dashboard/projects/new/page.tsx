@@ -35,7 +35,7 @@ export default async function NewProjectPage({
       <div className="flex items-center gap-3">
         <Link
           href="/dashboard/projects"
-          className="p-2 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
+          className="p-2 rounded-lg hover:bg-accent transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
         </Link>
@@ -43,7 +43,7 @@ export default async function NewProjectPage({
           <h1 className="text-xl font-bold">
             {t("newProject.title") || "Yeni Layihə"}
           </h1>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">
+          <p className="text-sm text-muted-foreground">
             {t("newProject.subtitle") || "Yeni iş layihəsi yaradın"}
           </p>
         </div>

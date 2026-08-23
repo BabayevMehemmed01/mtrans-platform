@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// Root path "/" → Dashboard-a yönləndir
+// Root path "/" → Ana səhifə konsepti ləğv edilib, birbaşa "Mənim İşlərim"ə yönləndir
 export default function RootPage() {
-  redirect("/dashboard");
+  redirect("/dashboard/my-work");
 }

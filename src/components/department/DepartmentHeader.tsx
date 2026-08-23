@@ -134,7 +134,7 @@ export function DepartmentHeader({
       </div>
 
       {/* Editable description strip */}
-      <div className="border-b border-[hsl(var(--border))] bg-white px-6 py-4">
+      <div className="border-b border-border bg-card px-6 py-4">
         {editing ? (
           <div className="space-y-2">
             <textarea
@@ -143,10 +143,10 @@ export function DepartmentHeader({
               onChange={(e) => setDescription(e.target.value)}
               rows={3}
               placeholder={t("departmentHeader.descPlaceholder") || "Bu şöbənin əsas məqsədini və fəaliyyət sahəsini yazın..."}
-              className="w-full px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+              className="w-full px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={handleSave} disabled={saving} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button size="sm" onClick={handleSave} disabled={saving}>
                 <Check className="w-3.5 h-3.5 mr-1" /> {saving ? (t("departmentHeader.saving") || "Yadda saxlanılır...") : (t("departmentHeader.save") || "Yadda saxla")}
               </Button>
               <Button
@@ -170,7 +170,7 @@ export function DepartmentHeader({
             {canEditDescription && (
               <button
                 onClick={() => setEditing(true)}
-                className="flex-shrink-0 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-gray-100 text-muted-foreground transition-all"
+                className="flex-shrink-0 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-muted text-muted-foreground transition-all"
                 title={t("departmentHeader.editDescTitle") || "Təsviri redaktə et"}
               >
                 <Pencil className="w-3.5 h-3.5" />

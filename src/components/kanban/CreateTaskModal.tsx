@@ -5,7 +5,14 @@ import { BookmarkPlus, Loader2, X } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { getTranslation } from "@/lib/i18n";
 import { ObserverMultiSelect } from "./ObserverMultiSelect";
-import type { KanbanTask, TaskMember, KanbanLabel } from "./types";
+import type { KanbanTask, TaskMember } from "./types";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface TaskTemplate {
   id: string;
@@ -18,7 +25,6 @@ interface CreateTaskModalProps {
   defaultStatus: string;
   defaultDueDate?: string | null;
   members: TaskMember[];
-  labels: KanbanLabel[];
   onCreated: (task: KanbanTask) => void;
   onClose: () => void;
 }
@@ -28,7 +34,6 @@ export function CreateTaskModal({
   defaultStatus,
   defaultDueDate,
   members,
-  labels,
   onCreated,
   onClose,
 }: CreateTaskModalProps) {
@@ -50,7 +55,6 @@ export function CreateTaskModal({
     assigneeId: "",
     observerIds: [] as string[],
     dueDate: defaultDueDate ?? "",
-    labelIds: [] as string[],
   });
 
   useEffect(() => {
@@ -67,17 +71,8 @@ export function CreateTaskModal({
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
-
-  const toggleLabel = (id: string) => {
-    setForm((p) => ({
-      ...p,
-      labelIds: p.labelIds.includes(id)
-        ? p.labelIds.filter((l) => l !== id)
-        : [...p.labelIds, id],
-    }));
-  };
 
   const applyTemplate = (id: string) => {
     setSelectedTemplateId(id);
@@ -163,47 +158,45 @@ export function CreateTaskModal({
         onClick={onClose}
       />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-lg max-h-[90vh] rounded-2xl bg-[hsl(var(--card))] border border-[hsl(var(--border))] shadow-2xl animate-scale-in overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-[hsl(var(--border))]">
-            <h2 className="text-base font-semibold">{t("createTaskModal.title") || "Yeni Tapşırıq"}</h2>
-            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors">
+        <div className="w-full max-w-lg max-h-[90vh] rounded-2xl bg-card border border-border shadow-2xl animate-scale-in overflow-hidden flex flex-col">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <h2 className="text-base font-semibold text-foreground">{t("createTaskModal.title") || "Yeni Tapşırıq"}</h2>
+            <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
 
           <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto">
             {error && (
-              <p className="text-sm text-[hsl(var(--destructive))] bg-[hsl(var(--destructive)/0.08)] px-3 py-2 rounded-lg">
+              <p className="text-sm text-destructive bg-destructive/8 px-3 py-2 rounded-lg">
                 ⚠️ {error}
               </p>
             )}
             {templateNotice && (
-              <p className="text-sm text-emerald-700 bg-emerald-50 px-3 py-2 rounded-lg">
+              <p className="text-sm text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-3 py-2 rounded-lg">
                 {templateNotice}
               </p>
             )}
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
                 {t("createTaskModal.templates") || "Şablonlar"}
               </label>
-              <select
-                value={selectedTemplateId}
-                onChange={(e) => applyTemplate(e.target.value)}
-                className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
-              >
-                <option value="">
-                  {t("createTaskModal.templatesPlaceholder") || "Şablon seçin (istəyə bağlı)"}
-                </option>
-                {templates.map((tpl) => (
-                  <option key={tpl.id} value={tpl.id}>{tpl.name}</option>
-                ))}
-              </select>
+              <Select value={selectedTemplateId} onValueChange={(v) => v && applyTemplate(v)}>
+                <SelectTrigger className="w-full bg-background border-border text-sm">
+                  <SelectValue placeholder={t("createTaskModal.templatesPlaceholder") || "Şablon seçin (istəyə bağlı)"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {templates.map((tpl) => (
+                    <SelectItem key={tpl.id} value={tpl.id}>{tpl.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">
-                {t("createTaskModal.taskName") || "Tapşırıq Adı"} <span className="text-[hsl(var(--destructive))]">*</span>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
+                {t("createTaskModal.taskName") || "Tapşırıq Adı"} <span className="text-destructive">*</span>
               </label>
               <input
                 name="title"
@@ -211,55 +204,55 @@ export function CreateTaskModal({
                 onChange={handleChange}
                 autoFocus
                 placeholder={t("createTaskModal.taskNamePlaceholder") || "Məsələn: Login formu dizaynı"}
-                className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.description") || "Təsvir"}</label>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.description") || "Təsvir"}</label>
               <textarea
                 name="description"
                 value={form.description}
                 onChange={handleChange}
                 rows={2}
                 placeholder={t("createTaskModal.descriptionPlaceholder") || "Tapşırıq haqqında əlavə məlumat..."}
-                className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all resize-none"
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.priority") || "Prioritet"}</label>
-                <select
-                  name="priority"
-                  value={form.priority}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
-                >
-                  <option value="LOW">{t("createTaskModal.priorityLow") || "Aşağı"}</option>
-                  <option value="MEDIUM">{t("createTaskModal.priorityMedium") || "Orta"}</option>
-                  <option value="HIGH">{t("createTaskModal.priorityHigh") || "Yüksək"}</option>
-                  <option value="URGENT">{t("createTaskModal.priorityUrgent") || "Təcili"}</option>
-                </select>
+                <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.priority") || "Prioritet"}</label>
+                <Select value={form.priority} onValueChange={(v) => v && setForm((p) => ({ ...p, priority: v }))}>
+                  <SelectTrigger className="w-full bg-background border-border text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="LOW">{t("createTaskModal.priorityLow") || "Aşağı"}</SelectItem>
+                    <SelectItem value="MEDIUM">{t("createTaskModal.priorityMedium") || "Orta"}</SelectItem>
+                    <SelectItem value="HIGH">{t("createTaskModal.priorityHigh") || "Yüksək"}</SelectItem>
+                    <SelectItem value="URGENT">{t("createTaskModal.priorityUrgent") || "Təcili"}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.assignee") || "İcraçı"}</label>
-                <select
-                  name="assigneeId"
-                  value={form.assigneeId}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
-                >
-                  <option value="">{t("createTaskModal.notSelected") || "Seçilməyib"}</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.assignee") || "İcraçı"}</label>
+                <Select value={form.assigneeId || "__none__"} onValueChange={(v) => setForm((p) => ({ ...p, assigneeId: !v || v === "__none__" ? "" : v }))}>
+                  <SelectTrigger className="w-full bg-background border-border text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{t("createTaskModal.notSelected") || "Seçilməyib"}</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">
+              <label className="block text-sm font-medium mb-1.5 text-foreground">
                 {t("createTaskModal.observers") || "Müşahidəçilər"}
               </label>
               <ObserverMultiSelect
@@ -274,49 +267,22 @@ export function CreateTaskModal({
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5">{t("createTaskModal.dueDate") || "Son Tarix"}</label>
+              <label className="block text-sm font-medium mb-1.5 text-foreground">{t("createTaskModal.dueDate") || "Son Tarix"}</label>
               <input
                 name="dueDate"
                 type="date"
                 value={form.dueDate}
                 onChange={handleChange}
-                className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+                className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
               />
             </div>
-
-            {labels.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium mb-2">{t("createTaskModal.labels") || "Etiketlər"}</label>
-                <div className="flex flex-wrap gap-1.5">
-                  {labels.map((label) => {
-                    const selected = form.labelIds.includes(label.id);
-                    return (
-                      <button
-                        key={label.id}
-                        type="button"
-                        onClick={() => toggleLabel(label.id)}
-                        className="text-xs px-2.5 py-1 rounded-full font-medium transition-all"
-                        style={{
-                          backgroundColor: selected ? label.color : undefined,
-                          color: selected ? "white" : label.color,
-                          border: `1.5px solid ${label.color}`,
-                          opacity: selected ? 1 : 0.7,
-                        }}
-                      >
-                        {label.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
 
             <div className="flex items-center justify-between gap-3 pt-2">
               <button
                 type="button"
                 onClick={handleSaveAsTemplate}
                 disabled={savingTemplate || loading}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--accent))] disabled:opacity-50 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-sm font-medium hover:bg-accent disabled:opacity-50 transition-colors text-foreground"
               >
                 {savingTemplate ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -329,14 +295,14 @@ export function CreateTaskModal({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--accent))] transition-colors"
+                  className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors text-foreground"
                 >
                   {t("createTaskModal.cancel") || "Ləğv Et"}
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-[hsl(var(--primary))] hover:bg-[hsl(var(--primary)/0.9)] disabled:opacity-50 text-white text-sm font-semibold transition-colors"
+                  className="flex items-center gap-2 px-5 py-2 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-semibold transition-colors"
                 >
                   {loading ? (
                     <>

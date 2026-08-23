@@ -8,20 +8,19 @@ import { getTranslation } from "@/lib/i18n"; // YENİ
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
+import type { KanbanTask, TaskMember } from "@/components/kanban/types";
 import { TaskDetailSheet } from "@/components/kanban/TaskDetailSheet";
 
 interface ProjectCalendarProps {
   projectId: string;
   tasks: KanbanTask[];
   members: TaskMember[];
-  labels: KanbanLabel[];
   onTaskUpdated: (task: KanbanTask) => void;
   onTaskDeleted: (taskId: string) => void;
   onTaskCreated: (task: KanbanTask) => void;
 }
 
-export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdated, onTaskDeleted, onTaskCreated }: ProjectCalendarProps) {
+export function ProjectCalendar({ projectId, tasks, members, onTaskUpdated, onTaskDeleted, onTaskCreated }: ProjectCalendarProps) {
   // Tərcüməni qoşuruq
   const { data: session } = useSession();
   const lang = (session?.user as any)?.language || "az";
@@ -101,33 +100,33 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
   );
 
   return (
-    <div className="h-full flex flex-col bg-slate-50/50 overflow-hidden">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shadow-sm z-10">
+    <div className="h-full flex flex-col bg-muted/30 overflow-hidden">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card shadow-sm z-10">
         <div className="flex items-center gap-4">
-          <div className="flex bg-slate-100 rounded-lg p-1 border border-gray-200">
-            <button onClick={prevPeriod} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
+          <div className="flex bg-muted rounded-lg p-1 border border-border">
+            <button onClick={prevPeriod} className="p-1.5 rounded-md hover:bg-card hover:shadow-sm transition-all text-muted-foreground">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button onClick={today} className="px-4 py-1.5 text-sm font-bold text-slate-700 hover:bg-white hover:shadow-sm transition-all rounded-md">
+            <button onClick={today} className="px-4 py-1.5 text-sm font-bold text-foreground hover:bg-card hover:shadow-sm transition-all rounded-md">
               {t("projectCalendar.today") || "Bu gün"}
             </button>
-            <button onClick={nextPeriod} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-gray-600">
+            <button onClick={nextPeriod} className="p-1.5 rounded-md hover:bg-card hover:shadow-sm transition-all text-muted-foreground">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-          <h2 className="text-xl font-black text-slate-800 capitalize tracking-tight">
+          <h2 className="text-xl font-black text-foreground capitalize tracking-tight">
             {viewMode === "week"
               ? `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`
               : format(currentDate, "MMMM yyyy")}
           </h2>
         </div>
-        <div className="flex rounded-lg border border-gray-200 bg-slate-100 p-1">
+        <div className="flex rounded-lg border border-border bg-muted p-1">
           <button
             type="button"
             onClick={() => setViewMode("month")}
             className={cn(
               "rounded-md px-3 py-1.5 text-xs font-bold transition-all",
-              viewMode === "month" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              viewMode === "month" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {t("projectCalendar.viewMonth") || "Ay"}
@@ -137,7 +136,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
             onClick={() => setViewMode("week")}
             className={cn(
               "rounded-md px-3 py-1.5 text-xs font-bold transition-all",
-              viewMode === "week" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              viewMode === "week" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {t("projectCalendar.viewWeek") || "Həftə"}
@@ -147,9 +146,9 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
 
       <div className="flex-1 overflow-auto p-4 sm:p-6 custom-scrollbar">
         <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-5 items-start">
-          <Card className="bg-white ring-gray-200/80">
+          <Card className="bg-card ring-border/80">
             <CardHeader className="pb-0">
-              <CardTitle className="text-sm font-bold text-slate-800">
+              <CardTitle className="text-sm font-bold text-foreground">
                 {t("projectCalendar.pickerTitle") || "Təqvim"}
               </CardTitle>
             </CardHeader>
@@ -166,11 +165,11 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                 }}
               />
               <div className="mt-3 space-y-2 px-2 pb-2">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                   {format(selectedDate, "d MMMM yyyy")}
                 </p>
                 {selectedDayTasks.length === 0 ? (
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-muted-foreground">
                     {t("projectCalendar.noTasksForDay") || "Bu günə tapşırıq yoxdur"}
                   </p>
                 ) : (
@@ -179,7 +178,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                       key={task.id}
                       type="button"
                       onClick={() => setSelectedTask(task)}
-                      className="w-full text-left px-2.5 py-2 text-[12px] font-semibold rounded-lg border border-blue-100 bg-blue-50 text-blue-700 truncate hover:bg-blue-100"
+                      className="w-full text-left px-2.5 py-2 text-[12px] font-semibold rounded-lg border border-primary/20 bg-primary/5 text-primary truncate hover:bg-primary/10"
                     >
                       {task.title}
                     </button>
@@ -189,11 +188,11 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
             </CardContent>
           </Card>
 
-        <div className="min-w-0 min-h-[750px] h-full flex flex-col bg-white border border-gray-200/80 rounded-2xl shadow-sm overflow-hidden">
+        <div className="min-w-0 min-h-[750px] h-full flex flex-col bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
           
-          <div className="grid grid-cols-7 border-b border-gray-200 bg-slate-50/80">
+          <div className="grid grid-cols-7 border-b border-border bg-muted/50">
             {weekDays.map((day, i) => (
-              <div key={i} className="py-3 text-center text-[12px] font-black text-slate-500 uppercase tracking-wider">
+              <div key={i} className="py-3 text-center text-[12px] font-black text-muted-foreground uppercase tracking-wider">
                 {day}
               </div>
             ))}
@@ -213,20 +212,20 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                   key={i}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    "group relative p-2 border-r border-b border-gray-100 transition-colors hover:bg-slate-50/80 flex flex-col",
-                    !isSameMonth(day, monthStart) && viewMode === "month" && "bg-gray-50/50 text-gray-400 opacity-60",
-                    isToday(day) && "bg-blue-50/20",
-                    isSameDay(day, selectedDate) && "bg-blue-50/60"
+                    "group relative p-2 border-r border-b border-border/70 transition-colors hover:bg-muted/50 flex flex-col",
+                    !isSameMonth(day, monthStart) && viewMode === "month" && "bg-muted/30 text-muted-foreground opacity-60",
+                    isToday(day) && "bg-primary/5",
+                    isSameDay(day, selectedDate) && "bg-primary/10"
                   )}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className={cn("text-[13px] font-bold w-7 h-7 flex items-center justify-center rounded-full", isToday(day) ? "bg-blue-600 text-white shadow-sm" : "text-slate-700")}>
+                    <span className={cn("text-[13px] font-bold w-7 h-7 flex items-center justify-center rounded-full", isToday(day) ? "bg-primary text-primary-foreground shadow-sm" : "text-foreground")}>
                       {format(day, "d")}
                     </span>
                     
                     <button
                       onClick={() => { setAddingDate(day); setNewTaskTitle(""); }}
-                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-blue-100 text-blue-600 transition-all"
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-primary/10 text-primary transition-all"
                       title={t("projectCalendar.addTitle") || "Bu günə yeni tədbir/task əlavə et"}
                     >
                       <Plus className="w-4 h-4" />
@@ -245,7 +244,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                         }}
                         placeholder={t("projectCalendar.inputPlaceholder") || "Adı yaz, Enter bas..."}
                         disabled={isLoading !== null}
-                        className="w-full px-2 py-1.5 text-[11px] font-bold border-2 border-blue-400 rounded-md outline-none bg-white shadow-sm placeholder:font-medium placeholder:text-blue-300"
+                        className="w-full px-2 py-1.5 text-[11px] font-bold border-2 border-primary/50 rounded-md outline-none bg-background text-foreground shadow-sm placeholder:font-medium placeholder:text-primary/40"
                       />
                     </div>
                   )}
@@ -253,7 +252,7 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                   <div className="flex-1 space-y-1.5 overflow-y-auto custom-scrollbar pr-1">
                     {isLoading && (
                       <div className="flex justify-center py-1">
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
                       </div>
                     )}
                     {dayTasks.map(task => (
@@ -262,9 +261,9 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
                         onClick={() => setSelectedTask(task)}
                         className={cn(
                           "px-2.5 py-1.5 text-[11px] font-bold rounded-md border cursor-pointer truncate transition-all hover:scale-[1.02] shadow-sm",
-                          task.status === "DONE" ? "bg-green-50 text-green-700 border-green-200" :
-                          task.status === "IN_PROGRESS" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                          "bg-blue-50 text-blue-700 border-blue-200"
+                          task.status === "DONE" ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/30" :
+                          task.status === "IN_PROGRESS" ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30" :
+                          "bg-primary/5 text-primary border-primary/20"
                         )}
                         title={task.title}
                       >
@@ -284,7 +283,6 @@ export function ProjectCalendar({ projectId, tasks, members, labels, onTaskUpdat
         <TaskDetailSheet
           task={selectedTask}
           members={members}
-          labels={labels}
           onUpdated={(t) => { onTaskUpdated(t); setSelectedTask(t); }}
           onDeleted={(id) => { onTaskDeleted(id); setSelectedTask(null); }}
           onClose={() => setSelectedTask(null)}

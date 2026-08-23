@@ -21,7 +21,7 @@ import { ProjectMembersClient, ProjectMemberExt } from "@/components/project/Pro
 import { ProjectCalendar } from "./ProjectCalendar";
 import { ProjectChat } from "./ProjectChat";
 import { ProjectFiles } from "./ProjectFiles";
-import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
+import type { KanbanTask, TaskMember } from "@/components/kanban/types";
 
 type TabId = "list" | "deadline" | "planner" | "calendar" | "members" | "chat" | "dashboard" | "files";
 
@@ -29,7 +29,6 @@ interface ProjectViewsProps {
   projectId: string;
   initialTasks: KanbanTask[];
   members: TaskMember[];
-  labels: KanbanLabel[];
   taskCount: number;
   memberCount: number;
   projectMembers: ProjectMemberExt[];
@@ -45,7 +44,6 @@ export function ProjectViews({
   projectId,
   initialTasks,
   members,
-  labels,
   taskCount,
   memberCount,
   projectMembers,
@@ -106,8 +104,8 @@ export function ProjectViews({
   return (
     <div className="flex flex-col h-full">
       {/* ─── Tab Bar ─────────────────────────────────────────────── */}
-      <div className="flex-shrink-0 border-b border-[hsl(var(--border))] bg-white px-6 overflow-x-auto custom-scrollbar">
-        <div className="flex items-center gap-2 min-w-max">
+      <div className="flex-shrink-0 border-b border-border bg-card px-6 overflow-x-auto custom-scrollbar">
+        <div className="flex items-center gap-1 min-w-max">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -116,14 +114,17 @@ export function ProjectViews({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium border-b-2 transition-all",
+                  "relative inline-flex items-center gap-2 px-4 py-3.5 text-sm font-medium transition-all",
                   isActive
-                    ? "border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg"
-                    : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-foreground hover:border-[hsl(var(--border))]"
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <Icon className={cn("w-4 h-4", isActive ? "text-blue-600" : "")} />
+                <Icon className={cn("w-4 h-4", isActive ? "text-primary" : "")} />
                 {tab.label}
+                {isActive && (
+                  <span className="absolute left-2 right-2 -bottom-px h-0.5 rounded-full bg-primary" />
+                )}
               </button>
             );
           })}
@@ -133,7 +134,7 @@ export function ProjectViews({
       {/* ─── Tab Content ──────────────────────────────────────────── */}
       <div
         className={cn(
-          "flex-1 bg-[hsl(var(--background))]",
+          "flex-1 bg-background",
           activeTab === "list" || activeTab === "planner" || activeTab === "deadline" || activeTab === "chat"
             ? "overflow-hidden"
             : "overflow-auto"
@@ -144,7 +145,6 @@ export function ProjectViews({
             projectId={projectId}
             tasks={tasks}
             members={members}
-            labels={labels}
             onTaskUpdated={handleTaskUpdated}
             onTaskDeleted={handleTaskDeleted}
             onTaskCreated={handleTaskCreated}
@@ -157,7 +157,6 @@ export function ProjectViews({
             projectId={projectId}
             initialTasks={tasks}
             members={members}
-            labels={labels}
             variant="deadline"
             onTaskCreated={handleTaskCreated}
             onTaskUpdated={handleTaskUpdated}
@@ -170,7 +169,6 @@ export function ProjectViews({
             projectId={projectId}
             initialTasks={tasks}
             members={members}
-            labels={labels}
             variant="planner"
             onTaskCreated={handleTaskCreated}
             onTaskUpdated={handleTaskUpdated}
@@ -199,7 +197,6 @@ export function ProjectViews({
             projectId={projectId}
             tasks={tasks} 
             members={members} 
-            labels={labels} 
             onTaskUpdated={handleTaskUpdated}
             onTaskDeleted={handleTaskDeleted}
             onTaskCreated={handleTaskCreated}

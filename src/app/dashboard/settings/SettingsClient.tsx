@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import { useTheme } from "next-themes";
 import { useSession } from "next-auth/react"; // YENİ: Sessiya üçün
 import { getTranslation } from "@/lib/i18n";  // YENİ: Tərcümə mühərriki
+import { cn } from "@/lib/utils";
 import {
   useColorTheme,
   COLOR_THEME_IDS,
@@ -31,6 +32,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // --- TİPLƏR ---
 type CompanyInfo = {
@@ -95,8 +104,25 @@ const CATEGORY_LABELS: Record<string, string> = {
 // 8 premium rəng teması: hər biri üçün önizləmə rəngi (swatch) və tərcümə açarı.
 // Faktiki tətbiq globals.css-dəki `[data-color-theme="..."]` CSS dəyişənləri
 // vasitəsilə ColorThemeProvider tərəfindən idarə olunur.
+const SETTINGS_TAB_TRIGGER_CLASS =
+  "group/tab justify-start gap-0 px-3 py-3 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md hover:-translate-y-0.5 transition-all text-[14px] font-bold text-muted-foreground bg-card border border-border shadow-sm hover:border-primary/40 hover:text-foreground hover:shadow-sm";
+
+const SETTINGS_TAB_ICON_CLASS =
+  "flex items-center justify-center size-8 rounded-lg mr-3 bg-muted text-muted-foreground transition-colors group-data-[state=active]/tab:bg-primary-foreground/15 group-data-[state=active]/tab:text-primary-foreground group-hover/tab:text-foreground";
+
+const SETTINGS_PANEL_CLASS =
+  "mt-0 border border-border rounded-2xl bg-card p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200";
+
+const SETTINGS_HEADING_CLASS =
+  "text-xl font-black mb-6 text-foreground border-b border-border pb-4";
+
+const SETTINGS_LABEL_CLASS = "text-[13px] font-bold text-muted-foreground uppercase tracking-wider";
+const SETTINGS_LABEL_SM_CLASS = "text-[12px] font-bold text-muted-foreground uppercase tracking-wider";
+const SETTINGS_SELECT_CLASS =
+  "w-full h-12 px-4 rounded-xl border border-input bg-muted text-[14px] font-bold text-foreground focus:border-primary focus:bg-background outline-none transition-all cursor-pointer";
+
 const COLOR_THEMES: { id: ColorThemeId; swatch: string; labelKey: string }[] = [
-  { id: "default", swatch: "#0f172a", labelKey: "default" },
+  { id: "default", swatch: "#4f46e5", labelKey: "default" },
   { id: "blue", swatch: "#2563eb", labelKey: "blue" },
   { id: "purple", swatch: "#7c3aed", labelKey: "purple" },
   { id: "green", swatch: "#059669", labelKey: "green" },
@@ -134,23 +160,22 @@ function PermissionCheckboxGroup({ permissions, selected, onChange, t }: { permi
         const catLabel = t(`settings.categories.${cat}`) !== `settings.categories.${cat}` ? t(`settings.categories.${cat}`) : CATEGORY_LABELS[cat] || cat;
 
         return (
-          <div key={cat} className="bg-slate-50/50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-100 dark:border-slate-700">
+          <div key={cat} className="bg-muted/50 p-4 rounded-xl border border-border">
             <div className="flex items-center gap-3 mb-3 cursor-pointer group" onClick={() => toggleCategory(perms)}>
-              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${allChecked ? "bg-blue-600 border-blue-600" : someChecked ? "bg-blue-100 border-blue-400 dark:bg-blue-900" : "border-gray-300 dark:border-slate-600 group-hover:border-blue-400"}`}>
-                {(allChecked || someChecked) && <Check className={`w-3.5 h-3.5 ${allChecked ? "text-white" : "text-blue-600 dark:text-blue-400"}`} strokeWidth={3} />}
-              </div>
-              <span className="text-[14px] font-bold text-slate-800 dark:text-slate-200">{catLabel}</span>
-              <span className="text-xs font-bold text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-md border border-gray-200 dark:border-slate-700 ml-auto">
+              <Checkbox
+                checked={allChecked ? true : someChecked ? "indeterminate" : false}
+                className="pointer-events-none size-5 rounded-md"
+              />
+              <span className="text-[14px] font-bold text-foreground">{catLabel}</span>
+              <span className="text-xs font-bold text-muted-foreground bg-card px-2 py-0.5 rounded-md border border-border ml-auto">
                 {catIds.filter((id) => selected.includes(id)).length} / {catIds.length}
               </span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pl-8">
               {perms.map((p) => (
-                <label key={p.id} className="flex items-center gap-3 py-1.5 cursor-pointer group rounded-lg hover:bg-white dark:hover:bg-slate-800 hover:shadow-sm px-2 transition-all">
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${selected.includes(p.id) ? "bg-blue-600 border-blue-600" : "border-gray-300 dark:border-slate-600 group-hover:border-blue-400"}`} onClick={() => toggle(p.id)}>
-                    {selected.includes(p.id) && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-                  </div>
-                  <span className="text-[13px] font-medium text-slate-600 dark:text-slate-300">{p.name}</span>
+                <label key={p.id} className="flex items-center gap-3 py-1.5 cursor-pointer group rounded-lg hover:bg-card hover:shadow-sm px-2 transition-all">
+                  <Checkbox checked={selected.includes(p.id)} onCheckedChange={() => toggle(p.id)} />
+                  <span className="text-[13px] font-medium text-muted-foreground">{p.name}</span>
                 </label>
               ))}
             </div>
@@ -170,12 +195,10 @@ function ProjectCheckboxList({ projects, selected, onChange }: { projects: Proje
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
       {projects.map((project) => (
-        <label key={project.id} className="flex items-center gap-3 py-2 cursor-pointer group rounded-xl border border-gray-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-800 hover:border-blue-200 dark:hover:border-blue-500 hover:shadow-sm px-3 transition-all">
-          <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${selected.includes(project.id) ? "bg-blue-600 border-blue-600" : "border-gray-300 dark:border-slate-600 group-hover:border-blue-400"}`} onClick={() => toggle(project.id)}>
-            {selected.includes(project.id) && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
-          </div>
+        <label key={project.id} className="flex items-center gap-3 py-2 cursor-pointer group rounded-xl border border-border bg-muted/50 hover:bg-card hover:border-primary/40 hover:shadow-sm px-3 transition-all">
+          <Checkbox checked={selected.includes(project.id)} onCheckedChange={() => toggle(project.id)} />
           <span className="w-3 h-3 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: project.color }} />
-          <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 truncate">{project.name}</span>
+          <span className="text-[13px] font-bold text-foreground truncate">{project.name}</span>
         </label>
       ))}
     </div>
@@ -358,27 +381,32 @@ export function SettingsClient({
     <Tabs defaultValue="appearance" className="flex flex-col md:flex-row gap-8 mt-6">
       
       {/* ─── SOL MENYU (VERTICAL TABS) ─── */}
-      <TabsList className="flex flex-col h-auto w-full md:w-64 bg-transparent p-0 gap-2 border-none items-stretch justify-start">
-        <TabsTrigger value="appearance" className="justify-start px-4 py-3.5 rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all text-[14px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-slate-600">
-          <Palette className="w-5 h-5 mr-3" /> {t("settings.tabs.appearance") || "Görünüş və Dil"}
+      <TabsList className="flex flex-col h-auto w-full md:w-64 bg-transparent p-0 gap-2 border-none items-stretch justify-start md:sticky md:top-20 md:self-start">
+        <TabsTrigger value="appearance" className={SETTINGS_TAB_TRIGGER_CLASS}>
+          <span className={SETTINGS_TAB_ICON_CLASS}><Palette className="w-4 h-4" /></span>
+          {t("settings.tabs.appearance") || "Görünüş və Dil"}
         </TabsTrigger>
         
-        <TabsTrigger value="defaults" className="justify-start px-4 py-3.5 rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all text-[14px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-slate-600">
-          <Users className="w-5 h-5 mr-3" /> {t("settings.tabs.defaults") || "Dəvət Ayarları"}
+        <TabsTrigger value="defaults" className={SETTINGS_TAB_TRIGGER_CLASS}>
+          <span className={SETTINGS_TAB_ICON_CLASS}><Users className="w-4 h-4" /></span>
+          {t("settings.tabs.defaults") || "Dəvət Ayarları"}
         </TabsTrigger>
 
         {isSuperAdmin && (
-          <TabsTrigger value="company" className="justify-start px-4 py-3.5 rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all text-[14px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-slate-600">
-            <Building2 className="w-5 h-5 mr-3" /> {t("settings.tabs.company") || "Şirkət Profili"}
+          <TabsTrigger value="company" className={SETTINGS_TAB_TRIGGER_CLASS}>
+            <span className={SETTINGS_TAB_ICON_CLASS}><Building2 className="w-4 h-4" /></span>
+            {t("settings.tabs.company") || "Şirkət Profili"}
           </TabsTrigger>
         )}
 
-        <TabsTrigger value="notifications" className="justify-start px-4 py-3.5 rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all text-[14px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-slate-600">
-          <Bell className="w-5 h-5 mr-3" /> {t("settings.tabs.notifications") || "Bildirişlər"}
+        <TabsTrigger value="notifications" className={SETTINGS_TAB_TRIGGER_CLASS}>
+          <span className={SETTINGS_TAB_ICON_CLASS}><Bell className="w-4 h-4" /></span>
+          {t("settings.tabs.notifications") || "Bildirişlər"}
         </TabsTrigger>
         
-        <TabsTrigger value="security" className="justify-start px-4 py-3.5 rounded-xl data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md transition-all text-[14px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm hover:border-blue-300 dark:hover:border-slate-600">
-          <ShieldCheck className="w-5 h-5 mr-3" /> {t("settings.tabs.security") || "Təhlükəsizlik"}
+        <TabsTrigger value="security" className={SETTINGS_TAB_TRIGGER_CLASS}>
+          <span className={SETTINGS_TAB_ICON_CLASS}><ShieldCheck className="w-4 h-4" /></span>
+          {t("settings.tabs.security") || "Təhlükəsizlik"}
         </TabsTrigger>
       </TabsList>
 
@@ -386,14 +414,14 @@ export function SettingsClient({
       <div className="flex-1 min-w-0">
         
         {/* 1. GÖRÜNÜŞ VƏ DİL */}
-        <TabsContent value="appearance" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
+        <TabsContent value="appearance" className={SETTINGS_PANEL_CLASS}>
+          <h3 className={SETTINGS_HEADING_CLASS}>
             {t("settings.appearance.title") || "Görünüş və İnterfeys"}
           </h3>
           <div className="space-y-8 max-w-2xl">
             
             <div className="space-y-3">
-              <Label className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <Label className={SETTINGS_LABEL_CLASS}>
                 {t("settings.appearance.theme") || "İnterfeys Mövzusu (Theme)"}
               </Label>
               <div className="grid grid-cols-3 gap-4">
@@ -407,7 +435,12 @@ export function SettingsClient({
                     type="button"
                     onClick={() => setTheme(tObj.id)}
                     aria-pressed={theme === tObj.id}
-                    className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${theme === tObj.id ? 'border-primary ring-2 ring-primary/30 bg-primary/5 text-primary' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300 dark:hover:border-slate-600 text-slate-600 dark:text-slate-400'}`}
+                    className={cn(
+                      "flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all",
+                      theme === tObj.id
+                        ? "border-primary ring-2 ring-primary/30 bg-primary/5 text-primary"
+                        : "border-border bg-card hover:border-muted-foreground/40 text-muted-foreground"
+                    )}
                   >
                     <tObj.icon className="w-6 h-6" />
                     <span className="text-[13px] font-bold">{tObj.label}</span>
@@ -417,7 +450,7 @@ export function SettingsClient({
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <Label className={SETTINGS_LABEL_CLASS}>
                 {t("settings.appearance.colorTheme") || "Rəng Teması (Color Theme)"}
               </Label>
               <p className="text-xs font-medium text-muted-foreground -mt-1">
@@ -433,7 +466,12 @@ export function SettingsClient({
                       type="button"
                       onClick={() => setColorThemeDraft(ct.id)}
                       aria-pressed={isSelected}
-                      className={`relative flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 transition-all p-3 ${isSelected ? 'border-primary ring-2 ring-primary/30 bg-primary/5' : 'border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-gray-300 dark:hover:border-slate-500'}`}
+                      className={cn(
+                        "relative flex flex-col items-center justify-center gap-2 h-24 rounded-xl border-2 transition-all p-3",
+                        isSelected
+                          ? "border-primary ring-2 ring-primary/30 bg-primary/5"
+                          : "border-border bg-card hover:border-muted-foreground/40"
+                      )}
                     >
                       {isSelected && (
                         <span className="absolute top-1.5 right-1.5 flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground">
@@ -444,7 +482,7 @@ export function SettingsClient({
                         className="w-8 h-8 rounded-full shadow-sm ring-1 ring-black/5"
                         style={{ backgroundColor: ct.swatch }}
                       />
-                      <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200">
+                      <span className="text-[12px] font-bold text-foreground">
                         {t(`settings.appearance.colorThemes.${ct.labelKey}`) || ct.labelKey}
                       </span>
                     </button>
@@ -454,17 +492,20 @@ export function SettingsClient({
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <Label className={SETTINGS_LABEL_CLASS}>
                 {t("settings.appearance.language") || "Sistem Dili"}
               </Label>
-              <div className="relative">
-                <Globe className="absolute left-4 top-3.5 w-5 h-5 text-slate-400 dark:text-slate-500" />
-                <select value={language} onChange={(e) => setLanguage(e.target.value)} className="w-full h-12 pl-12 pr-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[14px] font-bold text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none transition-all cursor-pointer">
-                  <option value="az">🇦🇿 Azərbaycanca</option>
-                  <option value="en">🇬🇧 English</option>
-                  <option value="ru">🇷🇺 Русский</option>
-                </select>
-              </div>
+              <Select value={language} onValueChange={(v) => setLanguage(v ?? "az")}>
+                <SelectTrigger className="h-12 w-full rounded-xl border-input bg-muted pl-4 text-[14px] font-bold text-foreground focus:border-primary focus:bg-background">
+                  <Globe className="mr-1 size-4 text-muted-foreground" />
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="az">🇦🇿 Azərbaycanca</SelectItem>
+                  <SelectItem value="en">🇬🇧 English</SelectItem>
+                  <SelectItem value="ru">🇷🇺 Русский</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="pt-6 flex items-center justify-end gap-3">
@@ -485,77 +526,85 @@ export function SettingsClient({
         </TabsContent>
 
         {/* 2. DƏVƏTLƏR VƏ İCAZƏLƏR */}
-        <TabsContent value="defaults" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
+        <TabsContent value="defaults" className={SETTINGS_PANEL_CLASS}>
+          <h3 className={SETTINGS_HEADING_CLASS}>
             {t("settings.defaults.title") || "Onboarding & İcazələr"}
           </h3>
           
           <div className="space-y-8 max-w-2xl">
-            <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 p-4 rounded-xl text-[13px] font-medium leading-relaxed border border-blue-100 dark:border-blue-800/30">
+            <div className="bg-primary/5 text-foreground p-4 rounded-xl text-[13px] font-medium leading-relaxed border border-primary/20">
               {t("settings.defaults.desc") || "Yeni əməkdaş (Member) və ya müştəri (Guest) dəvət edərkən onlara sistem tərəfindən avtomatik veriləcək rolları və layihə girişlərini buradan idarə edə bilərsiniz."}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-2">
-                <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <Label className={SETTINGS_LABEL_SM_CLASS}>
                   {t("settings.defaults.memberRole") || "İşçilər üçün Rol (Member)"}
                 </Label>
-                <select value={defaultMemberRoleId} onChange={(e) => setDefaultMemberRoleId(e.target.value)} className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[14px] font-bold text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none cursor-pointer">
-                  <option value="">-- {t("settings.defaults.selectRole") || "Rol Seçin"} --</option>
-                  {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                <Select value={defaultMemberRoleId || undefined} onValueChange={(v) => setDefaultMemberRoleId(v ?? "")}>
+                  <SelectTrigger className={SETTINGS_SELECT_CLASS}>
+                    <SelectValue placeholder={`-- ${t("settings.defaults.selectRole") || "Rol Seçin"} --`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                <Label className={SETTINGS_LABEL_SM_CLASS}>
                   {t("settings.defaults.guestRole") || "Qonaqlar üçün Rol (Guest)"}
                 </Label>
-                <select value={defaultGuestRoleId} onChange={(e) => setDefaultGuestRoleId(e.target.value)} className="w-full h-12 px-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[14px] font-bold text-slate-700 dark:text-slate-200 focus:border-blue-500 focus:bg-white dark:focus:bg-slate-900 outline-none cursor-pointer">
-                  <option value="">-- {t("settings.defaults.selectRole") || "Rol Seçin"} --</option>
-                  {roles.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
-                </select>
+                <Select value={defaultGuestRoleId || undefined} onValueChange={(v) => setDefaultGuestRoleId(v ?? "")}>
+                  <SelectTrigger className={SETTINGS_SELECT_CLASS}>
+                    <SelectValue placeholder={`-- ${t("settings.defaults.selectRole") || "Rol Seçin"} --`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[13px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <Label className={SETTINGS_LABEL_CLASS}>
                 {t("settings.defaults.autoProjects") || "Avtomatik Qoşulacaqları Layihələr"}
               </Label>
-              <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 bg-slate-50/50 dark:bg-slate-800/30">
+              <div className="border border-border rounded-xl p-4 bg-muted/30">
                 <ProjectCheckboxList projects={projects} selected={defaultProjectIds} onChange={setDefaultProjectIds} />
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
-              <Button onClick={handleSaveDefaults} disabled={isDefaultsLoading} className="bg-slate-800 dark:bg-slate-100 hover:bg-slate-900 dark:hover:bg-white text-white dark:text-slate-900 font-bold px-8 py-5 rounded-xl">
+              <Button onClick={handleSaveDefaults} disabled={isDefaultsLoading} className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold px-8 py-5 rounded-xl">
                 {isDefaultsLoading ? (t("settings.defaults.saving") || "Saxlanılır...") : (t("settings.defaults.save") || "Dəvət Ayarlarını Yadda Saxla")}
               </Button>
             </div>
 
             {/* İCAZƏ QƏLİBİ (TEMPLATE) */}
-            <div className="pt-8 border-t border-gray-100 dark:border-slate-800">
+            <div className="pt-8 border-t border-border">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h4 className="text-[16px] font-black text-foreground">
                     {t("settings.defaults.permTemplate") || "İcazə Qəlibi (Permission Template)"}
                   </h4>
-                  <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400 mt-1">
+                  <p className="text-[12px] font-medium text-muted-foreground mt-1">
                     {t("settings.defaults.permDesc") || "Yuxarıda seçdiyiniz \"İşçi Rolu\"nun hansı hüquqlara sahib olacağını dəqiq tənzimləyin."}
                   </p>
                 </div>
-                <div className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-3 py-1 rounded-lg text-[12px] font-bold border border-indigo-100 dark:border-indigo-800/50">
+                <div className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-[12px] font-bold border border-primary/20">
                   {selectedPermissionIds.length} {t("settings.defaults.permissionsCount") || "icazə"}
                 </div>
               </div>
 
               {!defaultMemberRoleId ? (
-                <div className="p-6 text-center border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl text-slate-400 dark:text-slate-500 font-medium text-sm">
+                <div className="p-6 text-center border-2 border-dashed border-border rounded-xl text-muted-foreground font-medium text-sm">
                   {t("settings.defaults.selectMemberFirstInfo") || "İcazələri tənzimləmək üçün yuxarıdan İşçi Rolu seçin."}
                 </div>
               ) : (
-                <div className="border border-gray-200 dark:border-slate-700 rounded-xl p-4 bg-white dark:bg-slate-900 shadow-sm">
+                <div className="border border-border rounded-xl p-4 bg-card shadow-sm">
                   <PermissionCheckboxGroup t={t} permissions={permissions} selected={selectedPermissionIds} onChange={(ids) => setRolePermissionsMap((p) => ({ ...p, [defaultMemberRoleId]: ids }))} />
-                  <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 flex justify-end">
-                    <Button onClick={handleSavePermissionTemplate} disabled={isPermissionsLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl px-6 py-5">
+                  <div className="mt-4 pt-4 border-t border-border flex justify-end">
+                    <Button onClick={handleSavePermissionTemplate} disabled={isPermissionsLoading} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-6 py-5">
                       {isPermissionsLoading ? (t("settings.defaults.saving") || "Saxlanılır...") : (t("settings.defaults.permSave") || "İcazələri Təsdiqlə")}
                     </Button>
                   </div>
@@ -568,39 +617,39 @@ export function SettingsClient({
 
         {/* 3. ŞİRKƏT PROFİLİ (YALNIZ SUPER ADMIN) */}
         {isSuperAdmin && (
-          <TabsContent value="company" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
+          <TabsContent value="company" className={SETTINGS_PANEL_CLASS}>
+            <h3 className={SETTINGS_HEADING_CLASS}>
               {t("settings.company.title") || "Şirkət Rəsmi Məlumatları"}
             </h3>
             <div className="space-y-6 max-w-2xl">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="col-span-1 sm:col-span-2 space-y-2">
-                  <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Label className={SETTINGS_LABEL_SM_CLASS}>
                     {t("settings.company.name") || "Şirkətin Adı *"}
                   </Label>
-                  <Input value={companyForm.name} onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold" />
+                  <Input value={companyForm.name} onChange={(e) => setCompanyForm({...companyForm, name: e.target.value})} className="h-12 rounded-xl bg-muted border-input font-bold" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Label className={SETTINGS_LABEL_SM_CLASS}>
                     {t("settings.company.taxId") || "VÖEN / Qeydiyyat Kodu"}
                   </Label>
-                  <Input value={companyForm.taxId} onChange={(e) => setCompanyForm({...companyForm, taxId: e.target.value})} className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold" />
+                  <Input value={companyForm.taxId} onChange={(e) => setCompanyForm({...companyForm, taxId: e.target.value})} className="h-12 rounded-xl bg-muted border-input font-bold" />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Label className={SETTINGS_LABEL_SM_CLASS}>
                     {t("settings.company.website") || "Veb-sayt"}
                   </Label>
-                  <Input value={companyForm.website} onChange={(e) => setCompanyForm({...companyForm, website: e.target.value})} placeholder="https://..." className="h-12 rounded-xl bg-slate-50 dark:bg-slate-800 border-gray-200 dark:border-slate-700 font-bold" />
+                  <Input value={companyForm.website} onChange={(e) => setCompanyForm({...companyForm, website: e.target.value})} placeholder="https://..." className="h-12 rounded-xl bg-muted border-input font-bold" />
                 </div>
                 <div className="col-span-1 sm:col-span-2 space-y-2">
-                  <Label className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                  <Label className={SETTINGS_LABEL_SM_CLASS}>
                     {t("settings.company.desc") || "Fəaliyyət Sahəsi və Məqsəd"}
                   </Label>
-                  <textarea rows={4} value={companyForm.description} onChange={(e) => setCompanyForm({...companyForm, description: e.target.value})} className="w-full p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-[14px] font-medium outline-none focus:border-blue-500 resize-none" />
+                  <textarea rows={4} value={companyForm.description} onChange={(e) => setCompanyForm({...companyForm, description: e.target.value})} className="w-full p-4 rounded-xl border border-input bg-muted text-[14px] font-medium text-foreground outline-none focus:border-primary resize-none" />
                 </div>
               </div>
-              <div className="pt-6 flex justify-end border-t border-gray-100 dark:border-slate-800">
-                <Button onClick={handleSaveCompany} disabled={isCompanyLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-6 rounded-xl">
+              <div className="pt-6 flex justify-end border-t border-border">
+                <Button onClick={handleSaveCompany} disabled={isCompanyLoading} className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold px-8 py-6 rounded-xl">
                   {isCompanyLoading ? (t("settings.company.saving") || "Yadda saxlanılır...") : (t("settings.company.save") || "Şirkət Profilini Yenilə")}
                 </Button>
               </div>
@@ -609,48 +658,48 @@ export function SettingsClient({
         )}
 
         {/* 4. BİLDİRİŞLƏR (NOTIFICATIONS) */}
-        <TabsContent value="notifications" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
+        <TabsContent value="notifications" className={SETTINGS_PANEL_CLASS}>
+          <h3 className={SETTINGS_HEADING_CLASS}>
             {t("settings.notifications.title") || "Bildiriş Ayarları"}
           </h3>
-          <div className="max-w-2xl py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-            <Bell className="w-12 h-12 text-slate-300 dark:text-slate-600 mb-3" />
-            <h4 className="text-[15px] font-bold text-slate-700 dark:text-slate-300">
+          <div className="max-w-2xl py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-border rounded-xl bg-muted/50">
+            <Bell className="w-12 h-12 text-muted-foreground/40 mb-3" />
+            <h4 className="text-[15px] font-bold text-foreground">
               {t("settings.notifications.wipTitle") || "Bildiriş Mərkəzi Hazırlanır"}
             </h4>
-            <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+            <p className="text-[13px] text-muted-foreground mt-1 max-w-sm">
               {t("settings.notifications.wipDesc") || "Email xəbərdarlıqları, səsli xəbərdarlıqlar və brauzer (push) bildirişlərinin fərdiləşdirilməsi növbəti yenilənmədə aktiv olacaq."}
             </p>
           </div>
         </TabsContent>
 
         {/* 5. TƏHLÜKƏSİZLİK (SECURITY) */}
-        <TabsContent value="security" className="mt-0 border border-gray-200/80 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900 p-6 md:p-8 shadow-sm animate-in fade-in zoom-in-95 duration-200">
-          <h3 className="text-xl font-black mb-6 text-foreground border-b border-gray-100 dark:border-slate-800 pb-4">
+        <TabsContent value="security" className={SETTINGS_PANEL_CLASS}>
+          <h3 className={SETTINGS_HEADING_CLASS}>
             {t("settings.security.title") || "Hesab Təhlükəsizliyi"}
           </h3>
           <div className="space-y-6 max-w-2xl">
-            <div className="p-5 border border-gray-200 dark:border-slate-700 rounded-xl bg-slate-50 dark:bg-slate-800/50">
-              <h4 className="text-[14px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 mb-4">
-                <Lock className="w-4 h-4 text-slate-500" /> {t("settings.security.updatePass") || "Şifrəni Yenilə"}
+            <div className="p-5 border border-border rounded-xl bg-muted/50">
+              <h4 className="text-[14px] font-bold text-foreground flex items-center gap-2 mb-4">
+                <Lock className="w-4 h-4 text-muted-foreground" /> {t("settings.security.updatePass") || "Şifrəni Yenilə"}
               </h4>
               <div className="space-y-4">
-                <Input type="password" placeholder={t("settings.security.oldPass") || "Köhnə şifrə"} className="h-11 rounded-lg bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700" />
-                <Input type="password" placeholder={t("settings.security.newPass") || "Yeni şifrə"} className="h-11 rounded-lg bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700" />
-                <Button className="bg-slate-800 dark:bg-slate-200 text-white dark:text-slate-900 font-bold rounded-lg px-6">
+                <Input type="password" placeholder={t("settings.security.oldPass") || "Köhnə şifrə"} className="h-11 rounded-lg bg-card border-input" />
+                <Input type="password" placeholder={t("settings.security.newPass") || "Yeni şifrə"} className="h-11 rounded-lg bg-card border-input" />
+                <Button className="bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold rounded-lg px-6">
                   {t("settings.security.changePass") || "Şifrəni Dəyiş"}
                 </Button>
               </div>
             </div>
 
-            <div className="p-5 border border-red-100 dark:border-red-900/30 rounded-xl bg-red-50/50 dark:bg-red-900/10">
-              <h4 className="text-[14px] font-bold text-red-800 dark:text-red-400 flex items-center gap-2 mb-2">
+            <div className="p-5 border border-destructive/20 rounded-xl bg-destructive/5">
+              <h4 className="text-[14px] font-bold text-destructive flex items-center gap-2 mb-2">
                 <LogOut className="w-4 h-4" /> {t("settings.security.logoutAll") || "Bütün Cihazlardan Çıxış Et"}
               </h4>
-              <p className="text-[13px] text-red-600/80 dark:text-red-400/80 mb-4">
+              <p className="text-[13px] text-destructive/80 mb-4">
                 {t("settings.security.logoutDesc") || "Əgər hesabınızın başqa bir cihazda açıq qaldığından şübhələnirsinizsə, bu düyməyə basaraq bütün aktiv sessiyaları sonlandıra bilərsiniz."}
               </p>
-              <Button variant="destructive" className="font-bold rounded-lg px-6 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white">
+              <Button variant="destructive" className="font-bold rounded-lg px-6">
                 {t("settings.security.logoutBtn") || "İndi Çıxış Et"}
               </Button>
             </div>

@@ -173,7 +173,7 @@ function PermissionsDialog({
                   return (
                     <div
                       key={perm.id}
-                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-[hsl(var(--border))]"
+                      className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-border"
                     >
                       <div className="min-w-0">
                         <p className="text-sm font-medium truncate">{perm.name}</p>
@@ -260,7 +260,7 @@ export function DepartmentPeopleTab({
         {canInvite && (
           <Dialog open={isInviteOpen} onOpenChange={(open) => { setIsInviteOpen(open); if (!open) { setInviteError(""); } }}>
             <DialogTrigger asChild>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button>
                 <Mail className="w-4 h-4 mr-2" /> {t("departmentPeopleTab.inviteBtn") || "Şöbəyə Dəvət Et"}
               </Button>
             </DialogTrigger>
@@ -289,7 +289,7 @@ export function DepartmentPeopleTab({
                   <Label htmlFor="deptInviteRole">{t("departmentPeopleTab.roleLabel") || "Rol"}</Label>
                   <select
                     id="deptInviteRole"
-                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                     value={inviteRoleId}
                     onChange={(e) => setInviteRoleId(e.target.value)}
                   >
@@ -300,7 +300,7 @@ export function DepartmentPeopleTab({
                   </select>
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button type="submit" disabled={loading}>
                     {loading ? (t("departmentPeopleTab.sending") || "Göndərilir...") : (t("departmentPeopleTab.sendInvite") || "Dəvət Göndər")}
                   </Button>
                 </DialogFooter>
@@ -310,7 +310,7 @@ export function DepartmentPeopleTab({
         )}
       </div>
 
-      <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         <Table>
           <TableHeader className="bg-muted/50">
             <TableRow>
@@ -333,7 +333,7 @@ export function DepartmentPeopleTab({
                       <span className="font-medium text-sm">
                         {member.name} {member.id === currentUserId && <span className="text-xs text-muted-foreground">{t("departmentPeopleTab.you") || "(Siz)"}</span>}
                       </span>
-                      <span className="text-xs text-[hsl(var(--muted-foreground))]">{member.jobTitle || member.email}</span>
+                      <span className="text-xs text-muted-foreground">{member.jobTitle || member.email}</span>
                     </div>
                   </div>
                 </TableCell>

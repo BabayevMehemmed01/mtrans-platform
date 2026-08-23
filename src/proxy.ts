@@ -37,9 +37,9 @@ export default auth((req: NextRequest & { auth: any }) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Auth varsa və public route-dursa → Dashboard-a yönləndir
+  // Auth varsa və public route-dursa → Ana səhifə konsepti yoxdur, birbaşa Mənim İşlərimə yönləndir
   if (session && isPublicRoute) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/dashboard/my-work", req.url));
   }
 
   return NextResponse.next();

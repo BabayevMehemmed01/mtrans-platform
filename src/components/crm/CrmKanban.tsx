@@ -167,7 +167,7 @@ export default function CrmKanban({ board }: CrmKanbanProps) {
   const handleDeleted = (dealId: string) => setDeals((prev) => prev.filter((d) => d.id !== dealId));
 
   if (loading) {
-    return <div className="flex h-64 items-center justify-center text-sm text-[hsl(var(--muted-foreground))]">{t("crmKanban.loading") || "Yüklənir..."}</div>;
+    return <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">{t("crmKanban.loading") || "Yüklənir..."}</div>;
   }
 
   return (

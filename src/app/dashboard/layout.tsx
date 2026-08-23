@@ -5,6 +5,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
 import { CommandPalette } from "@/components/layout/CommandPalette";
+import { PageTransition } from "@/components/layout/PageTransition";
 import { CallOverlay } from "@/components/chat/CallOverlay";
 
 // =============================================================================
@@ -37,8 +38,8 @@ export default async function DashboardLayout({
           <div className="flex flex-col flex-1 min-w-0 overflow-hidden bg-background">
             <Header />
             <main className="flex-1 overflow-hidden flex flex-col">
-              <div className="flex-1 overflow-y-auto p-6 animate-fade-in">
-                {children}
+              <div className="flex-1 overflow-y-auto p-6">
+                <PageTransition>{children}</PageTransition>
               </div>
             </main>
           </div>

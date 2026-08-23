@@ -75,7 +75,7 @@ export function MarketingAdsTab({ campaigns, config, loading, onOpenCreate, onCa
           </Button>
         </div>
         <div className="rounded-2xl border border-dashed border-pink-200 bg-pink-50/40 p-10 text-center shadow-sm">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-pink-100">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-card shadow-sm ring-1 ring-pink-200 dark:ring-pink-900/40">
             <Lock className="h-6 w-6 text-pink-500" />
           </div>
           <h3 className="text-sm font-semibold">Instagram Ads Quraşdırma Tələb Olunur</h3>

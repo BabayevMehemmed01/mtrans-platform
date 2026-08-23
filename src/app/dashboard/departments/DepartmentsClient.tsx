@@ -221,7 +221,7 @@ export function DepartmentsClient({
                   <Label htmlFor="headUser">{t("departmentsClient.deptHead") || "Şöbə Rəhbəri"}</Label>
                   <select
                     id="headUser"
-                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                     value={headUserId}
                     onChange={(e) => setHeadUserId(e.target.value)}
                   >
@@ -236,7 +236,7 @@ export function DepartmentsClient({
                     type="checkbox"
                     checked={isDefault}
                     onChange={(e) => setIsDefault(e.target.checked)}
-                    className="h-4 w-4 rounded border-[hsl(var(--input))]"
+                    className="h-4 w-4 rounded border-input"
                   />
                   <span className="flex items-center gap-1.5">
                     <Lock className="w-3.5 h-3.5 text-muted-foreground" />
@@ -284,7 +284,7 @@ export function DepartmentsClient({
               <Label htmlFor="editHeadUser">{t("departmentsClient.deptHead") || "Şöbə Rəhbəri"}</Label>
               <select
                 id="editHeadUser"
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                 value={editHeadUserId}
                 onChange={(e) => setEditHeadUserId(e.target.value)}
               >
@@ -300,7 +300,7 @@ export function DepartmentsClient({
                   type="checkbox"
                   checked={editIsDefault}
                   onChange={(e) => setEditIsDefault(e.target.checked)}
-                  className="h-4 w-4 rounded border-[hsl(var(--input))]"
+                  className="h-4 w-4 rounded border-input"
                 />
                 <span className="flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-muted-foreground" />
@@ -309,7 +309,7 @@ export function DepartmentsClient({
               </label>
             )}
             <DialogFooter>
-              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="submit" disabled={loading}>
                 {loading ? (t("departmentsClient.saving") || "Yadda saxlanılır...") : (t("departmentsClient.save") || "Yadda saxla")}
               </Button>
             </DialogFooter>
@@ -326,7 +326,7 @@ export function DepartmentsClient({
 
             return (
               <Link key={dept.id} href={`/dashboard/departments/${dept.id}`} className="block group">
-                <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-sm">
+                <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
                   {/* Colored banner (Classroom-style header) */}
                   <div
                     className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
@@ -399,7 +399,7 @@ export function DepartmentsClient({
                       <p className="text-sm text-muted-foreground line-clamp-2">{dept.description}</p>
                     )}
 
-                    <div className="mt-auto flex items-center gap-4 border-t border-[hsl(var(--border))] pt-3 text-sm text-muted-foreground">
+                    <div className="mt-auto flex items-center gap-4 border-t border-border pt-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <Users className="h-4 w-4" />
                         {(t("departmentsClient.workersCount") || "{count} işçi").replace("{count}", String(dept._count?.users ?? 0))}
@@ -416,7 +416,7 @@ export function DepartmentsClient({
           })}
         </div>
       ) : (
-        <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-[hsl(var(--border))] py-16 text-center">
+        <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-border py-16 text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <Building2 className="h-8 w-8 text-muted-foreground/60" />
           </div>

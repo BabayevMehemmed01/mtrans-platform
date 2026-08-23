@@ -38,7 +38,16 @@ const MY_WORK_TAB_KEYS: Record<string, string> = {
 
 function useBreadcrumbs(t: (key: string) => string) {
   const pathname = usePathname();
-  const segments = pathname.split("/").filter(Boolean);
+  // "Ana Səhifə" konsepti ləğv edilib — kök "dashboard" seqmentini breadcrumb-da göstərmirik,
+  // lakin link-lər hələ də /dashboard prefiksinə ehtiyac duyur.
+  const rawSegments = pathname.split("/").filter(Boolean);
+  const hasDashboardPrefix = rawSegments[0] === "dashboard";
+  const segments = hasDashboardPrefix ? rawSegments.slice(1) : rawSegments;
+  const basePrefix = hasDashboardPrefix ? "/dashboard" : "";
+
+  const buildHref = (uptoIndex: number) =>
+    basePrefix + "/" + segments.slice(0, uptoIndex + 1).join("/");
+
   return segments.map((seg, i) => {
     // Əgər seqment "my-work" alt-tabıdırsa, uyğun tərcümə açarından oxunur.
     // Tapılmazsa seqmentin özünü böyük hərflə yazacaq.
@@ -46,7 +55,7 @@ function useBreadcrumbs(t: (key: string) => string) {
       const tabKey = MY_WORK_TAB_KEYS[seg];
       return {
         label: t(tabKey) !== tabKey ? t(tabKey) : seg,
-        href: "/" + segments.slice(0, i + 1).join("/"),
+        href: buildHref(i),
         isLast: i === segments.length - 1,
       };
     }
@@ -56,7 +65,7 @@ function useBreadcrumbs(t: (key: string) => string) {
 
     return {
       label,
-      href: "/" + segments.slice(0, i + 1).join("/"),
+      href: buildHref(i),
       isLast: i === segments.length - 1,
     };
   });
@@ -115,22 +124,22 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex items-center h-14 px-4 gap-4 bg-[hsl(var(--card))] border-b border-[hsl(var(--border))] backdrop-blur-sm">
+    <header className="sticky top-0 z-30 flex items-center h-14 px-4 gap-4 bg-card border-b border-border backdrop-blur-sm">
       {/* ─── Breadcrumb Naviqasiyası ─── */}
       <nav className="flex items-center gap-1 text-sm flex-1 min-w-0">
         {breadcrumbs.map((crumb, index) => (
           <span key={crumb.href} className="flex items-center gap-1">
             {index > 0 && (
-              <span className="text-[hsl(var(--muted-foreground))]">/</span>
+              <span className="text-muted-foreground">/</span>
             )}
             {crumb.isLast ? (
-              <span className="truncate font-semibold text-[hsl(var(--foreground))]">
+              <span className="truncate font-semibold text-foreground">
                 {crumb.label}
               </span>
             ) : (
               <Link
                 href={crumb.href}
-                className="truncate text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+                className="truncate text-muted-foreground hover:text-foreground"
               >
                 {crumb.label}
               </Link>
@@ -142,11 +151,11 @@ export function Header() {
       {/* ─── Qlobal Axtarış Düyməsi (Command Palette Trigger) ─── */}
       <button
         onClick={() => setPaletteOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] text-sm text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--accent))] transition-colors min-w-[200px] hidden md:flex"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border text-sm text-muted-foreground hover:bg-accent transition-colors min-w-[200px] hidden md:flex"
       >
         <Search className="w-3.5 h-3.5" />
         <span className="flex-1 text-left">{t("header.search") || "Axtar..."}</span>
-        <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-[hsl(var(--muted))] rounded border border-[hsl(var(--border))]">
+        <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
           ⌘K
         </kbd>
       </button>
@@ -155,12 +164,12 @@ export function Header() {
       <div className="relative">
         <button
           onClick={() => setNotifMenuOpen((prev) => !prev)}
-          className="relative p-2 rounded-lg hover:bg-[hsl(var(--accent))] transition-colors"
+          className="relative p-2 rounded-lg hover:bg-accent transition-colors"
           title={t("header.notifications") || "Bildirişlər"}
         >
-          <Bell className="w-4 h-4 text-[hsl(var(--muted-foreground))]" />
+          <Bell className="w-4 h-4 text-muted-foreground" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 bg-[hsl(var(--destructive))] rounded-full ring-2 ring-[hsl(var(--card))]" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full ring-2 ring-card" />
           )}
         </button>
 
@@ -171,13 +180,13 @@ export function Header() {
               className="fixed inset-0 z-30"
               onClick={() => setNotifMenuOpen(false)}
             />
-            <div className="absolute right-0 top-full mt-1 z-40 w-80 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] shadow-xl animate-scale-in overflow-hidden">
-              <div className="flex items-center justify-between p-3 border-b border-[hsl(var(--border))]">
+            <div className="absolute right-0 top-full mt-1 z-40 w-80 rounded-xl border border-border bg-card shadow-xl animate-scale-in overflow-hidden">
+              <div className="flex items-center justify-between p-3 border-b border-border">
                 <p className="text-sm font-semibold">{t("header.notifications") || "Bildirişlər"}</p>
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllRead}
-                    className="flex items-center gap-1 text-xs text-[hsl(var(--primary))] hover:underline"
+                    className="flex items-center gap-1 text-xs text-primary hover:underline"
                   >
                     <CheckCheck className="w-3.5 h-3.5" />
                     {t("header.markAllRead") || "Hamısını oxunmuş et"}
@@ -186,7 +195,7 @@ export function Header() {
               </div>
               <div className="max-h-80 overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
-                  <p className="p-4 text-sm text-center text-[hsl(var(--muted-foreground))]">
+                  <p className="p-4 text-sm text-center text-muted-foreground">
                     {t("header.noNotifications") || "Bildiriş yoxdur"}
                   </p>
                 ) : (
@@ -195,19 +204,19 @@ export function Header() {
                       key={notif.id}
                       onClick={() => handleNotificationClick(notif)}
                       className={cn(
-                        "w-full text-left px-3 py-2.5 border-b border-[hsl(var(--border))] last:border-b-0 hover:bg-[hsl(var(--accent))] transition-colors",
-                        !notif.isRead && "bg-[hsl(var(--primary)/0.05)]"
+                        "w-full text-left px-3 py-2.5 border-b border-border last:border-b-0 hover:bg-accent transition-colors",
+                        !notif.isRead && "bg-primary/5"
                       )}
                     >
                       <div className="flex items-start gap-2">
                         {!notif.isRead && (
-                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[hsl(var(--primary))] flex-shrink-0" />
+                          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                         )}
                         <div className={cn("min-w-0", notif.isRead && "pl-3.5")}>
-                          <p className="text-xs text-[hsl(var(--foreground))] leading-snug">
+                          <p className="text-xs text-foreground leading-snug">
                             {notif.message}
                           </p>
-                          <p className="text-[10px] text-[hsl(var(--muted-foreground))] mt-1">
+                          <p className="text-[10px] text-muted-foreground mt-1">
                             {timeAgo(notif.createdAt)}
                           </p>
                         </div>

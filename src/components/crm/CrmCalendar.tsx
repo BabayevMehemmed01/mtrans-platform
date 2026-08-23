@@ -87,10 +87,10 @@ export default function CrmCalendar({ board }: CrmCalendarProps) {
         </div>
       </div>
 
-      <div className="border rounded-xl overflow-hidden bg-white">
-        <div className="grid grid-cols-7 border-b bg-[hsl(var(--muted)/0.4)]">
+      <div className="border rounded-xl overflow-hidden bg-card">
+        <div className="grid grid-cols-7 border-b bg-muted/40">
           {weekLabels.map((label) => (
-            <div key={label} className="px-2 py-2 text-center text-xs font-semibold text-[hsl(var(--muted-foreground))] uppercase tracking-wide">
+            <div key={label} className="px-2 py-2 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               {label}
             </div>
           ))}
@@ -104,16 +104,16 @@ export default function CrmCalendar({ board }: CrmCalendarProps) {
             return (
               <div
                 key={day.toISOString()}
-                className={`min-h-[110px] border-b border-r p-1.5 ${inMonth ? "bg-white" : "bg-[hsl(var(--muted)/0.25)]"}`}
+                className={`min-h-[110px] border-b border-r p-1.5 ${inMonth ? "bg-card" : "bg-muted/25"}`}
               >
                 <div className="flex justify-end mb-1">
                   <span
                     className={`text-xs w-6 h-6 flex items-center justify-center rounded-full ${
                       today
-                        ? "bg-[hsl(var(--primary))] text-white font-semibold"
+                        ? "bg-primary text-white font-semibold"
                         : inMonth
-                          ? "text-[hsl(var(--foreground))]"
-                          : "text-[hsl(var(--muted-foreground)/0.6)]"
+                          ? "text-foreground"
+                          : "text-muted-foreground/60"
                     }`}
                   >
                     {format(day, "d")}
@@ -137,7 +137,7 @@ export default function CrmCalendar({ board }: CrmCalendarProps) {
                     );
                   })}
                   {dayDeals.length > 3 && (
-                    <p className="text-[10px] text-[hsl(var(--muted-foreground))] px-1">+{dayDeals.length - 3}</p>
+                    <p className="text-[10px] text-muted-foreground px-1">+{dayDeals.length - 3}</p>
                   )}
                 </div>
               </div>

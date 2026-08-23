@@ -22,7 +22,7 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = getTranslation("az");
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard/my-work";
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});

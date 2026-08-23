@@ -2,7 +2,7 @@ import * as React from "react"
 
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement>>(
   ({ className, ...props }, ref) => (
-    <div className="relative w-full overflow-auto rounded-xl border border-[hsl(var(--border))] bg-white">
+    <div className="relative w-full overflow-auto rounded-xl border border-border bg-card">
       <table ref={ref} className={`w-full caption-bottom text-sm ${className}`} {...props} />
     </div>
   )
@@ -11,7 +11,7 @@ Table.displayName = "Table"
 
 const TableHeader = React.forwardRef<HTMLTableSectionElement, React.HTMLAttributes<HTMLTableSectionElement>>(
   ({ className, ...props }, ref) => (
-    <thead ref={ref} className={`[&_tr]:border-b [&_tr]:border-[hsl(var(--border))] bg-[hsl(var(--muted)/0.5)] ${className}`} {...props} />
+    <thead ref={ref} className={`[&_tr]:border-b [&_tr]:border-border bg-muted/50 ${className}`} {...props} />
   )
 )
 TableHeader.displayName = "TableHeader"
@@ -27,7 +27,7 @@ const TableRow = React.forwardRef<HTMLTableRowElement, React.HTMLAttributes<HTML
   ({ className, ...props }, ref) => (
     <tr
       ref={ref}
-      className={`border-b border-[hsl(var(--border))] transition-colors hover:bg-[hsl(var(--muted)/0.3)] data-[state=selected]:bg-[hsl(var(--muted))] ${className}`}
+      className={`border-b border-border transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted ${className}`}
       {...props}
     />
   )
@@ -38,7 +38,7 @@ const TableHead = React.forwardRef<HTMLTableCellElement, React.ThHTMLAttributes<
   ({ className, ...props }, ref) => (
     <th
       ref={ref}
-      className={`h-12 px-4 text-left align-middle font-medium text-[hsl(var(--muted-foreground))] [&:has([role=checkbox])]:pr-0 ${className}`}
+      className={`h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0 ${className}`}
       {...props}
     />
   )

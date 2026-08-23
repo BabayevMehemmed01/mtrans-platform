@@ -69,7 +69,7 @@ export function DepartmentTabs({
   return (
     <div className="flex flex-col h-full">
       {/* Tab Bar */}
-      <div className="flex-shrink-0 border-b border-[hsl(var(--border))] bg-white px-6">
+      <div className="flex-shrink-0 border-b border-border bg-card px-6">
         <div className="flex items-center gap-1">
           {TABS.map((tab) => {
             const Icon = tab.icon;
@@ -81,8 +81,8 @@ export function DepartmentTabs({
                 className={cn(
                   "inline-flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all",
                   isActive
-                    ? "border-blue-600 text-blue-600"
-                    : "border-transparent text-[hsl(var(--muted-foreground))] hover:text-foreground hover:border-[hsl(var(--border))]"
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -113,7 +113,7 @@ export function DepartmentTabs({
 
         {activeTab === "calendar" && (
           <div className="p-6">
-            <div className="bg-white rounded-2xl border border-[hsl(var(--border))] p-6 max-w-3xl">
+            <div className="bg-card rounded-2xl border border-border p-6 max-w-3xl shadow-sm transition-all hover:shadow-md">
               <WorkCalendar tasks={calendarTasks} />
             </div>
           </div>

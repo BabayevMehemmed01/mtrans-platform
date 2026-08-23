@@ -56,7 +56,7 @@ export default async function DepartmentsPage() {
           <h2 className="text-2xl font-bold tracking-tight">
             {t("departments.title") || "Şöbələr"}
           </h2>
-          <p className="text-[hsl(var(--muted-foreground))]">
+          <p className="text-muted-foreground">
             {t("departments.description") || "Şirkətinizin strukturunu və şöbələrini idarə edin."}
           </p>
         </div>

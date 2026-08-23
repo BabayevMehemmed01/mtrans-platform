@@ -53,7 +53,7 @@ export default async function RolesPage() {
           <h2 className="text-2xl font-bold tracking-tight">
             {t("rolesPage.title") || "Rollar və İcazələr"}
           </h2>
-          <p className="text-[hsl(var(--muted-foreground))]">
+          <p className="text-muted-foreground">
             {t("rolesPage.description") || "Şirkət daxilindəki rolları və sistemə giriş icazələrini (RBAC) idarə edin."}
           </p>
         </div>

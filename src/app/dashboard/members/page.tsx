@@ -66,7 +66,7 @@ export default async function MembersPage() {
           <h2 className="text-2xl font-bold tracking-tight">
             {t("membersPage.title") || "İnsanlar"}
           </h2>
-          <p className="text-[hsl(var(--muted-foreground))]">
+          <p className="text-muted-foreground">
             {t("membersPage.description") || "Şirkətinizə üzvlər əlavə edin, axtarış edin və komandanı idarə edin."}
           </p>
         </div>

@@ -34,6 +34,7 @@
   },
   "header": {
     "search": "Search...",
+    "commandPlaceholder": "Search projects, tasks, people...",
     "notifications": "Notifications",
     "markAllRead": "Mark all as read",
     "noNotifications": "No notifications",

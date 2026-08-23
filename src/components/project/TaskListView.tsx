@@ -19,17 +19,17 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TaskDetailSheet } from "@/components/kanban/TaskDetailSheet";
-import type { KanbanTask, TaskMember, KanbanLabel } from "@/components/kanban/types";
+import type { KanbanTask, TaskMember } from "@/components/kanban/types";
 import { useSession } from "next-auth/react"; // YENİ: Tərcümə üçün
 import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
 import { toPlannerStatus } from "@/lib/task-status";
 
 // ── Priority config ──────────────────────────────────────────────────────────
 const PRIORITY_MAP = {
-  URGENT: { label: "Təcili", color: "text-red-500", bg: "bg-red-50 text-red-600 border border-red-200" },
-  HIGH:   { label: "Yüksək", color: "text-orange-500", bg: "bg-orange-50 text-orange-600 border border-orange-200" },
-  MEDIUM: { label: "Orta",   color: "text-amber-500", bg: "bg-amber-50 text-amber-600 border border-amber-200" },
-  LOW:    { label: "Aşağı",  color: "text-gray-500",  bg: "bg-gray-50 text-gray-600 border border-gray-200" },
+  URGENT: { label: "Təcili", color: "text-red-500", bg: "bg-red-50 text-red-600 border border-red-200 dark:bg-red-500/10 dark:text-red-400 dark:border-red-500/30" },
+  HIGH:   { label: "Yüksək", color: "text-orange-500", bg: "bg-orange-50 text-orange-600 border border-orange-200 dark:bg-orange-500/10 dark:text-orange-400 dark:border-orange-500/30" },
+  MEDIUM: { label: "Orta",   color: "text-amber-500", bg: "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30" },
+  LOW:    { label: "Aşağı",  color: "text-muted-foreground",  bg: "bg-muted text-muted-foreground border border-border" },
 } as const;
 
 const STATUS_MAP = {
@@ -49,7 +49,6 @@ interface TaskListViewProps {
   projectId: string;
   tasks: KanbanTask[];
   members: TaskMember[];
-  labels: KanbanLabel[];
   onTaskUpdated: (task: KanbanTask) => void;
   onTaskDeleted: (taskId: string) => void;
   onTaskCreated: (task: KanbanTask) => void;
@@ -109,7 +108,7 @@ function AddTaskRow({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50 transition-colors rounded-lg mt-1"
+        className="flex items-center gap-2 w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors rounded-lg mt-1"
       >
         <Plus className="w-4 h-4" />
         {t("taskListView.addTaskBtn") || "Tapşırıq əlavə et"}
@@ -118,8 +117,8 @@ function AddTaskRow({
   }
 
   return (
-    <div className="flex items-center gap-3 px-4 py-2.5 bg-blue-50/50 rounded-lg border border-blue-200 mt-1 shadow-sm">
-      <Circle className="w-4 h-4 text-blue-400 flex-shrink-0" />
+    <div className="flex items-center gap-3 px-4 py-2.5 bg-primary/5 rounded-lg border border-primary/20 mt-1 shadow-sm">
+      <Circle className="w-4 h-4 text-primary/60 flex-shrink-0" />
       <input
         autoFocus
         value={title}
@@ -129,11 +128,11 @@ function AddTaskRow({
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
         placeholder={t("taskListView.addTaskPlaceholder") || "Tapşırıq adı yazın, Enter-ə basın..."}
-        className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-blue-400/70"
+        className="flex-1 bg-transparent text-sm font-medium outline-none placeholder:text-primary/50 text-foreground"
         disabled={loading}
       />
-      {loading && <Loader2 className="w-4 h-4 animate-spin text-blue-500" />}
-      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-xs font-semibold text-gray-500 hover:text-gray-800">
+      {loading && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-xs font-semibold text-muted-foreground hover:text-foreground">
         {t("taskListView.cancel") || "Ləğv et"}
       </button>
     </div>
@@ -180,7 +179,7 @@ function AddSubtaskRow({
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-blue-600 hover:bg-blue-50/50 transition-colors rounded-lg mt-1"
+        className="flex items-center gap-2 w-full px-2 py-1.5 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors rounded-lg mt-1"
       >
         <Plus className="w-3.5 h-3.5" />
         {t("taskListView.addSubtaskBtn") || "Alt tapşırıq əlavə et"}
@@ -189,8 +188,8 @@ function AddSubtaskRow({
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 bg-blue-50/50 rounded-lg border border-blue-200 mt-1">
-      <Circle className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+    <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-lg border border-primary/20 mt-1">
+      <Circle className="w-3.5 h-3.5 text-primary/60 flex-shrink-0" />
       <input
         autoFocus
         value={title}
@@ -200,11 +199,11 @@ function AddSubtaskRow({
           if (e.key === "Escape") { setOpen(false); setTitle(""); }
         }}
         placeholder={t("taskListView.addSubtaskPlaceholder") || "Alt tapşırıq adı yazın, Enter-ə basın..."}
-        className="flex-1 bg-transparent text-xs outline-none placeholder:text-blue-400/70"
+        className="flex-1 bg-transparent text-xs outline-none placeholder:text-primary/50 text-foreground"
         disabled={loading}
       />
-      {loading && <Loader2 className="w-3 h-3 animate-spin text-blue-500" />}
-      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-[11px] font-semibold text-gray-500 hover:text-gray-800">
+      {loading && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
+      <button onClick={() => { setOpen(false); setTitle(""); }} className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">
         {t("taskListView.cancel") || "Ləğv et"}
       </button>
     </div>
@@ -260,14 +259,14 @@ function StatusBadge({
         {t(`status.${status}`) || st?.label}
       </button>
       {open && (
-        <div className="absolute left-0 top-7 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-36">
+        <div className="absolute left-0 top-7 z-20 bg-popover border border-border rounded-xl shadow-lg p-1 w-36">
           {(["NOT_PLANNED", "IN_PROGRESS", "REVIEW", "DONE", "CANCELLED"] as const).map((key) => {
             const val = STATUS_MAP[key];
             return (
             <button
               key={key}
               onClick={() => changeStatus(key)}
-              className="flex items-center gap-2 w-full px-2.5 py-1.5 text-[11px] font-medium rounded-lg hover:bg-gray-50 transition-colors text-left"
+              className="flex items-center gap-2 w-full px-2.5 py-1.5 text-[11px] font-medium rounded-lg hover:bg-accent transition-colors text-left text-foreground"
             >
               <div
                 className="w-2.5 h-2.5 rounded-full"
@@ -329,30 +328,30 @@ function AssigneeCell({
           <>
             <Avatar className={avatarSize}>
               <AvatarImage src={assignee.avatar ?? undefined} />
-              <AvatarFallback className={cn("bg-blue-100 text-blue-700 font-medium", compact ? "text-[9px]" : "text-[10px]")}>
+              <AvatarFallback className={cn("bg-primary/10 text-primary font-medium", compact ? "text-[9px]" : "text-[10px]")}>
                 {getInitials(assignee.name ?? "")}
               </AvatarFallback>
             </Avatar>
             {!compact && (
-              <span className="text-[12px] font-medium text-gray-700 hidden xl:block truncate max-w-[80px]">
+              <span className="text-[12px] font-medium text-foreground hidden xl:block truncate max-w-[80px]">
                 {assignee.name?.split(" ")[0]}
               </span>
             )}
           </>
         ) : (
-          <div className={cn(avatarSize, "rounded-full border border-dashed border-gray-400 flex items-center justify-center hover:border-gray-600 transition-colors bg-gray-50")}>
-            <User className="w-3 h-3 text-gray-400" />
+          <div className={cn(avatarSize, "rounded-full border border-dashed border-muted-foreground/40 flex items-center justify-center hover:border-muted-foreground transition-colors bg-muted")}>
+            <User className="w-3 h-3 text-muted-foreground" />
           </div>
         )}
       </button>
       {open && (
-        <div className="absolute right-0 top-8 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-1 w-48 max-h-56 overflow-y-auto">
+        <div className="absolute right-0 top-8 z-20 bg-popover border border-border rounded-xl shadow-lg p-1 w-48 max-h-56 overflow-y-auto">
           <button
             onClick={() => assign(null)}
-            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left text-gray-500 font-medium"
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors text-left text-muted-foreground font-medium"
           >
-            <div className="w-5 h-5 rounded-full border border-dashed border-gray-400 flex items-center justify-center flex-shrink-0 bg-gray-50">
-              <User className="w-3 h-3 text-gray-400" />
+            <div className="w-5 h-5 rounded-full border border-dashed border-muted-foreground/40 flex items-center justify-center flex-shrink-0 bg-muted">
+              <User className="w-3 h-3 text-muted-foreground" />
             </div>
             {t("taskListView.notAssigned") || "Təyin edilməyib"}
           </button>
@@ -360,11 +359,11 @@ function AssigneeCell({
             <button
               key={m.id}
               onClick={() => assign(m.id)}
-              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-gray-50 transition-colors text-left font-medium text-gray-700"
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-xs rounded-lg hover:bg-accent transition-colors text-left font-medium text-foreground"
             >
               <Avatar className="w-5 h-5">
                 <AvatarImage src={m.avatar ?? undefined} />
-                <AvatarFallback className="text-[9px] bg-blue-100 text-blue-700">{getInitials(m.name)}</AvatarFallback>
+                <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{getInitials(m.name)}</AvatarFallback>
               </Avatar>
               <span className="truncate">{m.name}</span>
             </button>
@@ -420,9 +419,9 @@ function DueDateCell({
       <button
         onClick={() => setOpen(!open)}
         className={cn(
-          "flex items-center gap-1.5 rounded-md hover:bg-gray-100 transition-colors px-2 py-1",
+          "flex items-center gap-1.5 rounded-md hover:bg-accent transition-colors px-2 py-1",
           compact ? "text-[11px]" : "text-[12px] font-medium",
-          isOverdue ? "text-red-600 bg-red-50" : dueDate ? "text-gray-600" : "text-gray-400"
+          isOverdue ? "text-destructive bg-destructive/10" : dueDate ? "text-foreground" : "text-muted-foreground"
         )}
         title={t("taskListView.titleDate") || "Son tarixi dəyiş"}
       >
@@ -430,19 +429,19 @@ function DueDateCell({
         {dueDate ? format(new Date(dueDate), "dd MMM") : "—"}
       </button>
       {open && (
-        <div className="absolute right-0 top-8 z-20 bg-white border border-[hsl(var(--border))] rounded-xl shadow-lg p-3 w-52">
+        <div className="absolute right-0 top-8 z-20 bg-popover border border-border rounded-xl shadow-lg p-3 w-52">
           <input
             type="date"
             autoFocus
             value={val}
             onChange={(e) => setVal(e.target.value)}
-            className="w-full px-2 py-1.5 rounded-lg border border-gray-200 text-xs outline-none focus:border-blue-400"
+            className="w-full px-2 py-1.5 rounded-lg border border-input bg-background text-xs text-foreground outline-none focus:border-primary"
           />
           <div className="flex items-center justify-between mt-3">
-            <button onClick={() => save("")} className="text-[11px] font-semibold text-gray-500 hover:text-red-500">
+            <button onClick={() => save("")} className="text-[11px] font-semibold text-muted-foreground hover:text-destructive">
               {t("taskListView.clearDate") || "Təmizlə"}
             </button>
-            <button onClick={() => save(val)} className="text-[11px] font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded-md">
+            <button onClick={() => save(val)} className="text-[11px] font-semibold text-primary-foreground bg-primary hover:bg-primary/90 px-3 py-1 rounded-md">
               {t("taskListView.confirmDate") || "Təsdiqlə"}
             </button>
           </div>
@@ -480,8 +479,8 @@ function SubtaskRow({
   return (
     <div
       className={cn(
-        "group flex items-center gap-3 px-4 py-1.5 border-t border-gray-100/70 transition-colors",
-        hovered ? "bg-white shadow-sm" : "bg-transparent",
+        "group flex items-center gap-3 px-4 py-1.5 border-t border-border/70 transition-colors",
+        hovered ? "bg-card shadow-sm" : "bg-transparent",
         subtask.status === "DONE" && "opacity-60"
       )}
       onMouseEnter={() => setHovered(true)}
@@ -493,11 +492,11 @@ function SubtaskRow({
       <div className="w-6 flex-shrink-0 flex items-center justify-center">
         <div title={subtask.status === "DONE" ? (t("status.DONE") || "Tamamlandı") : (t("status.TODO") || "Gözləyir")}>
           {subtask.status === "DONE" ? (
-            <div className="w-3.5 h-3.5 rounded-full bg-green-500 flex items-center justify-center">
+            <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
               <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
             </div>
           ) : (
-            <div className={cn("w-3.5 h-3.5 rounded-full border-2", dot?.dot ?? "border-gray-300")} />
+            <div className={cn("w-3.5 h-3.5 rounded-full border-2", dot?.dot ?? "border-muted-foreground/40")} />
           )}
         </div>
       </div>
@@ -506,7 +505,7 @@ function SubtaskRow({
         <StatusBadge taskId={subtask.id} status={subtask.status} onChanged={onUpdated} compact t={t} />
       </div>
 
-      <span className={cn("flex-1 min-w-0 text-[13px] font-medium text-gray-700 truncate", subtask.status === "DONE" && "line-through text-gray-400")}>
+      <span className={cn("flex-1 min-w-0 text-[13px] font-medium text-foreground truncate", subtask.status === "DONE" && "line-through text-muted-foreground")}>
         {subtask.title}
       </span>
 
@@ -525,7 +524,7 @@ function SubtaskRow({
       <div className="w-16 flex justify-end pr-2 flex-shrink-0">
         <button
           onClick={deleteSub}
-          className={cn("p-1.5 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-all", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}
+          className={cn("p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}
           title={t("taskListView.titleDelete") || "Sil"}
         >
           <Trash2 className="w-3.5 h-3.5" />
@@ -627,8 +626,8 @@ function TaskRow({
     <>
       <div
         className={cn(
-          "group flex items-center gap-3 px-4 py-2.5 border-b border-gray-100 transition-all",
-          hovered ? "bg-slate-50 shadow-sm z-10 relative" : "bg-white",
+          "group flex items-center gap-3 px-4 py-2.5 border-b border-border transition-all",
+          hovered ? "bg-muted/50 shadow-sm z-10 relative" : "bg-card",
           task.status === "DONE" && "opacity-60"
         )}
         onMouseEnter={() => setHovered(true)}
@@ -639,7 +638,7 @@ function TaskRow({
           {subtaskCount > 0 ? (
             <button
               onClick={toggleExpand}
-              className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors"
+              className="w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
             >
               <ChevronRight className={cn("w-4 h-4 transition-transform", expanded && "rotate-90")} />
             </button>
@@ -654,7 +653,7 @@ function TaskRow({
             {task.status === "DONE" ? (
               <CheckCircleIcon />
             ) : (
-              <div className={cn("w-4 h-4 rounded-full border-2", STATUS_MAP[task.status as keyof typeof STATUS_MAP]?.dot ?? "border-gray-300")} />
+              <div className={cn("w-4 h-4 rounded-full border-2", STATUS_MAP[task.status as keyof typeof STATUS_MAP]?.dot ?? "border-muted-foreground/40")} />
             )}
           </div>
         </div>
@@ -664,7 +663,7 @@ function TaskRow({
           <StatusBadge taskId={task.id} status={task.status} onChanged={(raw) => onUpdated({ ...task, ...raw })} t={t} />
         </div>
 
-        {/* 4. Title & Labels */}
+        {/* 4. Title */}
         <div className="flex-1 min-w-0 flex items-center gap-2">
           {editingTitle ? (
             <input
@@ -673,13 +672,13 @@ function TaskRow({
               onChange={(e) => setTitleVal(e.target.value)}
               onBlur={saveTitle}
               onKeyDown={(e) => { if (e.key === "Enter") saveTitle(); if (e.key === "Escape") { setTitleVal(task.title); setEditingTitle(false); } }}
-              className="w-full text-sm bg-transparent border-b-2 border-blue-500 outline-none font-medium text-slate-900"
+              className="w-full text-sm bg-transparent border-b-2 border-primary outline-none font-medium text-foreground"
             />
           ) : (
             <span
               className={cn(
-                "text-[14px] font-semibold text-slate-800 truncate cursor-pointer hover:text-blue-600 transition-colors",
-                task.status === "DONE" && "line-through text-slate-400"
+                "text-[14px] font-semibold text-foreground truncate cursor-pointer hover:text-primary transition-colors",
+                task.status === "DONE" && "line-through text-muted-foreground"
               )}
               onClick={() => onTaskClick(task)}
               onDoubleClick={(e) => { e.stopPropagation(); setEditingTitle(true); }}
@@ -687,23 +686,14 @@ function TaskRow({
               {task.title}
             </span>
           )}
-          {task.labels && task.labels.length > 0 && (
-            <div className="hidden lg:flex items-center gap-1.5 flex-shrink-0 ml-2">
-              {task.labels.slice(0, 2).map(({ label }) => (
-                <span key={label.id} className="text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider" style={{ backgroundColor: `${label.color}15`, color: label.color }}>
-                  {label.name}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* 5. Indicators (Subtasks, Comments, Files) */}
-        <div className="w-24 flex-shrink-0 flex items-center gap-3 text-[11px] font-bold text-gray-400">
+        <div className="w-24 flex-shrink-0 flex items-center gap-3 text-[11px] font-bold text-muted-foreground">
           {subtaskCount > 0 && (
             <div className="flex items-center gap-1" title={`${doneSubtasks}/${subtaskCount} alt tapşırıq`}>
               <Check className="w-3.5 h-3.5" />
-              <span className={doneSubtasks === subtaskCount ? "text-green-500" : ""}>{doneSubtasks}/{subtaskCount}</span>
+              <span className={doneSubtasks === subtaskCount ? "text-emerald-500" : ""}>{doneSubtasks}/{subtaskCount}</span>
             </div>
           )}
           {commentCount > 0 && (
@@ -737,10 +727,10 @@ function TaskRow({
 
         {/* 9. Actions */}
         <div className={cn("w-16 flex-shrink-0 flex items-center justify-end gap-1 transition-opacity pr-2", hovered ? "opacity-100" : "opacity-0 pointer-events-none")}>
-          <button onClick={() => setEditingTitle(true)} className="p-1.5 rounded-md hover:bg-gray-200 text-gray-500 transition-colors" title={t("taskListView.titleEdit") || "Redaktə et"}>
+          <button onClick={() => setEditingTitle(true)} className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors" title={t("taskListView.titleEdit") || "Redaktə et"}>
             <Pencil className="w-3.5 h-3.5" />
           </button>
-          <button onClick={deleteTask} className="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-500 transition-colors" title={t("taskListView.titleDelete") || "Sil"}>
+          <button onClick={deleteTask} className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" title={t("taskListView.titleDelete") || "Sil"}>
             <Trash2 className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -748,10 +738,10 @@ function TaskRow({
 
       {/* ── Expanded subtasks ─────────────── */}
       {expanded && (
-        <div className="bg-slate-50/50 border-b border-gray-100 py-1 shadow-inner">
+        <div className="bg-muted/30 border-b border-border py-1 shadow-inner">
           {loadingSubtasks ? (
             <div className="flex items-center gap-2 pl-14 pr-4 py-2 text-xs font-medium text-muted-foreground">
-              <Loader2 className="w-4 h-4 animate-spin text-blue-500" /> {t("taskListView.loadingSubtasks") || "Alt tapşırıqlar yüklənir..."}
+              <Loader2 className="w-4 h-4 animate-spin text-primary" /> {t("taskListView.loadingSubtasks") || "Alt tapşırıqlar yüklənir..."}
             </div>
           ) : (
             <>
@@ -806,16 +796,16 @@ function GroupSection({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div className="mb-6 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+    <div className="mb-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden">
       {/* Group header */}
       <div
-        className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors bg-slate-50/80 border-b border-gray-100"
+        className="flex items-center gap-2 px-4 py-3 cursor-pointer hover:bg-accent transition-colors bg-muted/60 border-b border-border"
         onClick={() => setCollapsed(!collapsed)}
       >
-        <ChevronDown className={cn("w-4 h-4 text-gray-400 transition-transform", collapsed && "-rotate-90")} />
+        <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", collapsed && "-rotate-90")} />
         <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: color }} />
-        <span className="text-[14px] font-bold text-slate-800 tracking-tight">{title}</span>
-        <span className="text-[11px] font-bold text-slate-500 bg-white border border-gray-200 px-2 py-0.5 rounded-full ml-2 shadow-sm">
+        <span className="text-[14px] font-bold text-foreground tracking-tight">{title}</span>
+        <span className="text-[11px] font-bold text-muted-foreground bg-card border border-border px-2 py-0.5 rounded-full ml-2 shadow-sm">
           {tasks.length}
         </span>
       </div>
@@ -834,7 +824,7 @@ function GroupSection({
               t={t}
             />
           ))}
-          <div className="px-3 py-2 bg-white rounded-b-xl">
+          <div className="px-3 py-2 bg-card rounded-b-xl">
             <AddTaskRow status={defaultStatus} projectId={projectId} onCreated={onTaskCreated} t={t} />
           </div>
         </div>
@@ -848,7 +838,6 @@ export function TaskListView({
   projectId,
   tasks,
   members,
-  labels,
   onTaskUpdated,
   onTaskDeleted,
   onTaskCreated,
@@ -891,27 +880,27 @@ export function TaskListView({
 
   return (
     <>
-      <div className="h-full overflow-auto bg-slate-50/50">
+      <div className="h-full overflow-auto bg-muted/30">
         {/* Table header (Fixed Widths for Perfect Alignment) */}
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-gray-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+        <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-md border-b border-border px-4 py-3 flex items-center gap-3 shadow-sm">
           <div className="w-5 flex-shrink-0" />
           <div className="w-6 flex-shrink-0" />
-          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">
             {t("taskListView.tableStatus") || "Status"}
           </div>
-          <div className="flex-1 min-w-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider pl-1">
+          <div className="flex-1 min-w-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider pl-1">
             {t("taskListView.tableTaskName") || "Tapşırıq Adı"}
           </div>
-          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
             {t("taskListView.tableInfo") || "Məlumat"}
           </div>
-          <div className="w-32 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">
+          <div className="w-32 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center">
             {t("taskListView.tableAssignee") || "İcraçı"}
           </div>
-          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right">
+          <div className="w-28 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right">
             {t("taskListView.tableDueDate") || "Son Tarix"}
           </div>
-          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-right hidden md:block">
+          <div className="w-24 flex-shrink-0 text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-right hidden md:block">
             {t("taskListView.tablePriority") || "Prioritet"}
           </div>
           <div className="w-16 flex-shrink-0" />
@@ -952,7 +941,6 @@ export function TaskListView({
         <TaskDetailSheet
           task={selectedTask}
           members={members}
-          labels={labels}
           onUpdated={handleSheetUpdated}
           onDeleted={handleSheetDeleted}
           onClose={() => setSelectedTask(null)}

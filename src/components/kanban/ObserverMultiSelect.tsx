@@ -47,7 +47,7 @@ export function ObserverMultiSelect({
   return (
     <div className="space-y-2">
       <Popover>
-        <PopoverTrigger type="button" className="flex h-auto min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 py-2 text-sm transition-colors hover:bg-[hsl(var(--accent))]">
+        <PopoverTrigger type="button" className="flex h-auto min-h-10 w-full items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors hover:bg-accent">
           <span className="flex min-w-0 items-center gap-2">
             <Eye className="size-4 shrink-0 text-muted-foreground" />
             <span className="truncate text-left">

@@ -34,14 +34,14 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
             style={{ backgroundColor: column.color }}
           />
           <span className={cn("text-sm font-semibold", column.headerClassName)}>{column.label}</span>
-          <span className="text-xs text-[hsl(var(--muted-foreground))] bg-[hsl(var(--muted))] px-1.5 py-0.5 rounded-full font-medium">
+          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full font-medium">
             {tasks.length}
           </span>
         </div>
         {onAddTask && (
           <button
             onClick={onAddTask}
-            className="p-1 rounded-md hover:bg-[hsl(var(--accent))] transition-colors text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))]"
+            className="p-1 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
             title={t("kanbanColumn.addTaskTitle") || "Tapşırıq əlavə et"}
           >
             <Plus className="w-4 h-4" />
@@ -55,8 +55,8 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
         className={cn(
           "flex-1 flex flex-col gap-2 overflow-y-auto rounded-xl p-2 transition-colors min-h-20",
           isOver
-            ? "bg-[hsl(var(--primary)/0.06)] ring-2 ring-[hsl(var(--primary)/0.3)] ring-dashed"
-            : column.bodyClassName || "bg-[hsl(var(--muted)/0.5)]"
+            ? "bg-primary/6 ring-2 ring-primary/30 ring-dashed"
+            : column.bodyClassName || "bg-muted/50"
         )}
       >
         <SortableContext
@@ -76,7 +76,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
         {tasks.length === 0 && !isOver && (
           <div
             className={cn(
-              "flex-1 flex items-center justify-center text-xs text-[hsl(var(--muted-foreground)/0.5)] py-8",
+              "flex-1 flex items-center justify-center text-xs text-muted-foreground/50 py-8",
               onAddTask && "cursor-pointer"
             )}
             onClick={onAddTask}
@@ -90,7 +90,7 @@ export function KanbanColumn({ column, tasks, onAddTask, onTaskClick }: KanbanCo
       {onAddTask && (
         <button
           onClick={onAddTask}
-          className="mt-2 flex items-center gap-1.5 px-3 py-2 text-xs text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] hover:bg-[hsl(var(--accent))] rounded-lg transition-colors w-full"
+          className="mt-2 flex items-center gap-1.5 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors w-full"
         >
           <Plus className="w-3.5 h-3.5" />
           {t("kanbanColumn.addTaskBtn") || "Tapşırıq əlavə et"}

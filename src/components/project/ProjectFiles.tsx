@@ -147,7 +147,7 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
         }}
         onClick={() => inputRef.current?.click()}
         className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
-          dragOver ? "border-blue-500 bg-blue-50" : "border-gray-200 bg-white hover:border-blue-300 hover:bg-slate-50"
+          dragOver ? "border-primary bg-primary/5" : "border-border bg-card hover:border-primary/40 hover:bg-muted/50"
         }`}
       >
         <input
@@ -160,42 +160,42 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
             e.target.value = "";
           }}
         />
-        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
           {uploading ? <Loader2 className="h-5 w-5 animate-spin" /> : <UploadCloud className="h-5 w-5" />}
         </div>
-        <p className="text-sm font-bold text-slate-800">
+        <p className="text-sm font-bold text-foreground">
           {uploading
             ? (t("projectFiles.uploading") || "Yüklənir...")
             : (t("projectFiles.dropTitle") || "Faylları bura sürüşdürün və ya seçin")}
         </p>
-        <p className="mt-1 text-xs font-medium text-slate-500">
+        <p className="mt-1 text-xs font-medium text-muted-foreground">
           {t("projectFiles.dropHint") || "PDF, şəkil və sənədlər dəstəklənir"}
         </p>
       </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-2.5">⚠️ {error}</p>
+        <p className="text-sm text-destructive bg-destructive/5 border border-destructive/20 rounded-xl px-4 py-2.5">⚠️ {error}</p>
       )}
 
-      <div className="rounded-2xl border border-gray-200/80 bg-white shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
-            <Paperclip className="w-4 h-4 text-slate-500" />
-            <h3 className="text-sm font-bold text-slate-800">
+            <Paperclip className="w-4 h-4 text-muted-foreground" />
+            <h3 className="text-sm font-bold text-foreground">
               {t("projectFiles.listTitle") || "Yüklənmiş fayllar"}
             </h3>
           </div>
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
+          <span className="text-xs font-bold text-muted-foreground bg-muted px-2.5 py-1 rounded-full">
             {files.length}
           </span>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-5 h-5 animate-spin text-slate-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         ) : files.length === 0 ? (
-          <div className="py-16 text-center text-slate-400">
+          <div className="py-16 text-center text-muted-foreground/60">
             <FileIcon className="w-8 h-8 mx-auto mb-2 opacity-40" />
             <p className="text-sm font-medium">{t("projectFiles.empty") || "Hələ heç bir fayl yoxdur"}</p>
           </div>
@@ -216,25 +216,25 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
                   <TableRow key={file.id}>
                     <TableCell>
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                           {isImage ? (
-                            <ImageIcon className="w-4 h-4 text-slate-500" />
+                            <ImageIcon className="w-4 h-4 text-muted-foreground" />
                           ) : (
-                            <FileIcon className="w-4 h-4 text-slate-500" />
+                            <FileIcon className="w-4 h-4 text-muted-foreground" />
                           )}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-semibold text-slate-800 truncate">{file.fileName}</p>
+                          <p className="text-sm font-semibold text-foreground truncate">{file.fileName}</p>
                           {file.uploadedBy?.name && (
-                            <p className="text-[11px] text-slate-400">{file.uploadedBy.name}</p>
+                            <p className="text-[11px] text-muted-foreground/70">{file.uploadedBy.name}</p>
                           )}
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-slate-500 font-medium">
+                    <TableCell className="text-muted-foreground font-medium">
                       {formatFileSize(file.fileSize)}
                     </TableCell>
-                    <TableCell className="text-slate-500">
+                    <TableCell className="text-muted-foreground">
                       {timeAgo(file.createdAt)}
                     </TableCell>
                     <TableCell className="text-right">
@@ -243,7 +243,7 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
                           href={file.fileUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="p-1.5 rounded-md hover:bg-slate-100 text-slate-500"
+                          className="p-1.5 rounded-md hover:bg-muted text-muted-foreground"
                           title={t("projectFiles.download") || "Yüklə"}
                         >
                           <Download className="w-4 h-4" />
@@ -252,7 +252,7 @@ export function ProjectFiles({ projectId }: { projectId: string }) {
                           <button
                             type="button"
                             onClick={() => removeLocal(file.id)}
-                            className="p-1.5 rounded-md hover:bg-red-50 text-slate-400 hover:text-red-500"
+                            className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground/70 hover:text-destructive"
                             title={t("projectFiles.delete") || "Sil"}
                           >
                             <Trash2 className="w-4 h-4" />

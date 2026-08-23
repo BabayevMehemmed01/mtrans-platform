@@ -104,20 +104,20 @@ function PermissionCheckboxGroup({
               <div
                 className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${
                   allChecked
-                    ? "bg-blue-600 border-blue-600"
+                    ? "bg-primary border-primary"
                     : someChecked
-                    ? "bg-blue-200 border-blue-400"
-                    : "border-gray-300 group-hover:border-blue-400"
+                    ? "bg-primary/30 border-primary/60"
+                    : "border-border group-hover:border-primary/60"
                 }`}
               >
                 {(allChecked || someChecked) && (
-                  <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                  <Check className="w-2.5 h-2.5 text-primary-foreground" strokeWidth={3} />
                 )}
               </div>
-              <span className="text-sm font-semibold text-gray-700">
+              <span className="text-sm font-semibold text-foreground">
                 {getCategoryLabel(cat, t)}
               </span>
-              <span className="text-xs text-gray-400 ml-auto">
+              <span className="text-xs text-muted-foreground ml-auto">
                 {catIds.filter((id) => selected.includes(id)).length}/{catIds.length}
               </span>
             </div>
@@ -125,21 +125,21 @@ function PermissionCheckboxGroup({
               {(perms as any[]).map((p) => (
                 <label
                   key={p.id}
-                  className="flex items-center gap-2.5 py-1 cursor-pointer group rounded hover:bg-gray-50 px-2"
+                  className="flex items-center gap-2.5 py-1 cursor-pointer group rounded hover:bg-muted/50 px-2"
                 >
                   <div
                     className={`w-3.5 h-3.5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
                       selected.includes(p.id)
-                        ? "bg-blue-600 border-blue-600"
-                        : "border-gray-300 group-hover:border-blue-400"
+                        ? "bg-primary border-primary"
+                        : "border-border group-hover:border-primary/60"
                     }`}
                     onClick={() => toggle(p.id)}
                   >
                     {selected.includes(p.id) && (
-                      <Check className="w-2 h-2 text-white" strokeWidth={3} />
+                      <Check className="w-2 h-2 text-primary-foreground" strokeWidth={3} />
                     )}
                   </div>
-                  <span className="text-sm text-gray-600">{p.name}</span>
+                  <span className="text-sm text-foreground">{p.name}</span>
                 </label>
               ))}
             </div>
@@ -257,11 +257,8 @@ export function RolesClient({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{t("rolesClient.rolesTitle") || "Rollar"}</h2>
-        <Button
-          className="bg-blue-600 hover:bg-blue-700 text-white"
-          onClick={() => setIsCreateOpen(true)}
-        >
+        <h2 className="text-xl font-semibold text-foreground">{t("rolesClient.rolesTitle") || "Rollar"}</h2>
+        <Button onClick={() => setIsCreateOpen(true)}>
           {t("rolesClient.newRoleBtn") || "+ Yeni Rol"}
         </Button>
       </div>
@@ -298,7 +295,7 @@ export function RolesClient({
 
             <div className="space-y-2">
               <Label>{t("rolesClient.permsLabel") || "İcazələr"}</Label>
-              <div className="border border-[hsl(var(--border))] rounded-xl p-4">
+              <div className="border border-border rounded-xl p-4">
                 <PermissionCheckboxGroup
                   permissions={permissions}
                   selected={selectedPerms}
@@ -312,7 +309,7 @@ export function RolesClient({
             </div>
 
             <DialogFooter>
-              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="submit" disabled={loading}>
                 {loading ? (t("rolesClient.creatingBtn") || "Yaradılır...") : (t("rolesClient.createBtn") || "Rolu Yarat")}
               </Button>
             </DialogFooter>
@@ -351,7 +348,7 @@ export function RolesClient({
 
             <div className="space-y-2">
               <Label>{t("rolesClient.permsLabel") || "İcazələr"}</Label>
-              <div className="border border-[hsl(var(--border))] rounded-xl p-4">
+              <div className="border border-border rounded-xl p-4">
                 <PermissionCheckboxGroup
                   permissions={permissions}
                   selected={editPerms}
@@ -365,7 +362,7 @@ export function RolesClient({
             </div>
 
             <DialogFooter>
-              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="submit" disabled={loading}>
                 {loading ? (t("rolesClient.savingBtn") || "Yadda saxlanılır...") : (t("rolesClient.saveBtn") || "Yadda saxla")}
               </Button>
             </DialogFooter>
@@ -416,11 +413,11 @@ export function RolesClient({
               </TableCell>
               <TableCell>
                 {role.isSystem ? (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
                     {t("rolesClient.typeSystem") || "Sistem"}
                   </span>
                 ) : (
-                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
                     {t("rolesClient.typeCustom") || "Xüsusi"}
                   </span>
                 )}
@@ -438,7 +435,7 @@ export function RolesClient({
                       <span>{t("rolesClient.editPermsMenu") || "İcazələri redaktə et"}</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      className="text-red-600 focus:text-red-600"
+                      className="text-destructive focus:text-destructive"
                       onSelect={(e) => {
                         e.preventDefault()
                         handleDelete(role.id, role.isSystem)

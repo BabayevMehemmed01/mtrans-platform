@@ -151,6 +151,16 @@ export function MembersClient({
 
   const router = useRouter()
 
+  // Global axtarışdan (Cmd+K) gələn "?q=" parametrini ilkin filtr kimi tətbiq edirik
+  // (useSearchParams() Suspense sərhədi tələb etdiyi üçün sadə browser API-dən istifadə edirik).
+  // Server render zamanı "window" mövcud olmadığı üçün bunu lazy-init state ilə deyil,
+  // mount-dan sonra effect ilə oxumaq lazımdır (hydration mismatch yaratmamaq üçün).
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q")
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL-dən bir dəfəlik oxuma, sinxronizasiya effekti
+    if (q) setSearchTerm(q)
+  }, [])
+
   useEffect(() => {
     if (isInviteOpen && lockedDepartmentId) {
       setInviteDepartmentId(lockedDepartmentId)
@@ -351,7 +361,7 @@ export function MembersClient({
 
         <Dialog open={isInviteOpen} onOpenChange={(open) => { setIsInviteOpen(open); resetInviteForm() }}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white shrink-0">
+            <Button className="shrink-0">
               <Mail className="w-4 h-4 mr-2" />
               {t("membersClient.inviteBtn") || "Dəvət Göndər"}
             </Button>
@@ -379,7 +389,7 @@ export function MembersClient({
                     className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                       inviteType === "MEMBER"
                         ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-[hsl(var(--input))] text-[hsl(var(--muted-foreground))]"
+                        : "border-input text-muted-foreground"
                     }`}
                   >
                     {t("membersClient.typeMember") || "Üzv (Member)"}
@@ -390,7 +400,7 @@ export function MembersClient({
                     className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                       inviteType === "GUEST"
                         ? "border-blue-600 bg-blue-50 text-blue-700"
-                        : "border-[hsl(var(--input))] text-[hsl(var(--muted-foreground))]"
+                        : "border-input text-muted-foreground"
                     }`}
                   >
                     {t("membersClient.typeGuest") || "Qonaq (Guest)"}
@@ -443,7 +453,7 @@ export function MembersClient({
                   <Label htmlFor="dept">{t("membersClient.dept") || "Şöbə"}</Label>
                   <select
                     id="dept"
-                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
                     value={inviteDepartmentId}
                     onChange={(e) => setInviteDepartmentId(e.target.value)}
                     disabled={lockDepartmentSelect}
@@ -460,7 +470,7 @@ export function MembersClient({
                   <Label htmlFor="role">{t("membersClient.role") || "Rol"}</Label>
                   <select
                     id="role"
-                    className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                     value={inviteRoleId}
                     onChange={(e) => setInviteRoleId(e.target.value)}
                   >
@@ -475,17 +485,17 @@ export function MembersClient({
               {inviteType === "GUEST" && (
                 <div className="space-y-2">
                   <Label>{t("membersClient.projects") || "Layihələr"}</Label>
-                  <div className="max-h-40 overflow-y-auto rounded-md border border-[hsl(var(--input))] p-2 space-y-1">
+                  <div className="max-h-40 overflow-y-auto rounded-md border border-input p-2 space-y-1">
                     {projects.length === 0 && (
                       <p className="text-xs text-muted-foreground px-1 py-1">{t("membersClient.noProjects") || "Heç bir layihə tapılmadı"}</p>
                     )}
                     {projects.map(p => (
-                      <label key={p.id} className="flex items-center gap-2 px-1 py-1 text-sm rounded hover:bg-[hsl(var(--muted))] cursor-pointer">
+                      <label key={p.id} className="flex items-center gap-2 px-1 py-1 text-sm rounded hover:bg-muted cursor-pointer">
                         <input
                           type="checkbox"
                           checked={inviteProjectIds.includes(p.id)}
                           onChange={() => toggleInviteProject(p.id)}
-                          className="h-4 w-4 rounded border-[hsl(var(--input))]"
+                          className="h-4 w-4 rounded border-input"
                         />
                         <span
                           className="w-2 h-2 rounded-full flex-shrink-0"
@@ -513,7 +523,7 @@ export function MembersClient({
                 <Button type="button" variant="outline" onClick={() => setIsInviteOpen(false)}>
                   {t("membersClient.cancel") || "Ləğv et"}
                 </Button>
-                <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button type="submit" disabled={loading}>
                   {loading ? (t("membersClient.sending") || "Göndərilir...") : (t("membersClient.inviteBtn") || "Dəvət Göndər")}
                 </Button>
               </DialogFooter>
@@ -537,7 +547,7 @@ export function MembersClient({
                 <Label htmlFor="editDept">{t("membersClient.dept") || "Şöbə"}</Label>
                 <select
                   id="editDept"
-                  className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                   value={editDepartmentId}
                   onChange={(e) => setEditDepartmentId(e.target.value)}
                 >
@@ -551,7 +561,7 @@ export function MembersClient({
                 <Label htmlFor="editRole">{t("membersClient.role") || "Rol"}</Label>
                 <select
                   id="editRole"
-                  className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                  className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
                   value={editRoleId}
                   onChange={(e) => setEditRoleId(e.target.value)}
                 >
@@ -563,9 +573,9 @@ export function MembersClient({
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white">
-                {loading ? (t("membersClient.saving") || "Yadda saxlanılır...") : (t("membersClient.save") || "Yadda saxla")}
-              </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? (t("membersClient.saving") || "Yadda saxlanılır...") : (t("membersClient.save") || "Yadda saxla")}
+            </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -584,7 +594,7 @@ export function MembersClient({
         </TabsList>
 
         <TabsContent value="members" className="mt-4">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
@@ -601,7 +611,7 @@ export function MembersClient({
                   <TableRow key={member.id} className="hover:bg-muted/50 transition-colors">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 border border-[hsl(var(--border))]">
+                        <Avatar className="h-9 w-9 border border-border">
                           <AvatarImage src={member.avatar || undefined} />
                           <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">
                             {getInitials(member.name)}
@@ -647,7 +657,7 @@ export function MembersClient({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                            <MoreVertical className="h-4 w-4 text-muted-foreground" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
@@ -685,7 +695,7 @@ export function MembersClient({
         </TabsContent>
 
         <TabsContent value="invites" className="mt-4">
-          <div className="bg-[hsl(var(--card))] border border-[hsl(var(--border))] rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
             <Table>
               <TableHeader className="bg-muted/50">
                 <TableRow>
@@ -702,7 +712,7 @@ export function MembersClient({
                   <TableRow key={invite.id}>
                     <TableCell className="font-medium text-sm">{invite.email}</TableCell>
                     <TableCell>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-[hsl(var(--muted))] text-[hsl(var(--muted-foreground))]">
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                         {invite.type === "GUEST" ? (t("membersClient.typeGuest") || "Qonaq") : (t("membersClient.typeMember") || "Üzv")}
                       </span>
                     </TableCell>
@@ -722,7 +732,7 @@ export function MembersClient({
                             title={t("membersClient.resend") || "Yenidən göndər"}
                             onClick={() => handleResendInvite(invite)}
                           >
-                            <RefreshCw className="h-4 w-4 text-[hsl(var(--muted-foreground))]" />
+                            <RefreshCw className="h-4 w-4 text-muted-foreground" />
                           </Button>
                           {invite.status === "PENDING" && (
                             <Button

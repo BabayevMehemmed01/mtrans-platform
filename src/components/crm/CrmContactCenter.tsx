@@ -29,7 +29,7 @@ export default function CrmContactCenter() {
     <div className="space-y-5">
       <div>
         <h3 className="text-lg font-semibold">{t("crmContactCenter.title") || t("crm.tabContactCenter") || "Əlaqə Mərkəzi"}</h3>
-        <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           {t("crmContactCenter.subtitle") || ""}
         </p>
       </div>
@@ -40,7 +40,7 @@ export default function CrmContactCenter() {
             key={channel.key}
             type="button"
             className={cn(
-              "group aspect-square rounded-2xl border border-[hsl(var(--border))] bg-white",
+              "group aspect-square rounded-2xl border border-border bg-card",
               "flex flex-col items-center justify-center gap-3 p-4",
               "shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150"
             )}
@@ -53,7 +53,7 @@ export default function CrmContactCenter() {
             </div>
             <div className="text-center">
               <p className="text-sm font-semibold">{t(`crmContactCenter.${channel.key}`) || channel.key}</p>
-              <p className="text-[11px] text-[hsl(var(--muted-foreground))] mt-0.5">
+              <p className="text-[11px] text-muted-foreground mt-0.5">
                 {t("crmContactCenter.comingSoon") || "Tezliklə"}
               </p>
             </div>

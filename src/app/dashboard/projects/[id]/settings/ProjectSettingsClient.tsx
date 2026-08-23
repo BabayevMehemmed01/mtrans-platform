@@ -9,6 +9,13 @@ import { Archive, ArchiveRestore, Trash2, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Project = {
   id: string;
@@ -107,9 +114,9 @@ export function ProjectSettingsClient({
 
   return (
     <div className="mt-6 space-y-6">
-      <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-6 shadow-sm">
+      <div className="border border-border rounded-xl bg-card p-6 shadow-sm">
         <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-          <Settings2 className="w-5 h-5 text-[hsl(var(--primary))]" />
+          <Settings2 className="w-5 h-5 text-primary" />
           {t("projectSettingsClient.generalInfo") || "Ümumi Məlumatlar"}
         </h3>
         <div className="space-y-4">
@@ -124,58 +131,65 @@ export function ProjectSettingsClient({
               onChange={(e) => setDescription(e.target.value)}
               disabled={!canManage}
               rows={3}
-              className="flex w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+              className="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("projectSettingsClient.status") || "Status"}</Label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                disabled={!canManage}
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
-              >
-                <option value="PLANNING">{t("projectStatus.PLANNING") || "Planlanır"}</option>
-                <option value="ACTIVE">{t("projectStatus.ACTIVE") || "Aktiv"}</option>
-                <option value="ON_HOLD">{t("projectStatus.ON_HOLD") || "Dayandırılıb"}</option>
-                <option value="COMPLETED">{t("projectStatus.COMPLETED") || "Tamamlandı"}</option>
-                <option value="CANCELLED">{t("projectStatus.CANCELLED") || "Ləğv edildi"}</option>
-              </select>
+              <Select value={status} onValueChange={(v) => v && setStatus(v)} disabled={!canManage}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="PLANNING">{t("projectStatus.PLANNING") || "Planlanır"}</SelectItem>
+                  <SelectItem value="ACTIVE">{t("projectStatus.ACTIVE") || "Aktiv"}</SelectItem>
+                  <SelectItem value="ON_HOLD">{t("projectStatus.ON_HOLD") || "Dayandırılıb"}</SelectItem>
+                  <SelectItem value="COMPLETED">{t("projectStatus.COMPLETED") || "Tamamlandı"}</SelectItem>
+                  <SelectItem value="CANCELLED">{t("projectStatus.CANCELLED") || "Ləğv edildi"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>{t("projectSettingsClient.priority") || "Prioritet"}</Label>
-              <select
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-                disabled={!canManage}
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
-              >
-                <option value="LOW">{t("priority.LOW") || "Aşağı"}</option>
-                <option value="MEDIUM">{t("priority.MEDIUM") || "Orta"}</option>
-                <option value="HIGH">{t("priority.HIGH") || "Yüksək"}</option>
-                <option value="URGENT">{t("priority.URGENT") || "Təcili"}</option>
-              </select>
+              <Select value={priority} onValueChange={(v) => v && setPriority(v)} disabled={!canManage}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="LOW">{t("priority.LOW") || "Aşağı"}</SelectItem>
+                  <SelectItem value="MEDIUM">{t("priority.MEDIUM") || "Orta"}</SelectItem>
+                  <SelectItem value="HIGH">{t("priority.HIGH") || "Yüksək"}</SelectItem>
+                  <SelectItem value="URGENT">{t("priority.URGENT") || "Təcili"}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("projectSettingsClient.department") || "Şöbə"}</Label>
-              <select
-                value={departmentId}
-                onChange={(e) => setDepartmentId(e.target.value)}
+              <Select
+                value={departmentId || "__none__"}
+                onValueChange={(v) => setDepartmentId(v === "__none__" ? "" : (v ?? ""))}
                 disabled={!canManage}
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
               >
-                <option value="">{t("projectSettingsClient.noDepartment") || "— Şöbə seçilməyib —"}</option>
-                {departments.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name}</option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t("projectSettingsClient.noDepartment") || "— Şöbə seçilməyib —"}</SelectItem>
+                  {departments.map((d) => (
+                    <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label>{t("projectSettingsClient.color") || "Rəng"}</Label>
-              <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} disabled={!canManage} className="h-10 w-full" />
+              <div className="flex items-center gap-2">
+                <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} disabled={!canManage} className="h-10 w-16 flex-shrink-0 p-1" />
+                <Input value={color} onChange={(e) => setColor(e.target.value)} disabled={!canManage} className="h-10 flex-1 font-mono text-xs uppercase" />
+              </div>
             </div>
           </div>
           {canManage && (
@@ -191,14 +205,14 @@ export function ProjectSettingsClient({
       </div>
 
       {canManage && (
-        <div className="border border-amber-200 rounded-xl bg-amber-50/50 p-6">
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2 text-amber-800">
+        <div className="border border-amber-200 dark:border-amber-900/50 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 p-6">
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2 text-amber-800 dark:text-amber-400">
             {project.isArchived ? <ArchiveRestore className="w-5 h-5" /> : <Archive className="w-5 h-5" />}
             {project.isArchived 
               ? (t("projectSettingsClient.unarchive") || "Arxivdən Çıxar") 
               : (t("projectSettingsClient.archive") || "Arxivləşdir")}
           </h3>
-          <p className="text-sm text-amber-700 mb-4">
+          <p className="text-sm text-amber-700 dark:text-amber-400/80 mb-4">
             {project.isArchived
               ? (t("projectSettingsClient.isArchivedDesc") || "Bu layihə hazırda arxivdədir. Aktiv layihələr siyahısında görünmür.")
               : (t("projectSettingsClient.isNotArchivedDesc") || "Arxivləşdirilmiş layihələr aktiv siyahıdan gizlədilir, lakin məlumatlar saxlanılır.")}
@@ -214,12 +228,12 @@ export function ProjectSettingsClient({
       )}
 
       {canDelete && (
-        <div className="border border-red-200 rounded-xl bg-red-50/50 p-6">
-          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2 text-red-700">
+        <div className="border border-destructive/30 rounded-xl bg-destructive/5 p-6">
+          <h3 className="text-lg font-semibold mb-2 flex items-center gap-2 text-destructive">
             <Trash2 className="w-5 h-5" />
             {t("projectSettingsClient.deleteTitle") || "Layihəni Sil"}
           </h3>
-          <p className="text-sm text-red-600 mb-4">
+          <p className="text-sm text-destructive/80 mb-4">
             {t("projectSettingsClient.deleteDesc") || "Bu əməliyyat geri qaytarıla bilməz. Layihə və ona aid bütün tapşırıqlar həmişəlik silinəcək."}
           </p>
           <Button variant="destructive" onClick={deleteProject} disabled={deleting}>

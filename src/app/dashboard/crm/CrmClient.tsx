@@ -17,7 +17,7 @@ import { getTranslation } from "@/lib/i18n";
 const TAB_TRIGGER_CLASS = cn(
   "rounded-none border-b-2 border-transparent bg-transparent px-4 py-2.5 shadow-none",
   "data-[state=active]:border-[#2FC6F6] data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none",
-  "text-[hsl(var(--muted-foreground))] hover:text-foreground"
+  "text-muted-foreground hover:text-foreground"
 );
 
 export default function CrmClient() {
@@ -32,7 +32,7 @@ export default function CrmClient() {
     <>
       <Toaster position="top-right" />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="flex justify-center border-b border-[hsl(var(--border))]">
+        <div className="flex justify-center border-b border-border">
           <TabsList className="h-auto w-full justify-center gap-1 rounded-none bg-transparent p-0">
             <TabsTrigger value="kanban" className={TAB_TRIGGER_CLASS}>
               <LayoutGrid className="w-3.5 h-3.5 mr-1.5" /> {t("crm.tabKanban") || t("crm.viewKanban") || "Kanban"}

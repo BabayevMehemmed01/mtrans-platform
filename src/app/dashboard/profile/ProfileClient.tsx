@@ -82,14 +82,14 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
   return (
     <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Left: summary card */}
-      <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-6 shadow-sm h-fit">
+      <div className="border border-border rounded-xl bg-card p-6 shadow-sm h-fit">
         <div className="flex flex-col items-center text-center">
           <Avatar className="w-20 h-20 mb-3">
             <AvatarImage src={user.avatar ?? undefined} />
             <AvatarFallback className="text-lg">{getInitials(user.name)}</AvatarFallback>
           </Avatar>
           <h3 className="font-semibold text-lg">{user.name}</h3>
-          <p className="text-sm text-[hsl(var(--muted-foreground))]">{user.jobTitle || (t("profileClient.noJobTitle") || "Vəzifə təyin edilməyib")}</p>
+          <p className="text-sm text-muted-foreground">{user.jobTitle || (t("profileClient.noJobTitle") || "Vəzifə təyin edilməyib")}</p>
           {user.role && (
             <span
               className="mt-2 text-xs px-2.5 py-1 rounded-full font-medium"
@@ -99,7 +99,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
             </span>
           )}
         </div>
-        <div className="mt-6 space-y-3 text-sm text-[hsl(var(--muted-foreground))]">
+        <div className="mt-6 space-y-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4" /> {user.email}
           </div>
@@ -117,9 +117,9 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
 
       {/* Right: forms */}
       <div className="lg:col-span-2 space-y-6">
-        <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-6 shadow-sm">
+        <div className="border border-border rounded-xl bg-card p-6 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <User className="w-5 h-5 text-[hsl(var(--primary))]" />
+            <User className="w-5 h-5 text-primary" />
             {t("profileClient.personalInfo") || "Şəxsi Məlumatlar"}
           </h3>
           <div className="space-y-4 max-w-lg">
@@ -140,7 +140,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-[hsl(var(--input))] bg-transparent px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm"
               >
                 <option value="Asia/Baku">Asia/Baku (GMT+4)</option>
                 <option value="Europe/Istanbul">Europe/Istanbul (GMT+3)</option>
@@ -156,9 +156,9 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
           </div>
         </div>
 
-        <div className="border border-[hsl(var(--border))] rounded-xl bg-[hsl(var(--card))] p-6 shadow-sm">
+        <div className="border border-border rounded-xl bg-card p-6 shadow-sm">
           <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[hsl(var(--primary))]" />
+            <Shield className="w-5 h-5 text-primary" />
             {t("profileClient.changePassword") || "Şifrəni Dəyiş"}
           </h3>
           <div className="space-y-4 max-w-lg">
@@ -169,7 +169,7 @@ export function ProfileClient({ user }: { user: ProfileUser }) {
             <div className="space-y-2">
               <Label>{t("profileClient.newPassword") || "Yeni Şifrə"}</Label>
               <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              <p className="text-xs text-[hsl(var(--muted-foreground))]">{t("profileClient.passwordHint") || "Ən az 8 simvol, böyük/kiçik hərf və rəqəm daxil olmalıdır."}</p>
+              <p className="text-xs text-muted-foreground">{t("profileClient.passwordHint") || "Ən az 8 simvol, böyük/kiçik hərf və rəqəm daxil olmalıdır."}</p>
             </div>
             <div className="pt-2 flex justify-end">
               <Button onClick={savePassword} disabled={savingPassword}>

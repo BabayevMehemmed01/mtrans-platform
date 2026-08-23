@@ -45,14 +45,14 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
   };
 
   return (
-    <div className="flex-shrink-0 px-6 py-5 border-b border-[hsl(var(--border))] bg-white">
+    <div className="flex-shrink-0 px-6 py-5 border-b border-border bg-card">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         
         {/* Sol Tərəf: Geri düyməsi + Ad + Badgelər */}
         <div className="flex items-center gap-3">
           <Link
             href={backHref}
-            className="p-1.5 rounded-md border border-[hsl(var(--border))] hover:bg-muted transition-colors text-muted-foreground shadow-sm"
+            className="p-1.5 rounded-md border border-border hover:bg-muted transition-colors text-muted-foreground shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
@@ -66,7 +66,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
           
           <div className="flex flex-col">
             <div className="flex items-center gap-3">
-              <h1 className="text-xl font-bold tracking-tight text-slate-900">{project.name}</h1>
+              <h1 className="text-xl font-bold tracking-tight text-foreground">{project.name}</h1>
               <div className="hidden sm:flex items-center gap-2">
                 <span className={`text-[11px] px-2 py-0.5 rounded-full font-semibold border ${getStatusColor(project.status)}`}>
                   {statusLabels[project.status]}
@@ -83,7 +83,7 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
         <div className="flex items-center">
           <Link
             href={isCollab ? `/dashboard/collab/${project.id}/settings` : `/dashboard/projects/${project.id}/settings`}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[hsl(var(--border))] bg-white hover:bg-muted text-sm font-medium transition-colors shadow-sm"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-muted text-sm font-medium transition-colors shadow-sm"
           >
             <Settings className="w-4 h-4 text-muted-foreground" />
             <span>{t("projectHeader.settings") || "Ayarlar"}</span>
@@ -92,19 +92,19 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
       </div>
 
       {/* Alt Məlumat Sətri (Meta data) */}
-      <div className="flex flex-wrap items-center gap-4 mt-3 pl-12 text-xs text-[hsl(var(--muted-foreground))]">
+      <div className="flex flex-wrap items-center gap-4 mt-3 pl-12 text-xs text-muted-foreground">
         {project.department && (
-          <span className="flex items-center gap-1.5 font-medium text-slate-600">
-            <FolderKanban className="w-3.5 h-3.5 text-blue-500" />
+          <span className="flex items-center gap-1.5 font-medium text-muted-foreground">
+            <FolderKanban className="w-3.5 h-3.5 text-primary" />
             {project.department.name}
           </span>
         )}
-        <div className="w-1 h-1 rounded-full bg-slate-300" />
+        <div className="w-1 h-1 rounded-full bg-border" />
         <span className="flex items-center gap-1.5">
           <Users className="w-3.5 h-3.5" /> 
           {(t("projectHeader.peopleCount") || "{count} İnsan").replace("{count}", String(memberCount))}
         </span>
-        <div className="w-1 h-1 rounded-full bg-slate-300" />
+        <div className="w-1 h-1 rounded-full bg-border" />
         <span className="flex items-center gap-1.5">
           <CheckSquare className="w-3.5 h-3.5" /> 
           {(t("projectHeader.taskCount") || "{count} Task").replace("{count}", String(taskCount))}
@@ -112,8 +112,8 @@ export function ProjectHeader({ project, memberCount, taskCount }: ProjectHeader
         
         {project.description && (
           <>
-            <div className="w-1 h-1 rounded-full bg-slate-300 hidden sm:block" />
-            <span className="truncate max-w-md hidden sm:block italic text-slate-500">
+            <div className="w-1 h-1 rounded-full bg-border hidden sm:block" />
+            <span className="truncate max-w-md hidden sm:block italic text-muted-foreground">
               {project.description}
             </span>
           </>

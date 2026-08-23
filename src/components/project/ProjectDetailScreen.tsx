@@ -86,7 +86,7 @@ export async function ProjectDetailScreen({ id, tab, task, kind }: ProjectDetail
         }),
   };
 
-  const [tasks, labels, companyUsers] = await Promise.all([
+  const [tasks, companyUsers] = await Promise.all([
     prisma.task.findMany({
       where: taskWhereClause,
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
@@ -96,10 +96,6 @@ export async function ProjectDetailScreen({ id, tab, task, kind }: ProjectDetail
         labels: { include: { label: true } },
         _count: { select: { subtasks: true, comments: true, attachments: true } },
       },
-    }),
-    prisma.label.findMany({
-      where: { companyId },
-      orderBy: { name: "asc" },
     }),
     prisma.user.findMany({
       where: { companyId, status: "ACTIVE" },
@@ -134,7 +130,6 @@ export async function ProjectDetailScreen({ id, tab, task, kind }: ProjectDetail
           projectId={id}
           initialTasks={tasks as any}
           members={memberOptions}
-          labels={labels}
           taskCount={tasks.length}
           memberCount={project.members.length}
           projectMembers={project.members}

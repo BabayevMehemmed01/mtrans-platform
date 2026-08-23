@@ -6,6 +6,13 @@ import { useSession } from "next-auth/react"; // YENİ
 import { getTranslation } from "@/lib/i18n";  // YENİ
 import { Loader2, Building2, Save } from "lucide-react";
 import Link from "next/link";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const COLOR_PRESETS = [
   "#6366f1", "#8b5cf6", "#ec4899", "#ef4444",
@@ -94,21 +101,21 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
 
   return (
     <form onSubmit={handleSubmit} className="relative pb-24 space-y-5">
-      <div className="rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--card))] p-6 space-y-5 shadow-sm">
+      <div className="rounded-xl border border-border bg-card p-6 space-y-5 shadow-sm">
         {error && (
-          <div className="px-4 py-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] text-[hsl(var(--destructive))] text-sm">
+          <div className="px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
             ⚠️ {error}
           </div>
         )}
 
         {!hasDepartments && (
-          <div className="px-4 py-3 rounded-lg bg-[hsl(var(--destructive)/0.1)] border border-[hsl(var(--destructive)/0.2)] text-sm space-y-1">
-            <p className="text-[hsl(var(--destructive))] font-medium flex items-center gap-2">
+          <div className="px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-sm space-y-1">
+            <p className="text-destructive font-medium flex items-center gap-2">
               <Building2 className="w-4 h-4" /> {t("newProject.noDepartmentTitle") || "Əvvəlcə bir şöbə yaradın"}
             </p>
-            <p className="text-[hsl(var(--muted-foreground))]">
+            <p className="text-muted-foreground">
               {t("newProject.noDepartmentDesc") || "Layihə yaratmaq üçün şirkətinizdə ən az bir şöbə olmalıdır."}{" "}
-              <Link href="/dashboard/departments" className="text-[hsl(var(--primary))] font-medium hover:underline">
+              <Link href="/dashboard/departments" className="text-primary font-medium hover:underline">
                 {t("newProject.goToDepartments") || "Şöbələr səhifəsinə keçin"}
               </Link>
             </p>
@@ -118,14 +125,14 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
         {/* Name */}
         <div>
           <label className="block text-sm font-medium mb-1.5">
-            {t("newProject.nameLabel") || "Layihə Adı"} <span className="text-[hsl(var(--destructive))]">*</span>
+            {t("newProject.nameLabel") || "Layihə Adı"} <span className="text-destructive">*</span>
           </label>
           <input
             name="name"
             value={form.name}
             onChange={handleChange}
             placeholder={t("newProject.namePlaceholder") || "Məsələn: CRM Sistemi v2.0"}
-            className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
           />
         </div>
 
@@ -140,35 +147,40 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
             onChange={handleChange}
             rows={3}
             placeholder={t("newProject.descPlaceholder") || "Layihə haqqında qısa məlumat..."}
-            className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all resize-none"
+            className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none"
           />
         </div>
 
         {/* Department */}
         <div>
           <label className="block text-sm font-medium mb-1.5">
-            {t("newProject.departmentLabel") || "Şöbə"} <span className="text-[hsl(var(--destructive))]">*</span>
+            {t("newProject.departmentLabel") || "Şöbə"} <span className="text-destructive">*</span>
           </label>
-          <select
-            name="departmentId"
-            value={form.departmentId}
-            onChange={handleChange}
+          <Select
+            value={form.departmentId || undefined}
+            onValueChange={(v) => {
+              setDepartmentError("");
+              setForm((prev) => ({ ...prev, departmentId: v ?? "" }));
+            }}
             disabled={!hasDepartments}
-            className={`w-full px-3 py-2.5 rounded-lg border bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-              departmentError ? "border-[hsl(var(--destructive))]" : "border-[hsl(var(--border))]"
-            }`}
           >
-            <option value="" disabled>
-              {hasDepartments 
-                ? (t("newProject.selectDepartment") || "Şöbə seçin") 
-                : (t("newProject.noDepartmentAvailable") || "Şöbə mövcud deyil")}
-            </option>
-            {departments.map((d) => (
-              <option key={d.id} value={d.id}>{d.name}</option>
-            ))}
-          </select>
+            <SelectTrigger className={`w-full h-[42px] rounded-lg bg-background ${departmentError ? "border-destructive" : "border-border"}`}>
+              <SelectValue
+                placeholder={
+                  hasDepartments
+                    ? (t("newProject.selectDepartment") || "Şöbə seçin")
+                    : (t("newProject.noDepartmentAvailable") || "Şöbə mövcud deyil")
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((d) => (
+                <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {departmentError && (
-            <p className="mt-1.5 text-xs text-[hsl(var(--destructive))]">{departmentError}</p>
+            <p className="mt-1.5 text-xs text-destructive">{departmentError}</p>
           )}
         </div>
 
@@ -178,31 +190,37 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
             <label className="block text-sm font-medium mb-1.5">
               {t("newProject.statusLabel") || "Status"}
             </label>
-            <select
-              name="status"
+            <Select
               value={form.status}
-              onChange={handleChange}
-              className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+              onValueChange={(v) => v && setForm((prev) => ({ ...prev, status: v }))}
             >
-              {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-[42px] rounded-lg bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">
               {t("newProject.priorityLabel") || "Prioritet"}
             </label>
-            <select
-              name="priority"
+            <Select
               value={form.priority}
-              onChange={handleChange}
-              className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+              onValueChange={(v) => v && setForm((prev) => ({ ...prev, priority: v }))}
             >
-              {PRIORITY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              <SelectTrigger className="w-full h-[42px] rounded-lg bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -217,7 +235,7 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
               type="date"
               value={form.startDate}
               onChange={handleChange}
-              className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
           <div>
@@ -229,7 +247,7 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
               type="date"
               value={form.endDate}
               onChange={handleChange}
-              className="w-full px-3 py-2.5 rounded-lg border border-[hsl(var(--border))] bg-[hsl(var(--background))] text-sm focus:outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.5)] transition-all"
+              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
             />
           </div>
         </div>
@@ -258,7 +276,7 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
                 type="color"
                 value={form.color}
                 onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
-                className="w-8 h-8 rounded-lg cursor-pointer border border-[hsl(var(--border))] p-0.5"
+                className="w-8 h-8 rounded-lg cursor-pointer border border-border p-0.5"
                 title={t("newProject.customColor") || "Özəl rəng seçin"}
               />
             </div>
@@ -267,18 +285,18 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
       </div>
 
       {/* STICKY ACTIONS FOOTER - Həmişə ekranda görünür */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-[hsl(var(--background))] border-t border-[hsl(var(--border))] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
+      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-background border-t border-border p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
         <div className="max-w-2xl mx-auto flex items-center justify-end gap-3">
           <Link
             href="/dashboard/projects"
-            className="px-5 py-2.5 rounded-lg border border-[hsl(var(--border))] text-sm font-medium hover:bg-[hsl(var(--accent))] transition-colors"
+            className="px-5 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
           >
             {t("newProject.cancel") || "Ləğv Et"}
           </Link>
           <button
             type="submit"
             disabled={loading || !hasDepartments}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold transition-colors shadow-md"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-semibold transition-colors shadow-md"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {loading ? (t("newProject.saving") || "Yaradılır...") : (t("newProject.save") || "Yadda Saxla və Yarat")}

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
+import { useTheme } from "next-themes";
 import { toast } from "react-hot-toast";
 import useSWR from "swr";
 import {
@@ -27,12 +28,15 @@ import {
   Phone,
   Globe,
   FileText,
-  TrendingUp,
   Image as ImageIcon,
   ArrowRight,
   CheckCircle2,
   CircleDashed,
-  MoreHorizontal
+  MoreHorizontal,
+  Sun,
+  Moon,
+  Laptop,
+  Command,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -42,6 +46,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useCommandPaletteStore } from "@/store/useCommandPaletteStore";
 import { cn } from "@/lib/utils";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -88,6 +93,8 @@ interface UserProfileDropdownProps {
 
 export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
   const router = useRouter();
+  const { theme, setTheme } = useTheme();
+  const { setOpen: setPaletteOpen } = useCommandPaletteStore();
   const [isViewOpen, setViewOpen] = useState(false);
   const [isEditOpen, setEditOpen] = useState(false);
   const [isCompanyOpen, setCompanyOpen] = useState(false);
@@ -171,7 +178,7 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
           </div>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border-border z-[60]">
+        <DropdownMenuContent align="end" className="w-72 p-2 rounded-2xl shadow-xl border-border z-[60]">
           <div className="px-3 py-2 mb-2 border-b border-border">
             <p className="text-sm font-bold text-foreground truncate">{user?.name}</p>
             <p className="text-xs font-medium text-muted-foreground truncate">{user?.email}</p>
@@ -185,6 +192,47 @@ export function UserProfileDropdown({ user }: UserProfileDropdownProps) {
           <DropdownMenuItem onClick={() => setCompanyOpen(true)} className="gap-3 p-3 rounded-xl cursor-pointer font-semibold text-foreground hover:bg-accent hover:text-accent-foreground">
             <Building className="w-4 h-4" /> {isSuperAdmin ? "Şirkət Tənzimləmələri" : "Şöbə Məlumatları"}
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleNavigation("/dashboard/settings")} className="gap-3 p-3 rounded-xl cursor-pointer font-semibold text-foreground hover:bg-accent hover:text-accent-foreground">
+            <Settings className="w-4 h-4" /> Tənzimləmələr
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator className="my-2 bg-border" />
+
+          {/* ─── Cəld Mövzu Dəyişdirici (Quick Theme Toggle) ─── */}
+          <div className="px-3 py-1.5">
+            <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Görünüş</p>
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted p-1">
+              {[
+                { id: "light", icon: Sun, label: "Gündüz" },
+                { id: "dark", icon: Moon, label: "Gecə" },
+                { id: "system", icon: Laptop, label: "Sistem" },
+              ].map((opt) => (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setTheme(opt.id); }}
+                  className={cn(
+                    "flex flex-col items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold transition-all",
+                    theme === opt.id
+                      ? "bg-card text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <opt.icon className="w-3.5 h-3.5" />
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <DropdownMenuItem
+            onClick={() => { setPaletteOpen(true); }}
+            className="gap-3 p-3 mt-1 rounded-xl cursor-pointer font-semibold text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Command className="w-4 h-4" /> Sürətli Axtarış
+            <kbd className="ml-auto px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">⌘K</kbd>
+          </DropdownMenuItem>
+
           <DropdownMenuSeparator className="my-2 bg-border" />
           <DropdownMenuItem onClick={() => signOut({ callbackUrl: "/login" })} className="gap-3 p-3 rounded-xl cursor-pointer font-bold text-destructive hover:bg-destructive/10 hover:text-destructive">
             <LogOut className="w-4 h-4" /> Sistemdən Çıx

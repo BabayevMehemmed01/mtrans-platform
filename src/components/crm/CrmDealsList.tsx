@@ -89,7 +89,7 @@ export default function CrmDealsList({ board }: CrmDealsListProps) {
         </div>
       </div>
 
-      <div className="border rounded-md bg-white">
+      <div className="border rounded-md bg-card">
         <Table>
           <TableHeader>
             <TableRow>

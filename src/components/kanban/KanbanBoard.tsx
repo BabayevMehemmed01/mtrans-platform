@@ -26,7 +26,7 @@ import { KanbanColumn } from "./KanbanColumn";
 import { TaskCard } from "./TaskCard";
 import { CreateTaskModal } from "./CreateTaskModal";
 import { TaskDetailSheet } from "./TaskDetailSheet";
-import type { KanbanTask, KanbanColumn as ColType, TaskMember, KanbanLabel } from "./types";
+import type { KanbanTask, KanbanColumn as ColType, TaskMember } from "./types";
 import { PLANNER_COLUMNS, toPlannerStatus, DEFAULT_TASK_STATUS } from "@/lib/task-status";
 import { DEADLINE_COLUMNS, dueDateForBucket, getDeadlineBucket } from "@/lib/task-deadline";
 
@@ -51,7 +51,6 @@ interface KanbanBoardProps {
   projectId?: string;
   initialTasks: KanbanTask[];
   members: TaskMember[];
-  labels: KanbanLabel[];
   variant?: BoardVariant;
   onTaskCreated?: (task: KanbanTask) => void;
   onTaskUpdated?: (task: KanbanTask) => void;
@@ -67,7 +66,6 @@ export function KanbanBoard({
   projectId,
   initialTasks,
   members,
-  labels,
   variant = "planner",
   onTaskCreated,
   onTaskUpdated,
@@ -264,7 +262,6 @@ export function KanbanBoard({
           defaultStatus={createDefaults.status}
           defaultDueDate={createDefaults.dueDate || null}
           members={members}
-          labels={labels}
           onCreated={handleTaskCreated}
           onClose={() => setCreateCol(null)}
         />
@@ -274,7 +271,6 @@ export function KanbanBoard({
         <TaskDetailSheet
           task={selectedTask}
           members={members}
-          labels={labels}
           onUpdated={handleTaskUpdated}
           onDeleted={handleTaskDeleted}
           onClose={() => setSelectedTask(null)}

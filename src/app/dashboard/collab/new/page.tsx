@@ -18,19 +18,19 @@ export default async function NewCollabPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 p-6">
-      <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-gray-200/80 shadow-sm">
+      <div className="flex items-center gap-4 bg-card p-4 rounded-2xl border border-border shadow-sm">
         <Link
           href="/dashboard/collab"
-          className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors text-slate-600"
+          className="p-2 border border-border rounded-lg hover:bg-muted transition-colors text-muted-foreground"
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-            <Users className="w-5 h-5 text-blue-600" />
+          <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <Users className="w-5 h-5 text-primary" />
             {t("newCollab.title") || "Yeni Ortaq (Collab) Layihə"}
           </h1>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">
+          <p className="text-xs font-medium text-muted-foreground mt-0.5">
             {t("newCollab.subtitle") || "Bu layihəyə istənilən şöbədən işçi dəvət edə biləcəksiniz."}
           </p>
         </div>
