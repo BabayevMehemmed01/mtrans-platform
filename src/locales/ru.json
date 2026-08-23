@@ -38,6 +38,10 @@
     "notifications": "Уведомления",
     "markAllRead": "Отметить все как прочитанные",
     "noNotifications": "Нет уведомлений",
+    "recentNotifications": "Последние",
+    "readNotifications": "Прочитанные",
+    "noUnreadNotifications": "Нет непрочитанных уведомлений",
+    "noReadNotifications": "Нет прочитанных уведомлений",
     "defaultRole": "Пользователь"
   },
   "settings": {

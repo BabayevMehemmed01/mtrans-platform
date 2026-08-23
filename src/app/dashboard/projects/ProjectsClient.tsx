@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   FolderKanban,
@@ -11,11 +12,20 @@ import {
   LayoutGrid,
   List as ListIcon,
   Archive,
+  MoreVertical,
+  Pencil,
+  Trash,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Avatar,
   AvatarFallback,
@@ -76,24 +86,33 @@ export function ProjectsClient({
   departments: { id: string; name: string; color: string }[];
   translations: Translations;
 }) {
+  const [projects, setProjects] = useState(initialProjects);
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<string>("ALL");
   const [departmentId, setDepartmentId] = useState<string>("ALL");
   const [showArchived, setShowArchived] = useState(false);
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  useEffect(() => {
+    setProjects(initialProjects);
+  }, [initialProjects]);
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return initialProjects.filter((project) => {
+    return projects.filter((project) => {
       if (project.isArchived !== showArchived) return false;
       if (status !== "ALL" && project.status !== status) return false;
       if (departmentId !== "ALL" && project.department?.id !== departmentId) return false;
       if (q && !project.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [initialProjects, query, status, departmentId, showArchived]);
+  }, [projects, query, status, departmentId, showArchived]);
 
-  const archivedCount = initialProjects.filter((p) => p.isArchived).length;
+  const archivedCount = projects.filter((p) => p.isArchived).length;
+
+  const handleProjectDeleted = (id: string) => {
+    setProjects((prev) => prev.filter((p) => p.id !== id));
+  };
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -192,7 +211,12 @@ export function ProjectsClient({
         view === "grid" ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((project) => (
-              <ProjectGridCard key={project.id} project={project} t={t} />
+              <ProjectGridCard
+                key={project.id}
+                project={project}
+                t={t}
+                onDeleted={handleProjectDeleted}
+              />
             ))}
           </div>
         ) : (
@@ -207,7 +231,7 @@ export function ProjectsClient({
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
             <FolderKanban className="h-8 w-8 text-muted-foreground/60" />
           </div>
-          {initialProjects.length === 0 ? (
+          {projects.length === 0 ? (
             <>
               <h3 className="text-lg font-medium">{t.noProjectsTitle}</h3>
               <p className="mb-4 text-sm text-muted-foreground">{t.noProjectsDesc}</p>
@@ -245,70 +269,133 @@ function ProjectAvatars({ project }: { project: ProjectListItem }) {
   );
 }
 
-function ProjectGridCard({ project, t }: { project: ProjectListItem; t: Translations }) {
+function stopCardNav(e: React.SyntheticEvent) {
+  e.stopPropagation();
+}
+
+function ProjectGridCard({
+  project,
+  t,
+  onDeleted,
+}: {
+  project: ProjectListItem;
+  t: Translations;
+  onDeleted: (id: string) => void;
+}) {
+  const router = useRouter();
   const progressPct = project.taskCount > 0 ? Math.round((project.doneTaskCount / project.taskCount) * 100) : 0;
   const statusLabel = t.statusLabels[project.status] ?? project.status;
 
+  const handleEdit = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/dashboard/projects/${project.id}/settings`);
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm(`"${project.name}" layihəsini silmək istədiyinizə əminsiniz?`)) return;
+    const res = await fetch(`/api/projects/${project.id}`, { method: "DELETE" });
+    if (res.ok) {
+      onDeleted(project.id);
+      router.refresh();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Layihəni silmək mümkün olmadı");
+    }
+  };
+
   return (
-    <Link href={`/dashboard/projects/${project.id}`} className="group block">
-      <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-        {/* Colored banner (Classroom-style header) */}
-        <div
-          className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
-          style={{ backgroundColor: project.color }}
-        >
-          <FolderKanban className="absolute -right-4 -bottom-6 h-28 w-28 text-white/10" />
-          <div className="relative flex items-center justify-between">
-            <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm">{statusLabel}</Badge>
-            {project.isArchived && (
-              <Badge className="border-white/30 bg-black/30 text-white backdrop-blur-sm gap-1">
-                <Archive className="h-3 w-3" /> Arxiv
+    <div className="relative group">
+      <Link href={`/dashboard/projects/${project.id}`} className="block">
+        <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          {/* Colored banner (Classroom-style header) */}
+          <div
+            className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
+            style={{ backgroundColor: project.color }}
+          >
+            <FolderKanban className="absolute -right-4 -bottom-6 h-28 w-28 text-white/10" />
+            <div className="relative flex items-center gap-2 pr-10">
+              <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm">{statusLabel}</Badge>
+              {project.isArchived && (
+                <Badge className="border-white/30 bg-black/30 text-white backdrop-blur-sm gap-1">
+                  <Archive className="h-3 w-3" /> Arxiv
+                </Badge>
+              )}
+            </div>
+            <h3 className="relative line-clamp-2 text-xl font-bold text-white drop-shadow-sm">{project.name}</h3>
+          </div>
+
+          {/* Body */}
+          <div className="flex flex-1 flex-col gap-4 p-4">
+            {project.department ? (
+              <Badge variant="outline" className="w-fit gap-1.5">
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: project.department.color }} />
+                {project.department.name}
+              </Badge>
+            ) : (
+              <Badge variant="secondary" className="w-fit gap-1.5 text-muted-foreground">
+                <FolderClosed className="h-3 w-3" />
+                {t.noDepartment}
               </Badge>
             )}
-          </div>
-          <h3 className="relative line-clamp-2 text-xl font-bold text-white drop-shadow-sm">{project.name}</h3>
-        </div>
 
-        {/* Body */}
-        <div className="flex flex-1 flex-col gap-4 p-4">
-          {project.department ? (
-            <Badge variant="outline" className="w-fit gap-1.5">
-              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: project.department.color }} />
-              {project.department.name}
-            </Badge>
-          ) : (
-            <Badge variant="secondary" className="w-fit gap-1.5 text-muted-foreground">
-              <FolderClosed className="h-3 w-3" />
-              {t.noDepartment}
-            </Badge>
-          )}
-
-          {/* Progress */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-medium text-muted-foreground">İcra</span>
-              <span className="font-semibold text-foreground">{progressPct}%</span>
+            {/* Progress */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-medium text-muted-foreground">İcra</span>
+                <span className="font-semibold text-foreground">{progressPct}%</span>
+              </div>
+              <Progress value={progressPct} className="h-1.5" />
             </div>
-            <Progress value={progressPct} className="h-1.5" />
-          </div>
 
-          <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
-            <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <CheckSquare className="h-4 w-4" />
-              {project.doneTaskCount}/{project.taskCount}
-            </span>
-            {project.members.length > 0 ? (
-              <ProjectAvatars project={project} />
-            ) : (
-              <Avatar size="sm">
-                <AvatarImage src={project.owner.avatar ?? undefined} alt={project.owner.name} />
-                <AvatarFallback className="text-[10px]">{getInitials(project.owner.name)}</AvatarFallback>
-              </Avatar>
-            )}
+            <div className="mt-auto flex items-center justify-between gap-2 border-t border-border pt-3">
+              <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <CheckSquare className="h-4 w-4" />
+                {project.doneTaskCount}/{project.taskCount}
+              </span>
+              {project.members.length > 0 ? (
+                <ProjectAvatars project={project} />
+              ) : (
+                <Avatar size="sm">
+                  <AvatarImage src={project.owner.avatar ?? undefined} alt={project.owner.name} />
+                  <AvatarFallback className="text-[10px]">{getInitials(project.owner.name)}</AvatarFallback>
+                </Avatar>
+              )}
+            </div>
           </div>
         </div>
+      </Link>
+
+      <div className="absolute top-4 right-4 z-20">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white"
+              onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onPointerDown={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" onClick={stopCardNav}>
+            <DropdownMenuItem onClick={handleEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              <span>Redaktə et</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
+              onClick={(e) => { void handleDelete(e); }}
+            >
+              <Trash className="mr-2 h-4 w-4" />
+              <span>Sil</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </Link>
+    </div>
   );
 }
 

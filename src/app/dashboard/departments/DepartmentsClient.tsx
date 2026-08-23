@@ -152,6 +152,10 @@ export function DepartmentsClient({
     }
   }
 
+  const stopCardNav = (e: React.SyntheticEvent) => {
+    e.stopPropagation()
+  }
+
   const handleDelete = async (dept: any, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
@@ -325,93 +329,100 @@ export function DepartmentsClient({
             const canDeleteThis = canDelete && !dept.isDefault
 
             return (
-              <Link key={dept.id} href={`/dashboard/departments/${dept.id}`} className="block group">
-                <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-                  {/* Colored banner (Classroom-style header) */}
-                  <div
-                    className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
-                    style={{ backgroundColor: dept.color }}
-                  >
-                    <Building2 className="absolute -right-4 -bottom-6 h-28 w-28 text-white/10" />
-                    <div className="relative flex items-center justify-between">
-                      {dept.isDefault ? (
-                        <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm gap-1">
-                          <Lock className="h-3 w-3" /> {t("departmentsClient.defaultBadge") || "Standart"}
-                        </Badge>
-                      ) : <span />}
-
-                      {(canManageThis || canDeleteThis) && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {canManageThis && (
-                              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openEditModal(dept, e as any) }}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                <span>{t("departmentsClient.editBtn") || "Redaktə et"}</span>
-                              </DropdownMenuItem>
-                            )}
-                            {canDeleteThis && (
-                              <DropdownMenuItem
-                                className="text-red-600 focus:text-red-600"
-                                onSelect={(e) => { e.preventDefault(); handleDelete(dept, e as any) }}
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                <span>{t("departmentsClient.deleteBtn") || "Sil"}</span>
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+              <div key={dept.id} className="relative group">
+                <Link href={`/dashboard/departments/${dept.id}`} className="block">
+                  <div className="card-hover flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                    {/* Colored banner (Classroom-style header) */}
+                    <div
+                      className="relative flex h-32 flex-shrink-0 flex-col justify-between overflow-hidden p-4"
+                      style={{ backgroundColor: dept.color }}
+                    >
+                      <Building2 className="absolute -right-4 -bottom-6 h-28 w-28 text-white/10" />
+                      <div className="relative flex items-center justify-between pr-10">
+                        {dept.isDefault ? (
+                          <Badge className="border-white/30 bg-white/20 text-white backdrop-blur-sm gap-1">
+                            <Lock className="h-3 w-3" /> {t("departmentsClient.defaultBadge") || "Standart"}
+                          </Badge>
+                        ) : <span />}
+                      </div>
+                      <h3 className="relative line-clamp-2 text-xl font-bold text-white drop-shadow-sm">
+                        {dept.name}
+                      </h3>
                     </div>
-                    <h3 className="relative line-clamp-2 text-xl font-bold text-white drop-shadow-sm">
-                      {dept.name}
-                    </h3>
-                  </div>
 
-                  {/* Body */}
-                  <div className="flex flex-1 flex-col gap-4 p-4">
-                    {dept.head ? (
-                      <div className="flex items-center gap-2">
-                        <Avatar size="sm">
-                          <AvatarImage src={dept.head.avatar ?? undefined} alt={dept.head.name} />
-                          <AvatarFallback>{getInitials(dept.head.name)}</AvatarFallback>
-                        </Avatar>
-                        <span className="truncate text-sm text-muted-foreground">
-                          {dept.head.name} <span className="text-xs">{t("departmentsClient.headBadge") || "(Rəhbər)"}</span>
+                    {/* Body */}
+                    <div className="flex flex-1 flex-col gap-4 p-4">
+                      {dept.head ? (
+                        <div className="flex items-center gap-2">
+                          <Avatar size="sm">
+                            <AvatarImage src={dept.head.avatar ?? undefined} alt={dept.head.name} />
+                            <AvatarFallback>{getInitials(dept.head.name)}</AvatarFallback>
+                          </Avatar>
+                          <span className="truncate text-sm text-muted-foreground">
+                            {dept.head.name} <span className="text-xs">{t("departmentsClient.headBadge") || "(Rəhbər)"}</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <Badge variant="secondary" className="w-fit gap-1.5 text-muted-foreground">
+                          <UserCircle className="h-3 w-3" />
+                          {t("departmentsClient.noHead") || "Rəhbər təyin edilməyib"}
+                        </Badge>
+                      )}
+
+                      {dept.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">{dept.description}</p>
+                      )}
+
+                      <div className="mt-auto flex items-center gap-4 border-t border-border pt-3 text-sm text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <Users className="h-4 w-4" />
+                          {(t("departmentsClient.workersCount") || "{count} işçi").replace("{count}", String(dept._count?.users ?? 0))}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <FolderKanban className="h-4 w-4" />
+                          {(t("departmentsClient.projectsCount") || "{count} layihə").replace("{count}", String(dept._count?.projects ?? 0))}
                         </span>
                       </div>
-                    ) : (
-                      <Badge variant="secondary" className="w-fit gap-1.5 text-muted-foreground">
-                        <UserCircle className="h-3 w-3" />
-                        {t("departmentsClient.noHead") || "Rəhbər təyin edilməyib"}
-                      </Badge>
-                    )}
-
-                    {dept.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">{dept.description}</p>
-                    )}
-
-                    <div className="mt-auto flex items-center gap-4 border-t border-border pt-3 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1.5">
-                        <Users className="h-4 w-4" />
-                        {(t("departmentsClient.workersCount") || "{count} işçi").replace("{count}", String(dept._count?.users ?? 0))}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <FolderKanban className="h-4 w-4" />
-                        {(t("departmentsClient.projectsCount") || "{count} layihə").replace("{count}", String(dept._count?.projects ?? 0))}
-                      </span>
                     </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
+
+                {(canManageThis || canDeleteThis) && (
+                  <div className="absolute top-4 right-4 z-20">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-white hover:bg-white/20 hover:text-white"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation() }}
+                          onPointerDown={(e) => e.stopPropagation()}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" onClick={stopCardNav}>
+                        {canManageThis && (
+                          <DropdownMenuItem
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditModal(dept, e) }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>{t("departmentsClient.editBtn") || "Redaktə et"}</span>
+                          </DropdownMenuItem>
+                        )}
+                        {canDeleteThis && (
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950/30"
+                            onClick={(e) => { void handleDelete(dept, e) }}
+                          >
+                            <Trash className="mr-2 h-4 w-4" />
+                            <span>{t("departmentsClient.deleteBtn") || "Sil"}</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+              </div>
             )
           })}
         </div>

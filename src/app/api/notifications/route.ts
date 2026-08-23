@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { NotificationType } from "@prisma/client";
 
 // =============================================================================
 // GET   /api/notifications  — Cari istifadəçinin bildirişlərini qaytar
@@ -162,6 +163,14 @@ export async function GET() {
     const userId = session.user.id as string;
     const companyId = (session.user as any)?.companyId as string | undefined;
 
+    const cutoff = new Date(Date.now() - DAY_MS);
+    await prisma.notification.deleteMany({
+      where: {
+        isRead: true,
+        createdAt: { lt: cutoff },
+      },
+    });
+
     const [notifications, unreadCount] = await Promise.all([
       prisma.notification.findMany({
         where: { userId },
@@ -198,6 +207,7 @@ export async function PATCH() {
     const session = await auth();
     if (!session?.user) return NextResponse.json({ error: "İcazə yoxdur" }, { status: 401 });
     const userId = session.user.id as string;
+    const companyId = (session.user as any)?.companyId as string | undefined;
 
     const existingCount = await prisma.notification.count({ where: { userId } });
 
@@ -205,6 +215,25 @@ export async function PATCH() {
       await prisma.notification.updateMany({
         where: { userId, isRead: false },
         data: { isRead: true },
+      });
+    } else if (companyId) {
+      const virtual = await buildVirtualNotifications(userId, companyId);
+      const feed = virtual.length > 0 ? virtual : mockNotifications();
+      if (feed.length > 0) {
+        await prisma.notification.createMany({
+          data: feed.map((n) => ({
+            type: n.type as NotificationType,
+            message: n.message,
+            link: n.link,
+            isRead: true,
+            userId,
+            companyId,
+          })),
+        });
+      }
+      await prisma.channelMember.updateMany({
+        where: { userId },
+        data: { lastReadAt: new Date() },
       });
     } else {
       await prisma.channelMember.updateMany({
@@ -220,3 +249,6 @@ export async function PATCH() {
     return NextResponse.json({ error: "Server xətası" }, { status: 500 });
   }
 }
+
+export { PATCH as PUT };
+

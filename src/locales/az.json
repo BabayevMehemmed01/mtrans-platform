@@ -38,6 +38,10 @@
     "notifications": "Bildirişlər",
     "markAllRead": "Hamısını oxunmuş kimi qeyd et",
     "noNotifications": "Bildiriş yoxdur",
+    "recentNotifications": "Son Bildirişlər",
+    "readNotifications": "Oxunmuşlar",
+    "noUnreadNotifications": "Oxunmamış bildiriş yoxdur",
+    "noReadNotifications": "Oxunmuş bildiriş yoxdur",
     "defaultRole": "İstifadəçi"
   },
   "settings": {

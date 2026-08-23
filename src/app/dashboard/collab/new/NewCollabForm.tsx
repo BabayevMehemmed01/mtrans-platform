@@ -83,8 +83,8 @@ export function NewCollabForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative space-y-5 pb-32">
-      <div className="rounded-2xl border border-border bg-card p-6 space-y-5 shadow-sm">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 rounded-2xl border border-border bg-card p-6 shadow-sm">
         {error && (
           <div className="px-4 py-3 rounded-lg bg-destructive/5 border border-destructive/20 text-destructive font-medium text-sm">
             ⚠️ {error}
@@ -175,15 +175,15 @@ export function NewCollabForm() {
         </div>
 
         {/* Color */}
-        <div>
-          <label className="block text-[13px] font-bold text-foreground mb-2">{t("newCollab.colorLabel") || "Layihə İkon Rəngi"}</label>
-          <div className="flex items-center gap-3 flex-wrap bg-muted p-3 rounded-xl border border-border">
+        <div className="flex flex-col gap-2">
+          <label className="block text-[13px] font-bold text-foreground">{t("newCollab.colorLabel") || "Layihə İkon Rəngi"}</label>
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-muted p-3">
             {COLOR_PRESETS.map((color) => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setForm((prev) => ({ ...prev, color }))}
-                className="w-8 h-8 rounded-lg shadow-sm transition-transform hover:scale-110"
+                className="h-8 w-8 flex-shrink-0 rounded-lg shadow-sm transition-transform hover:scale-110"
                 style={{
                   backgroundColor: color,
                   outline: form.color === color ? `3px solid ${color}` : undefined,
@@ -191,37 +191,32 @@ export function NewCollabForm() {
                 }}
               />
             ))}
-            <div className="relative">
-              <input
-                type="color"
-                value={form.color}
-                onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
-                className="w-8 h-8 rounded-lg cursor-pointer border border-border shadow-sm p-0.5"
-                title={t("newCollab.customColor") || "Özəl rəng seçin"}
-              />
-            </div>
+            <input
+              type="color"
+              value={form.color}
+              onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
+              className="h-8 w-8 flex-shrink-0 cursor-pointer rounded-lg border border-border p-0.5 shadow-sm"
+              title={t("newCollab.customColor") || "Özəl rəng seçin"}
+            />
           </div>
         </div>
       </div>
 
-      {/* STICKY ACTIONS FOOTER */}
-      <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-border bg-background p-4 shadow-[0_-12px_32px_rgba(15,23,42,0.08)] md:left-64">
-        <div className="max-w-2xl mx-auto flex items-center justify-end gap-3">
-          <Link
-            href="/dashboard/collab"
-            className="px-5 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted transition-colors"
-          >
-            {t("newCollab.cancel") || "Ləğv Et"}
-          </Link>
-          <button
-            type="submit"
-            disabled={loading}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-bold transition-colors shadow-md"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {loading ? (t("newCollab.saving") || "Yaradılır...") : (t("newCollab.save") || "Yadda Saxla və Yarat")}
-          </button>
-        </div>
+      <div className="flex justify-end gap-4 mt-8">
+        <Link
+          href="/dashboard/collab"
+          className="px-5 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-muted transition-colors"
+        >
+          {t("newCollab.cancel") || "Ləğv Et"}
+        </Link>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-bold transition-colors shadow-md"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {loading ? (t("newCollab.saving") || "Yaradılır...") : (t("newCollab.save") || "Yadda Saxla və Yarat")}
+        </button>
       </div>
     </form>
   );

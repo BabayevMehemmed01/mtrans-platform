@@ -10,7 +10,9 @@ import { cn } from "@/lib/utils";
 import useSWR from "swr";
 import { useCommandPaletteStore } from "@/store/useCommandPaletteStore";
 import { UserProfileDropdown } from "./UserProfileDropdown";
-import { getTranslation } from "@/lib/i18n"; // YENİ: Tərcümə mühərriki
+import { getTranslation } from "@/lib/i18n";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -106,8 +108,7 @@ export function Header() {
   const breadcrumbs = useBreadcrumbs(t);
   const router = useRouter();
 
-  // Bildiriş pəncərəsi və Axtarış modulu üçün state-lər
-  const [notifMenuOpen, setNotifMenuOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const { setOpen: setPaletteOpen } = useCommandPaletteStore();
 
   // Real-time bildirişlərin SWR ilə çəkilməsi (hər 15 saniyədən bir)
@@ -118,6 +119,8 @@ export function Header() {
 
   const notifications = notifData?.notifications ?? [];
   const unreadCount = notifData?.unreadCount ?? 0;
+  const unreadNotifications = notifications.filter((n) => !n.isRead);
+  const readNotifications = notifications.filter((n) => n.isRead);
 
   const user = session?.user;
 
@@ -130,7 +133,7 @@ export function Header() {
   // "virtual-" prefiksli bildirişlər DB-də saxlanılmır (canlı sintez olunub),
   // ona görə onlar üçün tək-tək "oxunmuş et" sorğusu göndərmirik.
   const handleNotificationClick = async (notif: NotificationItem) => {
-    setNotifMenuOpen(false);
+    setNotifOpen(false);
     if (!notif.isRead && !notif.id.startsWith("virtual-")) {
       fetch(`/api/notifications/${notif.id}`, { method: "PATCH" }).then(() =>
         mutateNotifications()
@@ -141,10 +144,45 @@ export function Header() {
     }
   };
 
-  // Bütün bildirişləri oxunmuş kimi qeyd etmək
   const handleMarkAllRead = async () => {
     await fetch("/api/notifications", { method: "PATCH" });
-    mutateNotifications();
+    await mutateNotifications();
+  };
+
+  const renderNotificationList = (items: NotificationItem[], emptyText: string) => {
+    if (items.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
+          <Bell className="size-8 text-muted-foreground/40" />
+          <p className="text-sm text-muted-foreground">{emptyText}</p>
+        </div>
+      );
+    }
+
+    return items.map((notif) => (
+      <button
+        key={notif.id}
+        type="button"
+        onClick={() => handleNotificationClick(notif)}
+        className={cn(
+          "flex w-full items-start gap-2.5 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-accent",
+          !notif.isRead && "bg-primary/5"
+        )}
+      >
+        <NotificationIcon type={notif.type} />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs leading-snug text-foreground">
+            {notif.message}
+          </p>
+          <p className="mt-1 text-[10px] text-muted-foreground">
+            {timeAgo(notif.createdAt)}
+          </p>
+        </div>
+        {!notif.isRead && (
+          <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+        )}
+      </button>
+    ));
   };
 
   return (
@@ -185,9 +223,9 @@ export function Header() {
       </button>
 
       {/* ─── Bildirişlər Bölməsi ─── */}
-      <div className="relative">
-        <button
-          onClick={() => setNotifMenuOpen((prev) => !prev)}
+      <Popover open={notifOpen} onOpenChange={(open) => setNotifOpen(Boolean(open))}>
+        <PopoverTrigger
+          type="button"
           className="relative p-2 rounded-lg hover:bg-accent transition-colors"
           title={t("header.notifications") || "Bildirişlər"}
         >
@@ -195,66 +233,51 @@ export function Header() {
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 w-2 h-2 bg-destructive rounded-full ring-2 ring-card" />
           )}
-        </button>
-
-        {notifMenuOpen && (
-          <>
-            {/* Arxa fon örtüyü (Klikləyəndə bağlanması üçün) */}
-            <div
-              className="fixed inset-0 z-30"
-              onClick={() => setNotifMenuOpen(false)}
-            />
-            <div className="absolute right-0 top-full mt-1 z-40 w-80 rounded-xl border border-border bg-card shadow-xl animate-scale-in overflow-hidden">
-              <div className="flex items-center justify-between p-3 border-b border-border">
-                <p className="text-sm font-semibold">{t("header.notifications") || "Bildirişlər"}</p>
-                {notifications.length > 0 && (
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    <CheckCheck className="w-3.5 h-3.5" />
-                    {t("header.markAllRead") || "Hamısını oxunmuş kimi qeyd et"}
-                  </button>
-                )}
-              </div>
-              <div className="max-h-80 overflow-y-auto custom-scrollbar">
-                {notifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center gap-2 p-6 text-center">
-                    <Bell className="size-8 text-muted-foreground/40" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("header.noNotifications") || "Bildiriş yoxdur"}
-                    </p>
-                  </div>
-                ) : (
-                  notifications.map((notif) => (
-                    <button
-                      key={notif.id}
-                      onClick={() => handleNotificationClick(notif)}
-                      className={cn(
-                        "flex w-full items-start gap-2.5 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0 hover:bg-accent",
-                        !notif.isRead && "bg-primary/5"
-                      )}
-                    >
-                      <NotificationIcon type={notif.type} />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs leading-snug text-foreground">
-                          {notif.message}
-                        </p>
-                        <p className="mt-1 text-[10px] text-muted-foreground">
-                          {timeAgo(notif.createdAt)}
-                        </p>
-                      </div>
-                      {!notif.isRead && (
-                        <span className="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
-                      )}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+        </PopoverTrigger>
+        <PopoverContent align="end" sideOffset={8} className="w-80 gap-0 p-0">
+          <div className="flex items-center justify-between border-b border-border p-3">
+            <p className="text-sm font-semibold">{t("header.notifications") || "Bildirişlər"}</p>
+            {unreadNotifications.length > 0 && (
+              <button
+                type="button"
+                onClick={handleMarkAllRead}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <CheckCheck className="w-3.5 h-3.5" />
+                {t("header.markAllRead") || "Hamısını oxunmuş kimi qeyd et"}
+              </button>
+            )}
+          </div>
+          <Tabs defaultValue="unread" className="w-full">
+            <TabsList className="grid h-10 w-full grid-cols-2 rounded-none border-b border-border bg-transparent p-0">
+              <TabsTrigger
+                value="unread"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none"
+              >
+                {t("header.recentNotifications") || "Son Bildirişlər"}
+              </TabsTrigger>
+              <TabsTrigger
+                value="read"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none"
+              >
+                {t("header.readNotifications") || "Oxunmuşlar"}
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="unread" className="mt-0 max-h-80 overflow-y-auto custom-scrollbar">
+              {renderNotificationList(
+                unreadNotifications,
+                t("header.noUnreadNotifications") || "Oxunmamış bildiriş yoxdur"
+              )}
+            </TabsContent>
+            <TabsContent value="read" className="mt-0 max-h-80 overflow-y-auto custom-scrollbar">
+              {renderNotificationList(
+                readNotifications,
+                t("header.noReadNotifications") || "Oxunmuş bildiriş yoxdur"
+              )}
+            </TabsContent>
+          </Tabs>
+        </PopoverContent>
+      </Popover>
 
       {/* ─── Sağ Yuxarı: İstifadəçi Profili və Ayarlar Menyu Kompleksi ─── */}
       <UserProfileDropdown

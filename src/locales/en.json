@@ -38,6 +38,10 @@
     "notifications": "Notifications",
     "markAllRead": "Mark all as read",
     "noNotifications": "No notifications",
+    "recentNotifications": "Recent",
+    "readNotifications": "Read",
+    "noUnreadNotifications": "No unread notifications",
+    "noReadNotifications": "No read notifications",
     "defaultRole": "User"
   },
   "settings": {

@@ -138,8 +138,8 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative pb-24 space-y-5">
-      <div className="rounded-xl border border-border bg-card p-6 space-y-5 shadow-sm">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6 rounded-xl border border-border bg-card p-6 shadow-sm">
         {error && (
           <div className="px-4 py-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
             ⚠️ {error}
@@ -316,17 +316,17 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
         </div>
 
         {/* Color */}
-        <div>
-          <label className="block text-sm font-medium mb-2">
+        <div className="flex flex-col gap-2">
+          <label className="block text-sm font-medium">
             {t("newProject.colorLabel") || "Layihə Rəngi"}
           </label>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex flex-wrap items-center gap-2">
             {COLOR_PRESETS.map((color) => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setForm((prev) => ({ ...prev, color }))}
-                className="w-8 h-8 rounded-lg transition-transform hover:scale-110"
+                className="w-8 h-8 flex-shrink-0 rounded-lg transition-transform hover:scale-110"
                 style={{
                   backgroundColor: color,
                   outline: form.color === color ? `3px solid ${color}` : undefined,
@@ -334,37 +334,32 @@ export function NewProjectForm({ departments, defaultDepartmentId }: NewProjectF
                 }}
               />
             ))}
-            <div className="relative">
-              <input
-                type="color"
-                value={form.color}
-                onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
-                className="w-8 h-8 rounded-lg cursor-pointer border border-border p-0.5"
-                title={t("newProject.customColor") || "Özəl rəng seçin"}
-              />
-            </div>
+            <input
+              type="color"
+              value={form.color}
+              onChange={(e) => setForm((prev) => ({ ...prev, color: e.target.value }))}
+              className="h-8 w-8 flex-shrink-0 cursor-pointer rounded-lg border border-border p-0.5"
+              title={t("newProject.customColor") || "Özəl rəng seçin"}
+            />
           </div>
         </div>
       </div>
 
-      {/* STICKY ACTIONS FOOTER - Həmişə ekranda görünür */}
-      <div className="fixed bottom-0 left-0 right-0 md:left-64 z-40 bg-background border-t border-border p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)]">
-        <div className="max-w-2xl mx-auto flex items-center justify-end gap-3">
-          <Link
-            href="/dashboard/projects"
-            className="px-5 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
-          >
-            {t("newProject.cancel") || "Ləğv Et"}
-          </Link>
-          <button
-            type="submit"
-            disabled={loading || !hasDepartments}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-semibold transition-colors shadow-md"
-          >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {loading ? (t("newProject.saving") || "Yaradılır...") : (t("newProject.save") || "Yadda Saxla və Yarat")}
-          </button>
-        </div>
+      <div className="flex justify-end gap-4 mt-8">
+        <Link
+          href="/dashboard/projects"
+          className="px-5 py-2.5 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
+        >
+          {t("newProject.cancel") || "Ləğv Et"}
+        </Link>
+        <button
+          type="submit"
+          disabled={loading || !hasDepartments}
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 disabled:opacity-50 text-primary-foreground text-sm font-semibold transition-colors shadow-md"
+        >
+          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          {loading ? (t("newProject.saving") || "Yaradılır...") : (t("newProject.save") || "Yadda Saxla və Yarat")}
+        </button>
       </div>
     </form>
   );
